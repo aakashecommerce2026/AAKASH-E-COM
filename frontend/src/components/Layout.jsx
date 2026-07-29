@@ -1,0 +1,246 @@
+import React, { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  Box,
+  Drawer,
+  AppBar,
+  Toolbar,
+  List,
+  Typography,
+  IconButton,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Chip,
+  Button,
+  Tooltip
+} from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import PeopleIcon from '@mui/icons-material/People';
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import LogoutIcon from '@mui/icons-material/Logout';
+import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
+import EditIcon from '@mui/icons-material/Edit';
+import { logout } from '../store/actions';
+import { ProfileModal } from './ProfileModal';
+
+const drawerWidth = 260;
+
+const Layout = ({ children }) => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useSelector((state) => state.auth);
+
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  const handleLogout = () => {
+    dispatch(logout());
+  };
+
+  const isAdmin = user?.role === 'Admin';
+
+  // Menu items configured with authorized roles
+  const menuItems = [
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/', roles: ['Admin', 'Member'] },
+    { text: isAdmin ? 'Member Directory' : 'My Downline', icon: <PeopleIcon />, path: '/members', roles: ['Admin', 'Member'] },
+    { text: 'Commission Engine', icon: <SettingsSuggestIcon />, path: '/commission-engine', roles: ['Admin'] },
+    { text: isAdmin ? 'Repurchase Panel' : 'My Purchases', icon: <ShoppingCartIcon />, path: '/repurchase', roles: ['Admin', 'Member'] },
+    { text: isAdmin ? 'Payout Console' : 'My Payouts', icon: <AccountBalanceIcon />, path: '/payouts', roles: ['Admin', 'Member'] },
+    { text: isAdmin ? 'Commission Ledger' : 'My Earnings', icon: <MonetizationOnIcon />, path: '/commissions', roles: ['Admin', 'Member'] },
+  ];
+
+
+
+  const filteredMenu = menuItems.filter((item) => item.roles.includes(user?.role));
+
+  const drawerContent = (
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'primary.dark', color: 'white' }}>
+      {/* Brand Header */}
+      <Box sx={{ p: 2.5, display: 'flex', alignItems: 'center', gap: 1.5, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <Box component="img" src="/favicon.svg" alt="AAKASH E MART Logo" sx={{ width: 32, height: 32, borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }} />
+        <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 800, color: 'secondary.light', letterSpacing: '0.5px' }}>
+          AAKASH E MART
+        </Typography>
+      </Box>
+
+      {/* Navigation List */}
+      <List sx={{ px: 1.5, py: 2, flexGrow: 1 }}>
+        {filteredMenu.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                onClick={() => {
+                  navigate(item.path);
+                  setMobileOpen(false);
+                }}
+                sx={{
+                  borderRadius: 2,
+                  bgcolor: isActive ? 'secondary.main' : 'transparent',
+                  color: isActive ? 'primary.contrastText' : 'rgba(255, 255, 255, 0.7)',
+                  transition: 'all 0.2s',
+                  '&:hover': {
+                    bgcolor: isActive ? 'secondary.main' : 'rgba(255, 255, 255, 0.05)',
+                    color: 'white',
+                  },
+                }}
+              >
+                <ListItemIcon sx={{ color: isActive ? 'white' : 'rgba(255, 255, 255, 0.7)', minWidth: 40 }}>
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText primary={item.text} slotProps={{ primary: { fontSize: '0.92rem', fontWeight: isActive ? 600 : 500 } }} />
+              </ListItemButton>
+            </ListItem>
+          );
+        })}
+      </List>
+
+      {/* Profile Footer Info & Edit Trigger */}
+      <Box 
+        onClick={() => setProfileOpen(true)}
+        sx={{ 
+          p: 2, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          borderTop: '1px solid rgba(255,255,255,0.08)',
+          cursor: 'pointer',
+          transition: 'all 0.2s',
+          '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' }
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, overflow: 'hidden' }}>
+          <Box sx={{ bgcolor: 'secondary.main', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'white', flexShrink: 0 }}>
+            {user?.name?.charAt(0)}
+          </Box>
+          <Box sx={{ overflow: 'hidden' }}>
+            <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
+              {user?.name}
+            </Typography>
+            <Typography variant="caption" noWrap sx={{ color: 'rgba(255,255,255,0.5)', display: 'block' }}>
+              {user?.email}
+            </Typography>
+          </Box>
+        </Box>
+        <Tooltip title="Edit Profile & UPI Settings">
+          <IconButton size="small" sx={{ color: 'rgba(255,255,255,0.7)', '&:hover': { color: 'white', bgcolor: 'rgba(255,255,255,0.1)' } }}>
+            <EditIcon sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    </Box>
+  );
+
+  return (
+    <Box sx={{ display: 'flex' }}>
+      {/* Top Header AppBar */}
+      <AppBar
+        position="fixed"
+        sx={{
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          ml: { sm: `${drawerWidth}px` },
+          bgcolor: 'background.paper',
+          color: 'text.primary',
+          borderBottom: '1px solid #E2E8F0',
+          boxShadow: 'none',
+        }}
+      >
+        <Toolbar>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{ mr: 2, display: { sm: 'none' } }}
+          >
+            <MenuIcon />
+          </IconButton>
+          
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 700 }}>
+            {location.pathname === '/' ? 'Dashboard' : location.pathname === '/profile' ? 'Profile & UPI Settings' : menuItems.find(item => item.path === location.pathname)?.text || 'Portal'}
+          </Typography>
+
+          {/* Top Right Corner Controls: Logout & Access Badge */}
+          {user && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Chip
+                label={user.role === 'Admin' ? 'Admin Access' : 'Member Access'}
+                color={user.role === 'Admin' ? 'primary' : 'secondary'}
+                size="small"
+                sx={{ fontWeight: 600 }}
+              />
+
+              <Button
+                variant="contained"
+                color="secondary"
+                size="small"
+                startIcon={<LogoutIcon />}
+                onClick={handleLogout}
+                sx={{ fontWeight: 700 }}
+              >
+                Logout
+              </Button>
+            </Box>
+          )}
+        </Toolbar>
+      </AppBar>
+
+      {/* Sidebar Drawers */}
+      <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            display: { xs: 'block', sm: 'none' },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth, borderRight: 'none' },
+          }}
+        >
+          {drawerContent}
+        </Drawer>
+        <Drawer
+          variant="permanent"
+          sx={{
+            display: { xs: 'none', sm: 'block' },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth, borderRight: '1px solid #E2E8F0' },
+          }}
+          open
+        >
+          {drawerContent}
+        </Drawer>
+      </Box>
+
+      {/* Core Main Area */}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          minHeight: '100vh',
+          bgcolor: 'background.default',
+          pt: { xs: 10, sm: 11 },
+        }}
+      >
+        {children}
+      </Box>
+
+      {/* Profile & UPI Modal */}
+      <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
+    </Box>
+  );
+};
+
+export default Layout;
