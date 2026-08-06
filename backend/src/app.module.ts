@@ -5,6 +5,7 @@ import configuration from './config/configuration';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
+import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { MembersModule } from './modules/members/members.module';
 import { HierarchyModule } from './modules/hierarchy/hierarchy.module';
@@ -27,6 +28,7 @@ const envFile = process.env.NODE_ENV
       load: [configuration],
       envFilePath: [envFile, '.env'],
     }),
+    PrismaModule,
     AuthModule,
     MembersModule,
     HierarchyModule,

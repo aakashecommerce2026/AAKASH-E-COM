@@ -1,5 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Prisma Schema for AAKASH MLM Application
 
 generator client {
   provider = "prisma-client-js"
@@ -8,4 +7,53 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+/// Member Access Roles
+enum MemberRole {
+  ADMIN
+  SUB_ADMIN
+  MEMBER
+  SUPPORT
+}
+
+/// Member Account Lifecycle Status
+enum MemberStatus {
+  PENDING
+  ACTIVE
+  INACTIVE
+  BLOCKED
+  SUSPENDED
+}
+
+/// Members Table: Stores user profile, authentication, sponsor relationship, and payout details
+model Member {
+  id           String       @id @default(uuid())
+  memberCode   String       @unique @map("member_code")
+  name         String
+  mobile       String       @unique
+  email        String?      @unique
+  address      String?      @db.Text
+
+  // Self-referential relationship for Sponsor / Referrer downline tree
+  referrerId   String?      @map("referrer_id")
+  referrer     Member?      @relation("MemberReferrals", fields: [referrerId], references: [id], onDelete: SetNull)
+  referrals    Member[]     @relation("MemberReferrals")
+
+  joiningDate  DateTime     @default(now()) @map("joining_date")
+  upiId        String?      @map("upi_id")
+  bankDetails  Json?        @map("bank_details")
+  status       MemberStatus @default(ACTIVE)
+  passwordHash String       @map("password_hash")
+  role         MemberRole   @default(MEMBER)
+
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  @@index([referrerId])
+  @@index([memberCode])
+  @@index([mobile])
+  @@index([status])
+  @@index([joiningDate])
+  @@map("members")
 }
