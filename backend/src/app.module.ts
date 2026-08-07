@@ -17,9 +17,7 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { AuditModule } from './modules/audit/audit.module';
 
-const envFile = process.env.NODE_ENV
-  ? `.env.${process.env.NODE_ENV}`
-  : '.env';
+const envFile = process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env';
 
 @Module({
   imports: [

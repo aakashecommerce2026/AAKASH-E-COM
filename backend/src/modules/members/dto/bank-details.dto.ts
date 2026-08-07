@@ -7,7 +7,10 @@ export class BankDetailsDto {
   @IsNotEmpty()
   accountName!: string;
 
-  @ApiProperty({ example: '98765432101234', description: 'Bank Account Number' })
+  @ApiProperty({
+    example: '98765432101234',
+    description: 'Bank Account Number',
+  })
   @IsString()
   @IsNotEmpty()
   accountNumber!: string;
@@ -22,7 +25,10 @@ export class BankDetailsDto {
   @IsNotEmpty()
   bankName!: string;
 
-  @ApiPropertyOptional({ example: 'Chennai Main Branch', description: 'Bank Branch Name' })
+  @ApiPropertyOptional({
+    example: 'Chennai Main Branch',
+    description: 'Bank Branch Name',
+  })
   @IsOptional()
   @IsString()
   branchName?: string;

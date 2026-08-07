@@ -29,7 +29,9 @@ async function bootstrap() {
   // Swagger Documentation Setup
   const swaggerConfig = new DocumentBuilder()
     .setTitle('AAKASH MLM Backend API')
-    .setDescription('REST API Documentation for AAKASH E-COM Multi-Level Marketing Backend Service')
+    .setDescription(
+      'REST API Documentation for AAKASH E-COM Multi-Level Marketing Backend Service',
+    )
     .setVersion('1.0')
     .addBearerAuth()
     .build();
@@ -38,8 +40,15 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
 
   await app.listen(port);
-  console.log(`🚀 MLM Backend Server running on: http://localhost:${port}/${apiPrefix}`);
-  console.log(`📚 Swagger Documentation available at: http://localhost:${port}/api/docs`);
+  console.log(
+    `🚀 MLM Backend Server running on: http://localhost:${port}/${apiPrefix}`,
+  );
+  console.log(
+    `📚 Swagger Documentation available at: http://localhost:${port}/api/docs`,
+  );
 }
 
-bootstrap();
+void bootstrap().catch((err) => {
+  console.error('Fatal error starting NestJS server:', err);
+  process.exit(1);
+});

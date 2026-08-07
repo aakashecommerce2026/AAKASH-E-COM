@@ -28,17 +28,26 @@ export class CreateMemberDto {
   @IsNotEmpty()
   mobile!: string;
 
-  @ApiPropertyOptional({ example: 'john@example.com', description: 'Email address' })
+  @ApiPropertyOptional({
+    example: 'john@example.com',
+    description: 'Email address',
+  })
   @IsOptional()
   @IsEmail()
   email?: string;
 
-  @ApiPropertyOptional({ example: '123 Main Street, City', description: 'Postal Address' })
+  @ApiPropertyOptional({
+    example: '123 Main Street, City',
+    description: 'Postal Address',
+  })
   @IsOptional()
   @IsString()
   address?: string;
 
-  @ApiPropertyOptional({ example: 'a1b2c3d4-e5f6-7890-abcd-1234567890ab', description: 'Referrer Member UUID' })
+  @ApiPropertyOptional({
+    example: 'a1b2c3d4-e5f6-7890-abcd-1234567890ab',
+    description: 'Referrer Member UUID',
+  })
   @IsOptional()
   @IsUUID()
   referrerId?: string;
@@ -48,7 +57,10 @@ export class CreateMemberDto {
   @IsString()
   upiId?: string;
 
-  @ApiPropertyOptional({ type: BankDetailsDto, description: 'Bank Account Details' })
+  @ApiPropertyOptional({
+    type: BankDetailsDto,
+    description: 'Bank Account Details',
+  })
   @IsOptional()
   @ValidateNested()
   @Type(() => BankDetailsDto)
@@ -59,7 +71,10 @@ export class CreateMemberDto {
   @IsEnum(MemberStatus)
   status?: MemberStatus;
 
-  @ApiProperty({ example: 'SecureP@ssw0rd!', description: 'Plain password to hash' })
+  @ApiProperty({
+    example: 'SecureP@ssw0rd!',
+    description: 'Plain password to hash',
+  })
   @IsString()
   @IsNotEmpty()
   password!: string;

@@ -26,35 +26,88 @@ enum MemberStatus {
   SUSPENDED
 }
 
+/// Commission Status
+enum CommissionStatus {
+  PENDING
+  CALCULATED
+  DISBURSED
+  CANCELLED
+  HOLD
+}
+
+/// Distribution Batch Status
+enum DistributionBatchStatus {
+  INITIATED
+  PROCESSING
+  COMPLETED
+  PARTIALLY_COMPLETED
+  FAILED
+  CANCELLED
+}
+
+/// Distribution Record Payout Status
+enum DistributionRecordStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+  HOLD
+}
+
+/// Payment Modes for Disbursements
+enum PaymentMode {
+  UPI
+  BANK_TRANSFER
+  WALLET
+  CASH
+  MANUAL
+}
+
 /// Members Table: Stores user profile, authentication, sponsor relationship, and payout details
 model Member {
-  id                 String            @id @default(uuid())
-  memberCode         String            @unique @map("member_code")
-  name               String
-  mobile             String            @unique
-  email              String?           @unique
-  address            String?           @db.Text
+  id                           String                       @id @default(uuid())
+  memberCode                   String                       @unique @map("member_code")
+  name                         String
+  mobile                       String                       @unique
+  email                        String?                      @unique
+  address                      String?                      @db.Text
 
   // Self-referential relationship for Sponsor / Referrer downline tree
-  referrerId         String?           @map("referrer_id")
-  referrer           Member?           @relation("MemberReferrals", fields: [referrerId], references: [id], onDelete: SetNull)
-  referrals          Member[]          @relation("MemberReferrals")
+  referrerId                   String?                      @map("referrer_id")
+  referrer                     Member?                      @relation("MemberReferrals", fields: [referrerId], references: [id], onDelete: SetNull)
+  referrals                    Member[]                     @relation("MemberReferrals")
 
-  joiningDate        DateTime          @default(now()) @map("joining_date")
-  upiId              String?           @map("upi_id")
-  bankDetails        Json?             @map("bank_details")
-  status             MemberStatus      @default(ACTIVE)
-  passwordHash       String            @map("password_hash")
-  role               MemberRole        @default(MEMBER)
+  joiningDate                  DateTime                     @default(now()) @map("joining_date")
+  upiId                        String?                      @map("upi_id")
+  bankDetails                  Json?                        @map("bank_details")
+  status                       MemberStatus                 @default(ACTIVE)
+  passwordHash                 String                       @map("password_hash")
+  role                         MemberRole                   @default(MEMBER)
 
   // Reverse relations for RepurchaseEntry
-  repurchases        RepurchaseEntry[] @relation("MemberRepurchases")
-  createdRepurchases RepurchaseEntry[] @relation("RepurchasesCreatedBy")
+  repurchases                  RepurchaseEntry[]            @relation("MemberRepurchases")
+  createdRepurchases           RepurchaseEntry[]            @relation("RepurchasesCreatedBy")
 
-  createdAt          DateTime          @default(now()) @map("created_at")
-  updatedAt          DateTime          @updatedAt @map("updated_at")
+  // Reverse relations for MembershipCommissionLedger
+  membershipCommissionsSourced MembershipCommissionLedger[] @relation("MembershipCommissionSource")
+  membershipCommissionsEarned  MembershipCommissionLedger[] @relation("MembershipCommissionBeneficiary")
+
+  // Reverse relations for RepurchaseCommissionLedger
+  repurchaseCommissionsSourced RepurchaseCommissionLedger[] @relation("RepurchaseCommissionSource")
+  repurchaseCommissionsEarned  RepurchaseCommissionLedger[] @relation("RepurchaseCommissionBeneficiary")
+
+  // Reverse relations for DistributionBatch & DistributionRecord
+  batchesProcessed             DistributionBatch[]          @relation("BatchesProcessedBy")
+  distributionRecords          DistributionRecord[]         @relation("MemberDistributionRecords")
+
+  // Reverse relation for ActivityLog
+  activityLogs                 ActivityLog[]                @relation("ActivityLogsByActor")
+
+  createdAt                    DateTime                     @default(now()) @map("created_at")
+  updatedAt                    DateTime                     @updatedAt @map("updated_at")
 
   @@index([referrerId])
+  @@index([referrerId, status])
   @@index([memberCode])
   @@index([mobile])
   @@index([status])
@@ -64,24 +117,193 @@ model Member {
 
 /// Repurchase Entries Table: Tracks repurchase transactions for members
 model RepurchaseEntry {
-  id              String   @id @default(uuid())
-  transactionRef String   @unique @map("transaction_ref")
-  memberId        String   @map("member_id")
-  member          Member   @relation("MemberRepurchases", fields: [memberId], references: [id], onDelete: Cascade)
+  id                 String                       @id @default(uuid())
+  transactionRef    String                       @unique @map("transaction_ref")
+  memberId           String                       @map("member_id")
+  member             Member                       @relation("MemberRepurchases", fields: [memberId], references: [id], onDelete: Cascade)
 
-  amount          Decimal  @db.Decimal(12, 2)
-  transactionDate DateTime @default(now()) @map("transaction_date")
-  remarks         String?  @db.Text
+  amount             Decimal                      @db.Decimal(12, 2)
+  transactionDate    DateTime                     @default(now()) @map("transaction_date")
+  remarks            String?                      @db.Text
 
-  createdBy       String?  @map("created_by")
-  creator         Member?  @relation("RepurchasesCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  createdBy          String?                      @map("created_by")
+  creator            Member?                      @relation("RepurchasesCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
 
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  // Reverse relation for RepurchaseCommissionLedger
+  commissionLedgers  RepurchaseCommissionLedger[] @relation("RepurchaseCommissions")
+
+  createdAt          DateTime                     @default(now()) @map("created_at")
+  updatedAt          DateTime                     @updatedAt @map("updated_at")
 
   @@index([memberId])
+  @@index([memberId, transactionDate])
   @@index([transactionRef])
   @@index([transactionDate])
   @@index([createdBy])
   @@map("repurchase_entries")
 }
+
+/// Membership Commission Ledger Table: Tracks commission calculation and disbursements from membership registrations
+model MembershipCommissionLedger {
+  id                  String              @id @default(uuid())
+
+  sourceMemberId      String              @map("source_member_id")
+  sourceMember        Member              @relation("MembershipCommissionSource", fields: [sourceMemberId], references: [id], onDelete: Cascade)
+
+  beneficiaryMemberId String              @map("beneficiary_member_id")
+  beneficiaryMember   Member              @relation("MembershipCommissionBeneficiary", fields: [beneficiaryMemberId], references: [id], onDelete: Cascade)
+
+  level               Int
+  percentage          Decimal             @db.Decimal(5, 2)
+  amount              Decimal             @db.Decimal(12, 2)
+  status              CommissionStatus    @default(PENDING)
+
+  distributionRecordId String?            @map("distribution_record_id")
+  distributionRecord   DistributionRecord? @relation("MembershipCommissionRecord", fields: [distributionRecordId], references: [id], onDelete: SetNull)
+
+  createdAt           DateTime            @default(now()) @map("created_at")
+  updatedAt           DateTime            @updatedAt @map("updated_at")
+
+  @@index([sourceMemberId])
+  @@index([beneficiaryMemberId])
+  @@index([beneficiaryMemberId, status])
+  @@index([beneficiaryMemberId, createdAt])
+  @@index([status])
+  @@index([level])
+  @@index([distributionRecordId])
+  @@index([createdAt])
+  @@map("membership_commission_ledger")
+}
+
+/// Repurchase Commission Ledger Table: Tracks commission calculations and disbursements from repurchase transactions
+model RepurchaseCommissionLedger {
+  id                  String              @id @default(uuid())
+
+  repurchaseEntryId   String              @map("repurchase_entry_id")
+  repurchaseEntry     RepurchaseEntry     @relation("RepurchaseCommissions", fields: [repurchaseEntryId], references: [id], onDelete: Cascade)
+
+  sourceMemberId      String              @map("source_member_id")
+  sourceMember        Member              @relation("RepurchaseCommissionSource", fields: [sourceMemberId], references: [id], onDelete: Cascade)
+
+  beneficiaryMemberId String              @map("beneficiary_member_id")
+  beneficiaryMember   Member              @relation("RepurchaseCommissionBeneficiary", fields: [beneficiaryMemberId], references: [id], onDelete: Cascade)
+
+  level               Int
+  percentage          Decimal             @db.Decimal(5, 2)
+  amount              Decimal             @db.Decimal(12, 2)
+  status              CommissionStatus    @default(PENDING)
+
+  distributionRecordId String?            @map("distribution_record_id")
+  distributionRecord   DistributionRecord? @relation("RepurchaseCommissionRecord", fields: [distributionRecordId], references: [id], onDelete: SetNull)
+
+  createdAt           DateTime            @default(now()) @map("created_at")
+  updatedAt           DateTime            @updatedAt @map("updated_at")
+
+  @@unique([repurchaseEntryId, beneficiaryMemberId, level])
+  @@index([repurchaseEntryId])
+  @@index([sourceMemberId])
+  @@index([beneficiaryMemberId])
+  @@index([beneficiaryMemberId, status])
+  @@index([beneficiaryMemberId, createdAt])
+  @@index([status])
+  @@index([level])
+  @@index([distributionRecordId])
+  @@index([createdAt])
+  @@map("repurchase_commission_ledger")
+}
+
+/// Distribution Batches Table: Tracks payout batch execution runs by admins
+model DistributionBatch {
+  id               String                  @id @default(uuid())
+  batchNo          String                  @unique @map("batch_no")
+
+  totalMembers     Int                     @default(0) @map("total_members")
+  totalGrossAmount Decimal                 @default(0) @map("total_gross_amount") @db.Decimal(12, 2)
+  totalTdsAmount   Decimal                 @default(0) @map("total_tds_amount") @db.Decimal(12, 2)
+  totalAdminFee    Decimal                 @default(0) @map("total_admin_fee") @db.Decimal(12, 2)
+  totalNetAmount   Decimal                 @default(0) @map("total_net_amount") @db.Decimal(12, 2)
+
+  status           DistributionBatchStatus @default(INITIATED)
+
+  processedBy      String?                 @map("processed_by")
+  processor        Member?                 @relation("BatchesProcessedBy", fields: [processedBy], references: [id], onDelete: SetNull)
+
+  remarks          String?                 @db.Text
+
+  startedAt        DateTime?               @map("started_at")
+  completedAt      DateTime?               @map("completed_at")
+
+  records          DistributionRecord[]
+
+  createdAt        DateTime                @default(now()) @map("created_at")
+  updatedAt        DateTime                @updatedAt @map("updated_at")
+
+  @@index([batchNo])
+  @@index([status])
+  @@index([processedBy])
+  @@index([createdAt])
+  @@map("distribution_batches")
+}
+
+/// Distribution Records Table: Tracks individual payout item per beneficiary member
+model DistributionRecord {
+  id                   String                   @id @default(uuid())
+
+  batchId              String                   @map("batch_id")
+  batch                DistributionBatch        @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  memberId             String                   @map("member_id")
+  member               Member                   @relation("MemberDistributionRecords", fields: [memberId], references: [id], onDelete: Cascade)
+
+  commissionType       String?                  @map("commission_type")
+
+  grossAmount          Decimal                  @map("gross_amount") @db.Decimal(12, 2)
+  tdsAmount            Decimal                  @default(0) @map("tds_amount") @db.Decimal(12, 2)
+  adminFee             Decimal                  @default(0) @map("admin_fee") @db.Decimal(12, 2)
+  netAmount            Decimal                  @map("net_amount") @db.Decimal(12, 2)
+
+  paymentMode          PaymentMode              @default(UPI) @map("payment_mode")
+  paymentRef           String?                  @map("payment_ref")
+  bankDetails          Json?                    @map("bank_details")
+
+  status               DistributionRecordStatus @default(PENDING)
+  disbursedAt          DateTime?                @map("disbursed_at")
+  failureReason        String?                  @map("failure_reason") @db.Text
+  remarks              String?                  @db.Text
+
+  membershipCommissions MembershipCommissionLedger[] @relation("MembershipCommissionRecord")
+  repurchaseCommissions RepurchaseCommissionLedger[] @relation("RepurchaseCommissionRecord")
+
+  createdAt            DateTime                 @default(now()) @map("created_at")
+  updatedAt            DateTime                 @updatedAt @map("updated_at")
+
+  @@index([batchId])
+  @@index([memberId])
+  @@index([status])
+  @@index([paymentMode])
+  @@index([createdAt])
+  @@map("distribution_records")
+}
+
+/// Activity Logs Table: Audit log tracking system actions, admin operations, and member activities
+model ActivityLog {
+  id         String      @id @default(uuid())
+
+  actorId    String?     @map("actor_id")
+  actor      Member?     @relation("ActivityLogsByActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  actorRole  MemberRole? @map("actor_role")
+  actionType String      @map("action_type")
+  entityType String      @map("entity_type")
+  entityId   String?     @map("entity_id")
+  metadata   Json?
+
+  createdAt  DateTime    @default(now()) @map("created_at")
+
+  @@index([actorId])
+  @@index([actionType])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("activity_logs")
+}
+
