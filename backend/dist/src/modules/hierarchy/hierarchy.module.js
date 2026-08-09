@@ -8,10 +8,18 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HierarchyModule = void 0;
 const common_1 = require("@nestjs/common");
+const hierarchy_service_1 = require("./hierarchy.service");
+const hierarchy_controller_1 = require("./hierarchy.controller");
+const prisma_module_1 = require("../../prisma/prisma.module");
 let HierarchyModule = class HierarchyModule {
 };
 exports.HierarchyModule = HierarchyModule;
 exports.HierarchyModule = HierarchyModule = __decorate([
-    (0, common_1.Module)({})
+    (0, common_1.Module)({
+        imports: [prisma_module_1.PrismaModule],
+        controllers: [hierarchy_controller_1.HierarchyController],
+        providers: [hierarchy_service_1.HierarchyService],
+        exports: [hierarchy_service_1.HierarchyService],
+    })
 ], HierarchyModule);
 //# sourceMappingURL=hierarchy.module.js.map

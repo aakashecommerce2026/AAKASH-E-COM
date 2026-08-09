@@ -1,8 +1,8 @@
 {
 	"info": {
 		"_postman_id": "aakash-mlm-auth-collection-v1",
-		"name": "AAKASH MLM - Authentication & Admin Member Management API",
-		"description": "Postman Collection for AAKASH E-COM MLM Backend Service authentication, token rotation, password management, role-protected member endpoints, and Admin Member Management.",
+		"name": "AAKASH MLM - Authentication, Member Management & Hierarchy API",
+		"description": "Postman Collection for AAKASH E-COM MLM Backend Service authentication, token rotation, password management, role-protected member endpoints, Admin Member Management, and Hierarchy Recursive Traversal.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -340,7 +340,52 @@
 					"response": []
 				},
 				{
-					"name": "5. GET /admin/members/:id/referrer (Referrer Info)",
+					"name": "5. POST /admin/members/:id/reassign-referrer (Guarded Reassign)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"newReferrerId\": \"a1b2c3d4-e5f6-7890-abcd-1234567890ab\",\n  \"reason\": \"Admin branch realignment\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/members/{{memberId}}/reassign-referrer",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"members",
+								"{{memberId}}",
+								"reassign-referrer"
+							]
+						},
+						"description": "Guarded referrer reassignment flow with cycle detection and activity auditing."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Admin Hierarchy Traversal",
+			"item": [
+				{
+					"name": "1. GET /admin/hierarchy/:memberId/downline (Full Downline Tree)",
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -355,23 +400,29 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/admin/members/{{memberId}}/referrer",
+							"raw": "{{baseUrl}}/admin/hierarchy/{{memberId}}/downline?maxLevels=20",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"admin",
-								"members",
+								"hierarchy",
 								"{{memberId}}",
-								"referrer"
+								"downline"
+							],
+							"query": [
+								{
+									"key": "maxLevels",
+									"value": "20"
+								}
 							]
 						},
-						"description": "Quick admin lookup for direct referrer information."
+						"description": "Fetch recursive downline tree nodes up to 20 levels deep, level-tagged."
 					},
 					"response": []
 				},
 				{
-					"name": "6. GET /admin/members/:id/downline-preview (1-Level Downline)",
+					"name": "2. GET /admin/hierarchy/:memberId/direct-referrals (Level-1 Directs)",
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -386,18 +437,55 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/admin/members/{{memberId}}/downline-preview",
+							"raw": "{{baseUrl}}/admin/hierarchy/{{memberId}}/direct-referrals",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"admin",
-								"members",
+								"hierarchy",
 								"{{memberId}}",
-								"downline-preview"
+								"direct-referrals"
 							]
 						},
-						"description": "Shallow (1-level) downline preview listing direct referrals."
+						"description": "Fetch Level-1 direct referrals for specified member ID."
+					},
+					"response": []
+				},
+				{
+					"name": "3. GET /admin/hierarchy/:memberId/upline (Upline to Root)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/admin/hierarchy/{{memberId}}/upline?maxLevels=20",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"hierarchy",
+								"{{memberId}}",
+								"upline"
+							],
+							"query": [
+								{
+									"key": "maxLevels",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Walk upline from specified member ID up to the root sponsor (for debugging & commission checks)."
 					},
 					"response": []
 				}
