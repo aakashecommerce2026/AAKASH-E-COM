@@ -108,6 +108,7 @@ model Member {
 
   @@index([referrerId])
   @@index([referrerId, status])
+  @@index([referrerId, joiningDate])
   @@index([memberCode])
   @@index([mobile])
   @@index([status])

@@ -14,7 +14,7 @@ const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../prisma/prisma.service");
 let HierarchyService = class HierarchyService {
     prisma;
-    MAX_LEVELS_CAP = 20;
+    ABSOLUTE_MAX_LEVELS_CAP = 20;
     constructor(prisma) {
         this.prisma = prisma;
     }
@@ -26,7 +26,7 @@ let HierarchyService = class HierarchyService {
         if (!member) {
             throw new common_1.NotFoundException(`Member with ID '${memberId}' not found`);
         }
-        const cappedLevels = Math.min(Math.max(1, maxLevels || 10), this.MAX_LEVELS_CAP);
+        const cappedLevels = Math.min(Math.max(1, maxLevels || 10), this.ABSOLUTE_MAX_LEVELS_CAP);
         const downline = await this.prisma.$queryRaw `
       WITH RECURSIVE downline AS (
         SELECT 
@@ -58,9 +58,9 @@ let HierarchyService = class HierarchyService {
           d.level + 1 AS level
         FROM members m
         INNER JOIN downline d ON m.referrer_id = d.id
-        WHERE d.level < ${cappedLevels}
+        WHERE d.level < LEAST(${cappedLevels}::int, 20)
       )
-      SELECT * FROM downline ORDER BY level ASC, "joiningDate" DESC;
+      SELECT * FROM downline ORDER BY level ASC, "joiningDate" DESC LIMIT 5000;
     `;
         return downline;
     }
@@ -72,7 +72,7 @@ let HierarchyService = class HierarchyService {
         if (!member) {
             throw new common_1.NotFoundException(`Member with ID '${memberId}' not found`);
         }
-        const cappedLevels = Math.min(Math.max(1, maxLevels || 20), this.MAX_LEVELS_CAP);
+        const cappedLevels = Math.min(Math.max(1, maxLevels || 20), this.ABSOLUTE_MAX_LEVELS_CAP);
         const upline = await this.prisma.$queryRaw `
       WITH RECURSIVE upline AS (
         SELECT 
@@ -105,9 +105,9 @@ let HierarchyService = class HierarchyService {
           u.level + 1 AS level
         FROM members m
         INNER JOIN upline u ON m.id = u."referrerId"
-        WHERE u.level < ${cappedLevels}
+        WHERE u.level < LEAST(${cappedLevels}::int, 20)
       )
-      SELECT * FROM upline ORDER BY level ASC;
+      SELECT * FROM upline ORDER BY level ASC LIMIT 20;
     `;
         return upline;
     }
