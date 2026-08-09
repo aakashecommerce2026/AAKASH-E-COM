@@ -234,25 +234,39 @@ describe('HierarchyService (Recursive CTE Traversal & Network Analytics)', () =>
     });
   });
 
-  describe('isMemberInDownline', () => {
-    it('should return true if targetMemberId is same as rootMemberId', async () => {
-      const result = await service.isMemberInDownline('user-1', 'user-1');
+  describe('isInDownlineOf & isMemberInDownline (Section 8.3 Access Safeguard)', () => {
+    it('should return true when member checks self (self access)', async () => {
+      const result = await service.isInDownlineOf('member-1', 'member-1');
       expect(result).toBe(true);
     });
 
-    it('should return true if rootMemberId is found in target member upline chain', async () => {
+    it('should return true for a same-branch downline member', async () => {
       prisma.member.findUnique.mockResolvedValue({ id: 'level-2-grandchild' });
       prisma.$queryRaw.mockResolvedValue(mockUplineNodes); // upline contains root-member-uuid
 
-      const result = await service.isMemberInDownline('root-member-uuid', 'level-2-grandchild');
+      const result = await service.isInDownlineOf('root-member-uuid', 'level-2-grandchild');
       expect(result).toBe(true);
     });
 
-    it('should return false if rootMemberId is not in target member upline chain', async () => {
-      prisma.member.findUnique.mockResolvedValue({ id: 'stranger' });
-      prisma.$queryRaw.mockResolvedValue(mockUplineNodes);
+    it('should return false for a different-branch member', async () => {
+      prisma.member.findUnique.mockResolvedValue({ id: 'different-branch-member' });
+      prisma.$queryRaw.mockResolvedValue([
+        { id: 'other-sponsor-1', referrerId: 'other-root' },
+        { id: 'other-root', referrerId: null },
+      ]); // upline does NOT contain root-member-uuid
 
-      const result = await service.isMemberInDownline('other-root', 'stranger');
+      const result = await service.isInDownlineOf('root-member-uuid', 'different-branch-member');
+      expect(result).toBe(false);
+    });
+
+    it('should return false for an upline member (members shall not view upline)', async () => {
+      // Trying to check if upline sponsor 'level-1-referrer' is in downline of 'level-2-grandchild'
+      prisma.member.findUnique.mockResolvedValue({ id: 'level-1-referrer' });
+      prisma.$queryRaw.mockResolvedValue([
+        { id: 'root-member-uuid', referrerId: null },
+      ]); // upline of level-1-referrer does NOT contain level-2-grandchild
+
+      const result = await service.isInDownlineOf('level-2-grandchild', 'level-1-referrer');
       expect(result).toBe(false);
     });
   });

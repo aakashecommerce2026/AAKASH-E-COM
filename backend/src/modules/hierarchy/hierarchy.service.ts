@@ -377,17 +377,27 @@ export class HierarchyService {
   }
 
   /**
-   * Helper method for access restriction checks: verifies whether targetMemberId is present in rootMemberId's downline tree.
+   * Helper method for access restriction checks (Section 8.3):
+   * Verifies whether targetId belongs to memberId's downline tree by walking up targetId's upline CTE.
+   * Returns true if targetId is memberId self or a downline member of memberId.
+   * Returns false if targetId is an upline member or belongs to another branch.
    */
-  async isMemberInDownline(rootMemberId: string, targetMemberId: string): Promise<boolean> {
-    if (!rootMemberId || !targetMemberId) return false;
-    if (rootMemberId === targetMemberId) return true;
+  async isInDownlineOf(memberId: string, targetId: string): Promise<boolean> {
+    if (!memberId || !targetId) return false;
+    if (memberId === targetId) return true;
 
     try {
-      const upline = await this.getUpline(targetMemberId, this.ABSOLUTE_MAX_LEVELS_CAP);
-      return upline.some((node) => node.id === rootMemberId);
+      const upline = await this.getUpline(targetId, this.ABSOLUTE_MAX_LEVELS_CAP);
+      return upline.some((node) => node.id === memberId);
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Alias for isInDownlineOf.
+   */
+  async isMemberInDownline(rootMemberId: string, targetMemberId: string): Promise<boolean> {
+    return this.isInDownlineOf(rootMemberId, targetMemberId);
   }
 }

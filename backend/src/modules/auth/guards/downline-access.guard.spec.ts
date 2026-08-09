@@ -9,6 +9,7 @@ describe('DownlineAccessGuard', () => {
 
   beforeEach(() => {
     hierarchyService = {
+      isInDownlineOf: jest.fn(),
       isMemberInDownline: jest.fn(),
     };
     guard = new DownlineAccessGuard(hierarchyService as any);
@@ -51,20 +52,20 @@ describe('DownlineAccessGuard', () => {
   });
 
   it('should allow access if target member is in user downline', async () => {
-    (hierarchyService.isMemberInDownline as jest.Mock).mockResolvedValue(true);
+    (hierarchyService.isInDownlineOf as jest.Mock).mockResolvedValue(true);
     const context = createMockContext({ id: 'user-1', role: MemberRole.MEMBER }, { memberId: 'child-downline-id' });
 
     const canActivate = await guard.canActivate(context);
     expect(canActivate).toBe(true);
-    expect(hierarchyService.isMemberInDownline).toHaveBeenCalledWith('user-1', 'child-downline-id');
+    expect(hierarchyService.isInDownlineOf).toHaveBeenCalledWith('user-1', 'child-downline-id');
   });
 
   it('should throw ForbiddenException if target member is not in user downline', async () => {
-    (hierarchyService.isMemberInDownline as jest.Mock).mockResolvedValue(false);
+    (hierarchyService.isInDownlineOf as jest.Mock).mockResolvedValue(false);
     const context = createMockContext({ id: 'user-1', role: MemberRole.MEMBER }, { memberId: 'stranger-id' });
 
     await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenException);
-    expect(hierarchyService.isMemberInDownline).toHaveBeenCalledWith('user-1', 'stranger-id');
+    expect(hierarchyService.isInDownlineOf).toHaveBeenCalledWith('user-1', 'stranger-id');
   });
 
   it('should allow pass-through if no target ID parameter is present in request', async () => {
