@@ -6,20 +6,22 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MembersModule = void 0;
+exports.JwtAuthGuard = void 0;
 const common_1 = require("@nestjs/common");
-const members_service_1 = require("./members.service");
-const members_controller_1 = require("./members.controller");
-const prisma_module_1 = require("../../prisma/prisma.module");
-let MembersModule = class MembersModule {
+const passport_1 = require("@nestjs/passport");
+let JwtAuthGuard = class JwtAuthGuard extends (0, passport_1.AuthGuard)('jwt') {
+    canActivate(context) {
+        return super.canActivate(context);
+    }
+    handleRequest(err, user, info) {
+        if (err || !user) {
+            throw err || new common_1.UnauthorizedException('Authentication token is invalid or expired');
+        }
+        return user;
+    }
 };
-exports.MembersModule = MembersModule;
-exports.MembersModule = MembersModule = __decorate([
-    (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule],
-        controllers: [members_controller_1.MembersController],
-        providers: [members_service_1.MembersService],
-        exports: [members_service_1.MembersService],
-    })
-], MembersModule);
-//# sourceMappingURL=members.module.js.map
+exports.JwtAuthGuard = JwtAuthGuard;
+exports.JwtAuthGuard = JwtAuthGuard = __decorate([
+    (0, common_1.Injectable)()
+], JwtAuthGuard);
+//# sourceMappingURL=jwt-auth.guard.js.map
