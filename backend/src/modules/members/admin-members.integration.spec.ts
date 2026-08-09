@@ -112,10 +112,14 @@ describe('Admin Members Integration Test Suite', () => {
     it('should reject creation if referrer is INACTIVE', async () => {
       const inactiveReferrer = { ...mockActiveReferrer, status: MemberStatus.BLOCKED };
       prisma.member.findFirst.mockResolvedValue(null);
-      prisma.member.findUnique.mockResolvedValue(inactiveReferrer);
+      prisma.member.findUnique.mockImplementation(async ({ where }: any) => {
+        if (where?.id === inactiveReferrer.id) return inactiveReferrer;
+        return null;
+      });
 
       await expect(
         service.createByAdmin({
+          memberCode: 'AK10021',
           name: 'Invalid Referrer Member',
           mobile: '+919876543221',
           referrerId: inactiveReferrer.id,
