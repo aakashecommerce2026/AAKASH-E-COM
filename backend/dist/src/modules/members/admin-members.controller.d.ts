@@ -1,15 +1,18 @@
+import { MemberRole } from '@prisma/client';
 import { MembersService } from './members.service';
 import { CreateAdminMemberDto } from './dto/create-admin-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { QueryMembersDto } from './dto/query-members.dto';
+import { ReassignReferrerDto } from './dto/reassign-referrer.dto';
 import { MemberResponseDto } from './dto/member-response.dto';
 export declare class AdminMembersController {
     private readonly membersService;
     constructor(membersService: MembersService);
-    createMember(dto: CreateAdminMemberDto): Promise<MemberResponseDto & {
+    createMember(dto: CreateAdminMemberDto, actorId: string, actorRole: MemberRole): Promise<MemberResponseDto & {
         tempPassword?: string;
     }>;
-    updateMember(id: string, dto: UpdateMemberDto): Promise<MemberResponseDto>;
+    updateMember(id: string, dto: UpdateMemberDto, actorId: string, actorRole: MemberRole): Promise<MemberResponseDto>;
+    reassignReferrer(id: string, dto: ReassignReferrerDto, actorId: string, actorRole: MemberRole): Promise<MemberResponseDto>;
     getMembers(query: QueryMembersDto): Promise<{
         data: MemberResponseDto[];
         meta: {

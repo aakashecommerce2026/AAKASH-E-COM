@@ -20,20 +20,25 @@ const members_service_1 = require("./members.service");
 const create_admin_member_dto_1 = require("./dto/create-admin-member.dto");
 const update_member_dto_1 = require("./dto/update-member.dto");
 const query_members_dto_1 = require("./dto/query-members.dto");
+const reassign_referrer_dto_1 = require("./dto/reassign-referrer.dto");
 const member_response_dto_1 = require("./dto/member-response.dto");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const roles_guard_1 = require("../auth/guards/roles.guard");
 const roles_decorator_1 = require("../auth/decorators/roles.decorator");
+const current_user_decorator_1 = require("../auth/decorators/current-user.decorator");
 let AdminMembersController = class AdminMembersController {
     membersService;
     constructor(membersService) {
         this.membersService = membersService;
     }
-    async createMember(dto) {
-        return this.membersService.createByAdmin(dto);
+    async createMember(dto, actorId, actorRole) {
+        return this.membersService.createByAdmin(dto, actorId, actorRole);
     }
-    async updateMember(id, dto) {
-        return this.membersService.update(id, dto);
+    async updateMember(id, dto, actorId, actorRole) {
+        return this.membersService.update(id, dto, actorId, actorRole);
+    }
+    async reassignReferrer(id, dto, actorId, actorRole) {
+        return this.membersService.reassignReferrer(id, dto, actorId, actorRole);
     }
     async getMembers(query) {
         return this.membersService.findAll(query);
@@ -53,28 +58,47 @@ __decorate([
     (0, common_1.Post)(),
     (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
     (0, swagger_1.ApiOperation)({
-        summary: 'Create member (Admin), auto-generate memberCode & temp password if missing, link active referrer',
+        summary: 'Create member (Admin), auto-generate memberCode & temp password if missing, link active referrer, log audit',
     }),
     (0, swagger_1.ApiResponse)({ status: 201, description: 'Member created successfully', type: member_response_dto_1.MemberResponseDto }),
     (0, swagger_1.ApiResponse)({ status: 400, description: 'Validation error or invalid active referrer' }),
     (0, swagger_1.ApiResponse)({ status: 409, description: 'Member code, mobile, or email collision' }),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, current_user_decorator_1.CurrentUser)('id')),
+    __param(2, (0, current_user_decorator_1.CurrentUser)('role')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_admin_member_dto_1.CreateAdminMemberDto]),
+    __metadata("design:paramtypes", [create_admin_member_dto_1.CreateAdminMemberDto, String, String]),
     __metadata("design:returntype", Promise)
 ], AdminMembersController.prototype, "createMember", null);
 __decorate([
     (0, common_1.Put)(':id'),
-    (0, swagger_1.ApiOperation)({ summary: 'Edit member details' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Edit member details and log activity audit' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Member updated successfully', type: member_response_dto_1.MemberResponseDto }),
-    (0, swagger_1.ApiResponse)({ status: 400, description: 'Invalid data or self-referrer error' }),
+    (0, swagger_1.ApiResponse)({ status: 400, description: 'Invalid data, self-referrer error, or commission restriction' }),
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Member not found' }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)('id')),
+    __param(3, (0, current_user_decorator_1.CurrentUser)('role')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, update_member_dto_1.UpdateMemberDto]),
+    __metadata("design:paramtypes", [String, update_member_dto_1.UpdateMemberDto, String, String]),
     __metadata("design:returntype", Promise)
 ], AdminMembersController.prototype, "updateMember", null);
+__decorate([
+    (0, common_1.Post)(':id/reassign-referrer'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({ summary: 'Guarded flow to reassign a member referrer with cycle checks and audit logging' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Referrer reassigned successfully', type: member_response_dto_1.MemberResponseDto }),
+    (0, swagger_1.ApiResponse)({ status: 400, description: 'Circular dependency, inactive referrer, or self-referral error' }),
+    (0, swagger_1.ApiResponse)({ status: 404, description: 'Member or new referrer not found' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)('id')),
+    __param(3, (0, current_user_decorator_1.CurrentUser)('role')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, reassign_referrer_dto_1.ReassignReferrerDto, String, String]),
+    __metadata("design:returntype", Promise)
+], AdminMembersController.prototype, "reassignReferrer", null);
 __decorate([
     (0, common_1.Get)(),
     (0, swagger_1.ApiOperation)({ summary: 'Get paginated member list with search and filters' }),

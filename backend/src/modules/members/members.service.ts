@@ -6,10 +6,12 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import { CreateMemberDto } from './dto/create-member.dto';
 import { CreateAdminMemberDto } from './dto/create-admin-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { QueryMembersDto } from './dto/query-members.dto';
+import { ReassignReferrerDto } from './dto/reassign-referrer.dto';
 import { MemberResponseDto } from './dto/member-response.dto';
 import { MemberRole, MemberStatus, Prisma } from '@prisma/client';
 
@@ -17,7 +19,10 @@ import { MemberRole, MemberStatus, Prisma } from '@prisma/client';
 export class MembersService {
   private readonly BCRYPT_SALT_ROUNDS = 12;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditService: AuditService,
+  ) {}
 
   /**
    * Auto-generates a unique member code in AK10001+ format.
@@ -46,10 +51,10 @@ export class MembersService {
   }
 
   /**
-   * Public / General Member Creation (hashes password with 12 salt rounds).
+   * Public / General Member Creation.
    */
-  async create(createMemberDto: CreateMemberDto): Promise<MemberResponseDto> {
-    return this.createMemberInternal(createMemberDto);
+  async create(createMemberDto: CreateMemberDto, actorId?: string, actorRole?: MemberRole): Promise<MemberResponseDto> {
+    return this.createMemberInternal(createMemberDto, actorId, actorRole);
   }
 
   /**
@@ -57,6 +62,8 @@ export class MembersService {
    */
   async createByAdmin(
     dto: CreateAdminMemberDto,
+    actorId?: string,
+    actorRole?: MemberRole,
   ): Promise<MemberResponseDto & { tempPassword?: string }> {
     let memberCode = dto.memberCode;
     if (!memberCode) {
@@ -77,7 +84,7 @@ export class MembersService {
       password: tempPassword,
     };
 
-    const created = await this.createMemberInternal(fullCreateDto);
+    const created = await this.createMemberInternal(fullCreateDto, actorId, actorRole);
 
     return {
       ...created,
@@ -85,7 +92,11 @@ export class MembersService {
     };
   }
 
-  private async createMemberInternal(createMemberDto: CreateMemberDto): Promise<MemberResponseDto> {
+  private async createMemberInternal(
+    createMemberDto: CreateMemberDto,
+    actorId?: string,
+    actorRole?: MemberRole,
+  ): Promise<MemberResponseDto> {
     const { password, bankDetails, referrerId, role, status, ...rest } = createMemberDto;
 
     // Check uniqueness of memberCode, mobile, email
@@ -140,13 +151,33 @@ export class MembersService {
       },
     });
 
+    // Log action to activity_logs
+    await this.auditService.logAction({
+      actorId: actorId || createdMember.id,
+      actorRole: actorRole || createdMember.role,
+      actionType: 'CREATE_MEMBER',
+      entityType: 'Member',
+      entityId: createdMember.id,
+      metadata: {
+        memberCode: createdMember.memberCode,
+        name: createdMember.name,
+        referrerId: createdMember.referrerId,
+        role: createdMember.role,
+      },
+    });
+
     return this.mapToResponseDto(createdMember);
   }
 
   /**
    * Updates member details by ID.
    */
-  async update(id: string, updateDto: UpdateMemberDto): Promise<MemberResponseDto> {
+  async update(
+    id: string,
+    updateDto: UpdateMemberDto,
+    actorId?: string,
+    actorRole?: MemberRole,
+  ): Promise<MemberResponseDto> {
     const member = await this.prisma.member.findUnique({ where: { id } });
     if (!member) {
       throw new NotFoundException(`Member with ID '${id}' not found`);
@@ -184,11 +215,19 @@ export class MembersService {
       }
     }
 
-    // Validate referrerId update if provided
-    if (referrerId !== undefined) {
+    // Referrer update safeguard: If referrer is changed casually via PUT, check if commissions exist against this member
+    if (referrerId !== undefined && referrerId !== member.referrerId) {
+      const hasCommissions = await this.hasCommissionsAgainstMember(id);
+      if (hasCommissions) {
+        throw new BadRequestException(
+          `Cannot change referrer via standard update because commissions exist against this member. Use the guarded POST /admin/members/${id}/reassign-referrer endpoint.`,
+        );
+      }
+
       if (referrerId === id) {
         throw new BadRequestException('A member cannot be set as their own referrer');
       }
+
       if (referrerId !== null) {
         const referrer = await this.prisma.member.findUnique({ where: { id: referrerId } });
         if (!referrer) {
@@ -220,12 +259,132 @@ export class MembersService {
       },
     });
 
+    // Log update to activity_logs
+    await this.auditService.logAction({
+      actorId: actorId || id,
+      actorRole: actorRole || updatedMember.role,
+      actionType: 'UPDATE_MEMBER',
+      entityType: 'Member',
+      entityId: updatedMember.id,
+      metadata: {
+        updatedFields: Object.keys(updateDto),
+        newStatus: updatedMember.status,
+      },
+    });
+
     return this.mapToResponseDto(updatedMember);
   }
 
   /**
-   * Retrieves single member by ID without relations.
+   * Guarded flow to reassign a member's referrer.
    */
+  async reassignReferrer(
+    id: string,
+    dto: ReassignReferrerDto,
+    actorId?: string,
+    actorRole?: MemberRole,
+  ): Promise<MemberResponseDto> {
+    const member = await this.prisma.member.findUnique({ where: { id } });
+    if (!member) {
+      throw new NotFoundException(`Member with ID '${id}' not found`);
+    }
+
+    const { newReferrerId, reason } = dto;
+
+    if (newReferrerId === id) {
+      throw new BadRequestException('A member cannot be set as their own referrer');
+    }
+
+    const newReferrer = await this.prisma.member.findUnique({ where: { id: newReferrerId } });
+    if (!newReferrer) {
+      throw new BadRequestException(`New referrer with ID '${newReferrerId}' does not exist`);
+    }
+
+    if (newReferrer.status !== MemberStatus.ACTIVE) {
+      throw new BadRequestException(
+        `New referrer with ID '${newReferrerId}' is not active (status: ${newReferrer.status})`,
+      );
+    }
+
+    // Cycle detection: Ensure newReferrerId is not a downline member of member 'id'
+    const isCycle = await this.isMemberInUplineChain(newReferrerId, id);
+    if (isCycle) {
+      throw new BadRequestException(
+        `Circular dependency detected: Member '${newReferrer.name}' is already in the downline of '${member.name}'`,
+      );
+    }
+
+    const previousReferrerId = member.referrerId;
+
+    const updatedMember = await this.prisma.member.update({
+      where: { id },
+      data: { referrerId: newReferrerId },
+    });
+
+    // Audit log
+    await this.auditService.logAction({
+      actorId: actorId || null,
+      actorRole: actorRole || MemberRole.ADMIN,
+      actionType: 'REASSIGN_REFERRER',
+      entityType: 'Member',
+      entityId: id,
+      metadata: {
+        previousReferrerId,
+        newReferrerId,
+        reason,
+      },
+    });
+
+    return this.mapToResponseDto(updatedMember);
+  }
+
+  /**
+   * Helper to check if member 'targetId' is present in upline hierarchy of 'startMemberId'.
+   */
+  private async isMemberInUplineChain(startMemberId: string, targetId: string): Promise<boolean> {
+    let currentId: string | null = startMemberId;
+    const visited = new Set<string>();
+
+    while (currentId) {
+      if (currentId === targetId) {
+        return true;
+      }
+      visited.add(currentId);
+
+      const parent: { referrerId: string | null } | null = await this.prisma.member.findUnique({
+        where: { id: currentId },
+        select: { referrerId: true },
+      });
+
+      if (!parent || !parent.referrerId || visited.has(parent.referrerId)) {
+        break;
+      }
+      currentId = parent.referrerId;
+    }
+
+    return false;
+  }
+
+  /**
+   * Checks if commissions exist in membership or repurchase ledgers against a member.
+   */
+  private async hasCommissionsAgainstMember(memberId: string): Promise<boolean> {
+    const [membershipCount, repurchaseCount] = await Promise.all([
+      this.prisma.membershipCommissionLedger.count({
+        where: {
+          OR: [{ sourceMemberId: memberId }, { beneficiaryMemberId: memberId }],
+        },
+      }),
+      this.prisma.repurchaseCommissionLedger.count({
+        where: {
+          OR: [{ sourceMemberId: memberId }, { beneficiaryMemberId: memberId }],
+        },
+      }),
+    ]);
+
+    return membershipCount > 0 || repurchaseCount > 0;
+  }
+
   async findById(id: string): Promise<MemberResponseDto> {
     const member = await this.prisma.member.findUnique({
       where: { id },
@@ -238,9 +397,6 @@ export class MembersService {
     return this.mapToResponseDto(member);
   }
 
-  /**
-   * Retrieves single member by ID with referrer info populated.
-   */
   async findByIdWithReferrer(id: string) {
     const member = await this.prisma.member.findUnique({
       where: { id },
@@ -267,9 +423,6 @@ export class MembersService {
     return result;
   }
 
-  /**
-   * Retrieves paginated member list with search and status/role filter.
-   */
   async findAll(query: QueryMembersDto) {
     const { page = 1, limit = 10, search, status, role, sortBy = 'createdAt', sortOrder = 'desc' } = query;
     const skip = (page - 1) * limit;
@@ -329,9 +482,6 @@ export class MembersService {
     };
   }
 
-  /**
-   * Retrieves referrer information for a specific member ID.
-   */
   async getReferrerInfo(id: string) {
     const member = await this.prisma.member.findUnique({
       where: { id },
@@ -366,9 +516,6 @@ export class MembersService {
     };
   }
 
-  /**
-   * Retrieves a shallow (1-level) downline preview of direct referrals for member ID.
-   */
   async getDownlinePreview(id: string) {
     const member = await this.prisma.member.findUnique({
       where: { id },

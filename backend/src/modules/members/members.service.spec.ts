@@ -2,11 +2,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { MembersService } from './members.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import { MemberRole, MemberStatus } from '@prisma/client';
 
 describe('MembersService', () => {
   let service: MembersService;
   let prisma: any;
+  let auditService: any;
 
   const mockActiveReferrer = {
     id: 'referrer-uuid-1',
@@ -46,12 +48,23 @@ describe('MembersService', () => {
         create: jest.fn(),
         update: jest.fn(),
       },
+      membershipCommissionLedger: {
+        count: jest.fn().mockResolvedValue(0),
+      },
+      repurchaseCommissionLedger: {
+        count: jest.fn().mockResolvedValue(0),
+      },
+    };
+
+    auditService = {
+      logAction: jest.fn().mockResolvedValue({ id: 'log-uuid-1' }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MembersService,
         { provide: PrismaService, useValue: prisma },
+        { provide: AuditService, useValue: auditService },
       ],
     }).compile();
 

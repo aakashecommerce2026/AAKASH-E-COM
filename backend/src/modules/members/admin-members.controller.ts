@@ -21,10 +21,12 @@ import { MembersService } from './members.service';
 import { CreateAdminMemberDto } from './dto/create-admin-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { QueryMembersDto } from './dto/query-members.dto';
+import { ReassignReferrerDto } from './dto/reassign-referrer.dto';
 import { MemberResponseDto } from './dto/member-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @ApiTags('Admin Members Management')
 @Controller('admin/members')
@@ -37,22 +39,46 @@ export class AdminMembersController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
-    summary: 'Create member (Admin), auto-generate memberCode & temp password if missing, link active referrer',
+    summary: 'Create member (Admin), auto-generate memberCode & temp password if missing, link active referrer, log audit',
   })
   @ApiResponse({ status: 201, description: 'Member created successfully', type: MemberResponseDto })
   @ApiResponse({ status: 400, description: 'Validation error or invalid active referrer' })
   @ApiResponse({ status: 409, description: 'Member code, mobile, or email collision' })
-  async createMember(@Body() dto: CreateAdminMemberDto) {
-    return this.membersService.createByAdmin(dto);
+  async createMember(
+    @Body() dto: CreateAdminMemberDto,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('role') actorRole: MemberRole,
+  ) {
+    return this.membersService.createByAdmin(dto, actorId, actorRole);
   }
 
   @Put(':id')
-  @ApiOperation({ summary: 'Edit member details' })
+  @ApiOperation({ summary: 'Edit member details and log activity audit' })
   @ApiResponse({ status: 200, description: 'Member updated successfully', type: MemberResponseDto })
-  @ApiResponse({ status: 400, description: 'Invalid data or self-referrer error' })
+  @ApiResponse({ status: 400, description: 'Invalid data, self-referrer error, or commission restriction' })
   @ApiResponse({ status: 404, description: 'Member not found' })
-  async updateMember(@Param('id') id: string, @Body() dto: UpdateMemberDto) {
-    return this.membersService.update(id, dto);
+  async updateMember(
+    @Param('id') id: string,
+    @Body() dto: UpdateMemberDto,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('role') actorRole: MemberRole,
+  ) {
+    return this.membersService.update(id, dto, actorId, actorRole);
+  }
+
+  @Post(':id/reassign-referrer')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Guarded flow to reassign a member referrer with cycle checks and audit logging' })
+  @ApiResponse({ status: 200, description: 'Referrer reassigned successfully', type: MemberResponseDto })
+  @ApiResponse({ status: 400, description: 'Circular dependency, inactive referrer, or self-referral error' })
+  @ApiResponse({ status: 404, description: 'Member or new referrer not found' })
+  async reassignReferrer(
+    @Param('id') id: string,
+    @Body() dto: ReassignReferrerDto,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('role') actorRole: MemberRole,
+  ) {
+    return this.membersService.reassignReferrer(id, dto, actorId, actorRole);
   }
 
   @Get()

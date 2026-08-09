@@ -46,12 +46,15 @@ exports.MembersService = void 0;
 const common_1 = require("@nestjs/common");
 const bcrypt = __importStar(require("bcrypt"));
 const prisma_service_1 = require("../../prisma/prisma.service");
+const audit_service_1 = require("../audit/audit.service");
 const client_1 = require("@prisma/client");
 let MembersService = class MembersService {
     prisma;
+    auditService;
     BCRYPT_SALT_ROUNDS = 12;
-    constructor(prisma) {
+    constructor(prisma, auditService) {
         this.prisma = prisma;
+        this.auditService = auditService;
     }
     async generateMemberCode() {
         const count = await this.prisma.member.count();
@@ -69,10 +72,10 @@ let MembersService = class MembersService {
         const randomChars = Math.random().toString(36).substring(2, 8);
         return `AK@${randomChars}`;
     }
-    async create(createMemberDto) {
-        return this.createMemberInternal(createMemberDto);
+    async create(createMemberDto, actorId, actorRole) {
+        return this.createMemberInternal(createMemberDto, actorId, actorRole);
     }
-    async createByAdmin(dto) {
+    async createByAdmin(dto, actorId, actorRole) {
         let memberCode = dto.memberCode;
         if (!memberCode) {
             memberCode = await this.generateMemberCode();
@@ -88,13 +91,13 @@ let MembersService = class MembersService {
             memberCode,
             password: tempPassword,
         };
-        const created = await this.createMemberInternal(fullCreateDto);
+        const created = await this.createMemberInternal(fullCreateDto, actorId, actorRole);
         return {
             ...created,
             ...(generatedTemp ? { tempPassword } : {}),
         };
     }
-    async createMemberInternal(createMemberDto) {
+    async createMemberInternal(createMemberDto, actorId, actorRole) {
         const { password, bankDetails, referrerId, role, status, ...rest } = createMemberDto;
         const existing = await this.prisma.member.findFirst({
             where: {
@@ -138,9 +141,22 @@ let MembersService = class MembersService {
                 bankDetails: bankDetails ? JSON.parse(JSON.stringify(bankDetails)) : undefined,
             },
         });
+        await this.auditService.logAction({
+            actorId: actorId || createdMember.id,
+            actorRole: actorRole || createdMember.role,
+            actionType: 'CREATE_MEMBER',
+            entityType: 'Member',
+            entityId: createdMember.id,
+            metadata: {
+                memberCode: createdMember.memberCode,
+                name: createdMember.name,
+                referrerId: createdMember.referrerId,
+                role: createdMember.role,
+            },
+        });
         return this.mapToResponseDto(createdMember);
     }
-    async update(id, updateDto) {
+    async update(id, updateDto, actorId, actorRole) {
         const member = await this.prisma.member.findUnique({ where: { id } });
         if (!member) {
             throw new common_1.NotFoundException(`Member with ID '${id}' not found`);
@@ -173,7 +189,11 @@ let MembersService = class MembersService {
                 }
             }
         }
-        if (referrerId !== undefined) {
+        if (referrerId !== undefined && referrerId !== member.referrerId) {
+            const hasCommissions = await this.hasCommissionsAgainstMember(id);
+            if (hasCommissions) {
+                throw new common_1.BadRequestException(`Cannot change referrer via standard update because commissions exist against this member. Use the guarded POST /admin/members/${id}/reassign-referrer endpoint.`);
+            }
             if (referrerId === id) {
                 throw new common_1.BadRequestException('A member cannot be set as their own referrer');
             }
@@ -202,7 +222,91 @@ let MembersService = class MembersService {
                     : {}),
             },
         });
+        await this.auditService.logAction({
+            actorId: actorId || id,
+            actorRole: actorRole || updatedMember.role,
+            actionType: 'UPDATE_MEMBER',
+            entityType: 'Member',
+            entityId: updatedMember.id,
+            metadata: {
+                updatedFields: Object.keys(updateDto),
+                newStatus: updatedMember.status,
+            },
+        });
         return this.mapToResponseDto(updatedMember);
+    }
+    async reassignReferrer(id, dto, actorId, actorRole) {
+        const member = await this.prisma.member.findUnique({ where: { id } });
+        if (!member) {
+            throw new common_1.NotFoundException(`Member with ID '${id}' not found`);
+        }
+        const { newReferrerId, reason } = dto;
+        if (newReferrerId === id) {
+            throw new common_1.BadRequestException('A member cannot be set as their own referrer');
+        }
+        const newReferrer = await this.prisma.member.findUnique({ where: { id: newReferrerId } });
+        if (!newReferrer) {
+            throw new common_1.BadRequestException(`New referrer with ID '${newReferrerId}' does not exist`);
+        }
+        if (newReferrer.status !== client_1.MemberStatus.ACTIVE) {
+            throw new common_1.BadRequestException(`New referrer with ID '${newReferrerId}' is not active (status: ${newReferrer.status})`);
+        }
+        const isCycle = await this.isMemberInUplineChain(newReferrerId, id);
+        if (isCycle) {
+            throw new common_1.BadRequestException(`Circular dependency detected: Member '${newReferrer.name}' is already in the downline of '${member.name}'`);
+        }
+        const previousReferrerId = member.referrerId;
+        const updatedMember = await this.prisma.member.update({
+            where: { id },
+            data: { referrerId: newReferrerId },
+        });
+        await this.auditService.logAction({
+            actorId: actorId || null,
+            actorRole: actorRole || client_1.MemberRole.ADMIN,
+            actionType: 'REASSIGN_REFERRER',
+            entityType: 'Member',
+            entityId: id,
+            metadata: {
+                previousReferrerId,
+                newReferrerId,
+                reason,
+            },
+        });
+        return this.mapToResponseDto(updatedMember);
+    }
+    async isMemberInUplineChain(startMemberId, targetId) {
+        let currentId = startMemberId;
+        const visited = new Set();
+        while (currentId) {
+            if (currentId === targetId) {
+                return true;
+            }
+            visited.add(currentId);
+            const parent = await this.prisma.member.findUnique({
+                where: { id: currentId },
+                select: { referrerId: true },
+            });
+            if (!parent || !parent.referrerId || visited.has(parent.referrerId)) {
+                break;
+            }
+            currentId = parent.referrerId;
+        }
+        return false;
+    }
+    async hasCommissionsAgainstMember(memberId) {
+        const [membershipCount, repurchaseCount] = await Promise.all([
+            this.prisma.membershipCommissionLedger.count({
+                where: {
+                    OR: [{ sourceMemberId: memberId }, { beneficiaryMemberId: memberId }],
+                },
+            }),
+            this.prisma.repurchaseCommissionLedger.count({
+                where: {
+                    OR: [{ sourceMemberId: memberId }, { beneficiaryMemberId: memberId }],
+                },
+            }),
+        ]);
+        return membershipCount > 0 || repurchaseCount > 0;
     }
     async findById(id) {
         const member = await this.prisma.member.findUnique({
@@ -357,6 +461,7 @@ let MembersService = class MembersService {
 exports.MembersService = MembersService;
 exports.MembersService = MembersService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        audit_service_1.AuditService])
 ], MembersService);
 //# sourceMappingURL=members.service.js.map
