@@ -1,8 +1,8 @@
 {
 	"info": {
 		"_postman_id": "aakash-mlm-auth-collection-v1",
-		"name": "AAKASH MLM - Authentication & Roles API",
-		"description": "Postman Collection for AAKASH E-COM MLM Backend Service authentication, token rotation, password management, and role-protected member endpoints.",
+		"name": "AAKASH MLM - Authentication & Admin Member Management API",
+		"description": "Postman Collection for AAKASH E-COM MLM Backend Service authentication, token rotation, password management, role-protected member endpoints, and Admin Member Management.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -176,18 +176,28 @@
 								"change-password"
 							]
 						},
-						"description": "Change password for logged-in user (verifies current password and hashes new password with 12 bcrypt salt rounds)"
+						"description": "Change password for logged-in user"
 					},
 					"response": []
 				}
 			]
 		},
 		{
-			"name": "Members",
+			"name": "Admin Member Management",
 			"item": [
 				{
-					"name": "1. Create Member",
+					"name": "1. POST /admin/members (Create Member)",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "POST",
 						"header": [
 							{
@@ -197,23 +207,24 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"memberCode\": \"AK10001\",\n  \"name\": \"John Doe\",\n  \"mobile\": \"+919876543210\",\n  \"email\": \"john.doe@example.com\",\n  \"address\": \"123 Main Street\",\n  \"password\": \"Password123!\",\n  \"role\": \"MEMBER\",\n  \"status\": \"ACTIVE\"\n}"
+							"raw": "{\n  \"name\": \"Alice Smith\",\n  \"mobile\": \"+919876543211\",\n  \"email\": \"alice@example.com\",\n  \"address\": \"456 Commerce Ave\",\n  \"role\": \"MEMBER\",\n  \"status\": \"ACTIVE\"\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/members",
+							"raw": "{{baseUrl}}/admin/members",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
+								"admin",
 								"members"
 							]
 						},
-						"description": "Register new member with 12 bcrypt salt rounds password hashing"
+						"description": "Create member by Admin. Auto-generates memberCode and temp password if omitted."
 					},
 					"response": []
 				},
 				{
-					"name": "2. Get Member Profile by ID (Ownership Protected)",
+					"name": "2. GET /admin/members (Paginated List & Search)",
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -228,16 +239,165 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/members/{{memberId}}",
+							"raw": "{{baseUrl}}/admin/members?page=1&limit=10&search=Alice&status=ACTIVE",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
+								"admin",
+								"members"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "search",
+									"value": "Alice"
+								},
+								{
+									"key": "status",
+									"value": "ACTIVE"
+								}
+							]
+						},
+						"description": "Get paginated members list with name/mobile/email/member_code search and status filter."
+					},
+					"response": []
+				},
+				{
+					"name": "3. GET /admin/members/:id (Single Member + Populated Referrer)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/admin/members/{{memberId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
 								"members",
 								"{{memberId}}"
 							]
 						},
-						"description": "Fetch member details. Non-admin members can only fetch their own ID; admins can fetch any ID."
+						"description": "View single member details with populated referrer info."
+					},
+					"response": []
+				},
+				{
+					"name": "4. PUT /admin/members/:id (Edit Member)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Alice Smith Updated\",\n  \"status\": \"ACTIVE\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/members/{{memberId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"members",
+								"{{memberId}}"
+							]
+						},
+						"description": "Edit member details."
+					},
+					"response": []
+				},
+				{
+					"name": "5. GET /admin/members/:id/referrer (Referrer Info)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/admin/members/{{memberId}}/referrer",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"members",
+								"{{memberId}}",
+								"referrer"
+							]
+						},
+						"description": "Quick admin lookup for direct referrer information."
+					},
+					"response": []
+				},
+				{
+					"name": "6. GET /admin/members/:id/downline-preview (1-Level Downline)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/admin/members/{{memberId}}/downline-preview",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"members",
+								"{{memberId}}",
+								"downline-preview"
+							]
+						},
+						"description": "Shallow (1-level) downline preview listing direct referrals."
 					},
 					"response": []
 				}

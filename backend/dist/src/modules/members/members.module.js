@@ -10,6 +10,7 @@ exports.MembersModule = void 0;
 const common_1 = require("@nestjs/common");
 const members_service_1 = require("./members.service");
 const members_controller_1 = require("./members.controller");
+const admin_members_controller_1 = require("./admin-members.controller");
 const prisma_module_1 = require("../../prisma/prisma.module");
 let MembersModule = class MembersModule {
 };
@@ -17,7 +18,7 @@ exports.MembersModule = MembersModule;
 exports.MembersModule = MembersModule = __decorate([
     (0, common_1.Module)({
         imports: [prisma_module_1.PrismaModule],
-        controllers: [members_controller_1.MembersController],
+        controllers: [members_controller_1.MembersController, admin_members_controller_1.AdminMembersController],
         providers: [members_service_1.MembersService],
         exports: [members_service_1.MembersService],
     })

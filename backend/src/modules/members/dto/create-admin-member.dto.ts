@@ -14,11 +14,14 @@ import { Type } from 'class-transformer';
 import { MemberRole, MemberStatus } from '@prisma/client';
 import { BankDetailsDto } from './bank-details.dto';
 
-export class CreateMemberDto {
-  @ApiProperty({ example: 'AK10001', description: 'Unique Member Code' })
+export class CreateAdminMemberDto {
+  @ApiPropertyOptional({
+    example: 'AK10001',
+    description: 'Member Code (auto-generated if omitted)',
+  })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: 'Member code is required' })
-  memberCode!: string;
+  memberCode?: string;
 
   @ApiProperty({ example: 'John Doe', description: 'Full name of the member' })
   @IsString()
@@ -76,14 +79,14 @@ export class CreateMemberDto {
   @IsEnum(MemberStatus, { message: 'Invalid member status' })
   status?: MemberStatus;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'SecureP@ssw0rd!',
-    description: 'Plain password to hash (minimum 6 characters)',
+    description: 'Plain password (auto-generated temporary password if omitted)',
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: 'Password is required' })
   @MinLength(6, { message: 'Password must be at least 6 characters long' })
-  password!: string;
+  password?: string;
 
   @ApiPropertyOptional({ enum: MemberRole, default: MemberRole.MEMBER })
   @IsOptional()

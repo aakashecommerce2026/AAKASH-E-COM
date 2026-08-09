@@ -9,13 +9,13 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateMemberDto = void 0;
+exports.CreateAdminMemberDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 const client_1 = require("@prisma/client");
 const bank_details_dto_1 = require("./bank-details.dto");
-class CreateMemberDto {
+class CreateAdminMemberDto {
     memberCode;
     name;
     mobile;
@@ -28,19 +28,22 @@ class CreateMemberDto {
     password;
     role;
 }
-exports.CreateMemberDto = CreateMemberDto;
+exports.CreateAdminMemberDto = CreateAdminMemberDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'AK10001', description: 'Unique Member Code' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        example: 'AK10001',
+        description: 'Member Code (auto-generated if omitted)',
+    }),
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)({ message: 'Member code is required' }),
     __metadata("design:type", String)
-], CreateMemberDto.prototype, "memberCode", void 0);
+], CreateAdminMemberDto.prototype, "memberCode", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: 'John Doe', description: 'Full name of the member' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)({ message: 'Member name is required' }),
     __metadata("design:type", String)
-], CreateMemberDto.prototype, "name", void 0);
+], CreateAdminMemberDto.prototype, "name", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: '+919876543210', description: 'Mobile phone number' }),
     (0, class_validator_1.IsString)(),
@@ -49,7 +52,7 @@ __decorate([
         message: 'Mobile number must be 10 to 15 digits, optionally prefixed with +',
     }),
     __metadata("design:type", String)
-], CreateMemberDto.prototype, "mobile", void 0);
+], CreateAdminMemberDto.prototype, "mobile", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
         example: 'john@example.com',
@@ -58,7 +61,7 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEmail)({}, { message: 'Invalid email format' }),
     __metadata("design:type", String)
-], CreateMemberDto.prototype, "email", void 0);
+], CreateAdminMemberDto.prototype, "email", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
         example: '123 Main Street, City',
@@ -67,7 +70,7 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CreateMemberDto.prototype, "address", void 0);
+], CreateAdminMemberDto.prototype, "address", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
         example: 'a1b2c3d4-e5f6-7890-abcd-1234567890ab',
@@ -76,13 +79,13 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsUUID)('4', { message: 'Referrer ID must be a valid UUID' }),
     __metadata("design:type", String)
-], CreateMemberDto.prototype, "referrerId", void 0);
+], CreateAdminMemberDto.prototype, "referrerId", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ example: 'john@upi', description: 'UPI ID' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CreateMemberDto.prototype, "upiId", void 0);
+], CreateAdminMemberDto.prototype, "upiId", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
         type: bank_details_dto_1.BankDetailsDto,
@@ -92,27 +95,27 @@ __decorate([
     (0, class_validator_1.ValidateNested)(),
     (0, class_transformer_1.Type)(() => bank_details_dto_1.BankDetailsDto),
     __metadata("design:type", bank_details_dto_1.BankDetailsDto)
-], CreateMemberDto.prototype, "bankDetails", void 0);
+], CreateAdminMemberDto.prototype, "bankDetails", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ enum: client_1.MemberStatus, default: client_1.MemberStatus.ACTIVE }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(client_1.MemberStatus, { message: 'Invalid member status' }),
     __metadata("design:type", String)
-], CreateMemberDto.prototype, "status", void 0);
+], CreateAdminMemberDto.prototype, "status", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({
+    (0, swagger_1.ApiPropertyOptional)({
         example: 'SecureP@ssw0rd!',
-        description: 'Plain password to hash (minimum 6 characters)',
+        description: 'Plain password (auto-generated temporary password if omitted)',
     }),
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)({ message: 'Password is required' }),
     (0, class_validator_1.MinLength)(6, { message: 'Password must be at least 6 characters long' }),
     __metadata("design:type", String)
-], CreateMemberDto.prototype, "password", void 0);
+], CreateAdminMemberDto.prototype, "password", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ enum: client_1.MemberRole, default: client_1.MemberRole.MEMBER }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(client_1.MemberRole, { message: 'Invalid member role' }),
     __metadata("design:type", String)
-], CreateMemberDto.prototype, "role", void 0);
-//# sourceMappingURL=create-member.dto.js.map
+], CreateAdminMemberDto.prototype, "role", void 0);
+//# sourceMappingURL=create-admin-member.dto.js.map
