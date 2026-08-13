@@ -133,6 +133,8 @@ model RepurchaseEntry {
   // Reverse relation for RepurchaseCommissionLedger
   commissionLedgers  RepurchaseCommissionLedger[] @relation("RepurchaseCommissions")
 
+  deletedAt          DateTime?                    @map("deleted_at")
+
   createdAt          DateTime                     @default(now()) @map("created_at")
   updatedAt          DateTime                     @updatedAt @map("updated_at")
 
@@ -141,6 +143,7 @@ model RepurchaseEntry {
   @@index([transactionRef])
   @@index([transactionDate])
   @@index([createdBy])
+  @@index([deletedAt])
   @@map("repurchase_entries")
 }
 

@@ -18,7 +18,7 @@ exports.RepurchaseModule = RepurchaseModule;
 exports.RepurchaseModule = RepurchaseModule = __decorate([
     (0, common_1.Module)({
         imports: [prisma_module_1.PrismaModule, audit_module_1.AuditModule],
-        controllers: [repurchase_controller_1.RepurchaseController],
+        controllers: [repurchase_controller_1.AdminRepurchaseController],
         providers: [repurchase_service_1.RepurchaseService],
         exports: [repurchase_service_1.RepurchaseService],
     })

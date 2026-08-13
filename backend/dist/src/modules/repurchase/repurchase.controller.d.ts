@@ -2,7 +2,7 @@ import { RepurchaseService } from './repurchase.service';
 import { CreateRepurchaseEntryDto } from './dto/create-repurchase-entry.dto';
 import { UpdateRepurchaseEntryDto } from './dto/update-repurchase-entry.dto';
 import { QueryRepurchaseEntryDto } from './dto/query-repurchase-entry.dto';
-export declare class RepurchaseController {
+export declare class AdminRepurchaseController {
     private readonly repurchaseService;
     constructor(repurchaseService: RepurchaseService);
     create(dto: CreateRepurchaseEntryDto, actorId: string): Promise<{
@@ -16,22 +16,12 @@ export declare class RepurchaseController {
         createdBy: any;
         createdAt: any;
         updatedAt: any;
+        deletedAt: any;
     }>;
     findAll(query: QueryRepurchaseEntryDto): Promise<{
-        data: {
-            id: any;
-            transactionRef: any;
-            memberId: any;
-            member: any;
-            amount: number;
-            transactionDate: any;
-            remarks: any;
-            createdBy: any;
-            createdAt: any;
-            updatedAt: any;
-        }[];
+        data: any;
         meta: {
-            total: number;
+            total: any;
             page: number;
             limit: number;
             totalPages: number;
@@ -48,6 +38,7 @@ export declare class RepurchaseController {
         createdBy: any;
         createdAt: any;
         updatedAt: any;
+        deletedAt: any;
     }>;
     update(id: string, dto: UpdateRepurchaseEntryDto, actorId: string): Promise<{
         id: any;
@@ -60,6 +51,7 @@ export declare class RepurchaseController {
         createdBy: any;
         createdAt: any;
         updatedAt: any;
+        deletedAt: any;
     }>;
     remove(id: string, actorId: string): Promise<{
         message: string;

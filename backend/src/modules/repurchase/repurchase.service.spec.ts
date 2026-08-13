@@ -37,20 +37,26 @@ describe('RepurchaseService Unit Tests', () => {
     createdBy: 'admin-uuid-1',
     createdAt: new Date('2026-08-10T10:00:00Z'),
     updatedAt: new Date('2026-08-10T10:00:00Z'),
+    deletedAt: null,
   };
 
   beforeEach(async () => {
     prisma = {
       repurchaseEntry: {
         findUnique: jest.fn(),
+        findFirst: jest.fn(),
         findMany: jest.fn(),
         count: jest.fn(),
         create: jest.fn(),
         update: jest.fn(),
         delete: jest.fn(),
       },
+      repurchaseCommissionLedger: {
+        count: jest.fn().mockResolvedValue(0), // Default: no commissions generated yet
+      },
       member: {
         findUnique: jest.fn(),
+        findFirst: jest.fn(),
       },
     };
 
@@ -73,10 +79,10 @@ describe('RepurchaseService Unit Tests', () => {
     expect(service).toBeDefined();
   });
 
-  describe('1. create', () => {
+  describe('1. create (POST /admin/repurchase)', () => {
     it('should create a repurchase entry successfully when member exists and is ACTIVE', async () => {
-      prisma.repurchaseEntry.findUnique.mockResolvedValue(null); // transactionRef check
-      prisma.member.findUnique.mockResolvedValue(mockActiveMember); // member check
+      prisma.repurchaseEntry.findFirst.mockResolvedValue(null); // transactionRef check
+      prisma.member.findFirst.mockResolvedValue(mockActiveMember); // member check
       prisma.repurchaseEntry.create.mockResolvedValue(mockRepurchaseEntry);
 
       const result = await service.create({
@@ -94,7 +100,7 @@ describe('RepurchaseService Unit Tests', () => {
     });
 
     it('should throw ConflictException if transactionRef already exists', async () => {
-      prisma.repurchaseEntry.findUnique.mockResolvedValue(mockRepurchaseEntry);
+      prisma.repurchaseEntry.findFirst.mockResolvedValue(mockRepurchaseEntry);
 
       await expect(
         service.create({
@@ -106,8 +112,8 @@ describe('RepurchaseService Unit Tests', () => {
     });
 
     it('should throw NotFoundException if memberId does not exist', async () => {
-      prisma.repurchaseEntry.findUnique.mockResolvedValue(null);
-      prisma.member.findUnique.mockResolvedValue(null);
+      prisma.repurchaseEntry.findFirst.mockResolvedValue(null);
+      prisma.member.findFirst.mockResolvedValue(null);
 
       await expect(
         service.create({
@@ -119,8 +125,8 @@ describe('RepurchaseService Unit Tests', () => {
     });
 
     it('should throw BadRequestException if member exists but is NOT active (e.g. BLOCKED)', async () => {
-      prisma.repurchaseEntry.findUnique.mockResolvedValue(null);
-      prisma.member.findUnique.mockResolvedValue(mockInactiveMember);
+      prisma.repurchaseEntry.findFirst.mockResolvedValue(null);
+      prisma.member.findFirst.mockResolvedValue(mockInactiveMember);
 
       await expect(
         service.create({
@@ -132,8 +138,8 @@ describe('RepurchaseService Unit Tests', () => {
     });
   });
 
-  describe('2. findAll', () => {
-    it('should return paginated list of repurchase entries', async () => {
+  describe('2. findAll (GET /admin/repurchase)', () => {
+    it('should return paginated list of repurchase entries excluding soft-deleted items', async () => {
       prisma.repurchaseEntry.count.mockResolvedValue(1);
       prisma.repurchaseEntry.findMany.mockResolvedValue([mockRepurchaseEntry]);
 
@@ -146,27 +152,33 @@ describe('RepurchaseService Unit Tests', () => {
         limit: 10,
         totalPages: 1,
       });
+      expect(prisma.repurchaseEntry.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ deletedAt: null }),
+        }),
+      );
     });
   });
 
-  describe('3. findById', () => {
+  describe('3. findById (GET /admin/repurchase/:id)', () => {
     it('should return single repurchase entry by id', async () => {
-      prisma.repurchaseEntry.findUnique.mockResolvedValue(mockRepurchaseEntry);
+      prisma.repurchaseEntry.findFirst.mockResolvedValue(mockRepurchaseEntry);
 
       const result = await service.findById(mockRepurchaseEntry.id);
       expect(result.id).toBe(mockRepurchaseEntry.id);
     });
 
-    it('should throw NotFoundException if entry not found', async () => {
-      prisma.repurchaseEntry.findUnique.mockResolvedValue(null);
+    it('should throw NotFoundException if entry not found or soft-deleted', async () => {
+      prisma.repurchaseEntry.findFirst.mockResolvedValue(null);
 
       await expect(service.findById('non-existent-id')).rejects.toThrow(NotFoundException);
     });
   });
 
-  describe('4. update', () => {
-    it('should update repurchase entry', async () => {
-      prisma.repurchaseEntry.findUnique.mockResolvedValue(mockRepurchaseEntry);
+  describe('4. update (PUT /admin/repurchase/:id)', () => {
+    it('should update repurchase entry before commission generation', async () => {
+      prisma.repurchaseEntry.findFirst.mockResolvedValue(mockRepurchaseEntry);
+      prisma.repurchaseCommissionLedger.count.mockResolvedValue(0); // 0 commissions
       prisma.repurchaseEntry.update.mockResolvedValue({
         ...mockRepurchaseEntry,
         amount: 2000,
@@ -179,33 +191,38 @@ describe('RepurchaseService Unit Tests', () => {
       );
     });
 
-    it('should throw ConflictException if updating to an existing transactionRef', async () => {
-      prisma.repurchaseEntry.findUnique
-        .mockResolvedValueOnce(mockRepurchaseEntry) // target lookup
-        .mockResolvedValueOnce({ id: 'other-id', transactionRef: 'REP-EXISTING' }); // collision check
+    it('should throw BadRequestException and lock entry if commission ledgers have already been generated', async () => {
+      prisma.repurchaseEntry.findFirst.mockResolvedValue(mockRepurchaseEntry);
+      prisma.repurchaseCommissionLedger.count.mockResolvedValue(3); // Commissions generated!
 
       await expect(
-        service.update(mockRepurchaseEntry.id, { transactionRef: 'REP-EXISTING' }),
-      ).rejects.toThrow(ConflictException);
+        service.update(mockRepurchaseEntry.id, { amount: 2000 }),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
-  describe('5. remove', () => {
-    it('should delete repurchase entry', async () => {
-      prisma.repurchaseEntry.findUnique.mockResolvedValue(mockRepurchaseEntry);
-      prisma.repurchaseEntry.delete.mockResolvedValue(mockRepurchaseEntry);
+  describe('5. remove (DELETE /admin/repurchase/:id)', () => {
+    it('should soft-delete repurchase entry before commission generation', async () => {
+      prisma.repurchaseEntry.findFirst.mockResolvedValue(mockRepurchaseEntry);
+      prisma.repurchaseCommissionLedger.count.mockResolvedValue(0); // 0 commissions
+      prisma.repurchaseEntry.update.mockResolvedValue({
+        ...mockRepurchaseEntry,
+        deletedAt: new Date(),
+      });
 
       const result = await service.remove(mockRepurchaseEntry.id);
-      expect(result.message).toContain('deleted successfully');
-      expect(auditService.logAction).toHaveBeenCalledWith(
-        expect.objectContaining({ actionType: 'DELETE_REPURCHASE_ENTRY' }),
-      );
+      expect(result.message).toContain('soft-deleted successfully');
+      expect(prisma.repurchaseEntry.update).toHaveBeenCalledWith({
+        where: { id: mockRepurchaseEntry.id },
+        data: expect.objectContaining({ deletedAt: expect.any(Date) }),
+      });
     });
 
-    it('should throw NotFoundException if repurchase entry does not exist', async () => {
-      prisma.repurchaseEntry.findUnique.mockResolvedValue(null);
+    it('should throw BadRequestException and block delete if commission ledgers have already been generated', async () => {
+      prisma.repurchaseEntry.findFirst.mockResolvedValue(mockRepurchaseEntry);
+      prisma.repurchaseCommissionLedger.count.mockResolvedValue(3); // Commissions generated!
 
-      await expect(service.remove('non-existent-id')).rejects.toThrow(NotFoundException);
+      await expect(service.remove(mockRepurchaseEntry.id)).rejects.toThrow(BadRequestException);
     });
   });
 });

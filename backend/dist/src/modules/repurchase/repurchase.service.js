@@ -21,28 +21,39 @@ let RepurchaseService = class RepurchaseService {
         this.prisma = prisma;
         this.auditService = auditService;
     }
+    async hasCommissionsGenerated(repurchaseEntryId) {
+        const count = await this.prisma.repurchaseCommissionLedger.count({
+            where: { repurchaseEntryId },
+        });
+        return count > 0;
+    }
     async create(dto, actorId) {
         const { transactionRef, memberId, amount, transactionDate, remarks, createdBy } = dto;
-        const existingRef = await this.prisma.repurchaseEntry.findUnique({
-            where: { transactionRef },
+        const existingRef = await this.prisma.repurchaseEntry.findFirst({
+            where: { transactionRef, deletedAt: null },
         });
         if (existingRef) {
             throw new common_1.ConflictException(`Transaction reference '${transactionRef}' already exists`);
         }
-        const member = await this.prisma.member.findUnique({
-            where: { id: memberId },
+        const member = await this.prisma.member.findFirst({
+            where: {
+                OR: [
+                    { id: memberId },
+                    { memberCode: memberId },
+                ],
+            },
         });
         if (!member) {
-            throw new common_1.NotFoundException(`Member with ID '${memberId}' does not exist`);
+            throw new common_1.NotFoundException(`Member '${memberId}' does not exist`);
         }
         if (member.status !== client_1.MemberStatus.ACTIVE) {
-            throw new common_1.BadRequestException(`Member with ID '${memberId}' is not active (current status: ${member.status})`);
+            throw new common_1.BadRequestException(`Member '${member.name}' (${member.memberCode}) is not active (current status: ${member.status})`);
         }
         const creatorId = actorId || createdBy || null;
         const entry = await this.prisma.repurchaseEntry.create({
             data: {
                 transactionRef,
-                memberId,
+                memberId: member.id,
                 amount: new client_1.Prisma.Decimal(amount),
                 transactionDate: transactionDate ? new Date(transactionDate) : new Date(),
                 remarks: remarks || null,
@@ -70,9 +81,14 @@ let RepurchaseService = class RepurchaseService {
     async findAll(query) {
         const { page = 1, limit = 10, memberId, search, startDate, endDate, sortBy = 'transactionDate', sortOrder = 'desc' } = query;
         const skip = (page - 1) * limit;
-        const where = {};
+        const where = {
+            deletedAt: null,
+        };
         if (memberId) {
-            where.memberId = memberId;
+            where.OR = [
+                { memberId },
+                { member: { memberCode: memberId } },
+            ];
         }
         if (startDate || endDate) {
             where.transactionDate = {};
@@ -86,12 +102,24 @@ let RepurchaseService = class RepurchaseService {
         }
         if (search && search.trim() !== '') {
             const term = search.trim();
-            where.OR = [
-                { transactionRef: { contains: term, mode: 'insensitive' } },
-                { member: { name: { contains: term, mode: 'insensitive' } } },
-                { member: { memberCode: { contains: term, mode: 'insensitive' } } },
-                { member: { mobile: { contains: term } } },
-            ];
+            const searchWhere = {
+                OR: [
+                    { transactionRef: { contains: term, mode: 'insensitive' } },
+                    { member: { name: { contains: term, mode: 'insensitive' } } },
+                    { member: { memberCode: { contains: term, mode: 'insensitive' } } },
+                    { member: { mobile: { contains: term } } },
+                ],
+            };
+            if (where.OR) {
+                where.AND = [
+                    { OR: where.OR },
+                    searchWhere,
+                ];
+                delete where.OR;
+            }
+            else {
+                where.OR = searchWhere.OR;
+            }
         }
         const validSortFields = ['transactionDate', 'createdAt', 'amount', 'transactionRef'];
         const orderByField = validSortFields.includes(sortBy) ? sortBy : 'transactionDate';
@@ -121,8 +149,8 @@ let RepurchaseService = class RepurchaseService {
         };
     }
     async findById(id) {
-        const entry = await this.prisma.repurchaseEntry.findUnique({
-            where: { id },
+        const entry = await this.prisma.repurchaseEntry.findFirst({
+            where: { id, deletedAt: null },
             include: {
                 member: {
                     select: { id: true, memberCode: true, name: true, mobile: true, status: true },
@@ -135,33 +163,43 @@ let RepurchaseService = class RepurchaseService {
         return this.mapToResponseDto(entry);
     }
     async update(id, dto, actorId) {
-        const existing = await this.prisma.repurchaseEntry.findUnique({ where: { id } });
+        const existing = await this.prisma.repurchaseEntry.findFirst({
+            where: { id, deletedAt: null },
+        });
         if (!existing) {
             throw new common_1.NotFoundException(`Repurchase entry with ID '${id}' not found`);
         }
+        const hasCommissions = await this.hasCommissionsGenerated(id);
+        if (hasCommissions) {
+            throw new common_1.BadRequestException(`Repurchase entry '${existing.transactionRef}' is locked because commissions have already been calculated. Please issue a separate correction or reversal entry.`);
+        }
         const { transactionRef, memberId, amount, transactionDate, remarks } = dto;
         if (transactionRef && transactionRef !== existing.transactionRef) {
-            const collision = await this.prisma.repurchaseEntry.findUnique({
-                where: { transactionRef },
+            const collision = await this.prisma.repurchaseEntry.findFirst({
+                where: { transactionRef, deletedAt: null },
             });
             if (collision) {
                 throw new common_1.ConflictException(`Transaction reference '${transactionRef}' is already taken`);
             }
         }
+        let updatedMemberId = existing.memberId;
         if (memberId && memberId !== existing.memberId) {
-            const member = await this.prisma.member.findUnique({ where: { id: memberId } });
+            const member = await this.prisma.member.findFirst({
+                where: { OR: [{ id: memberId }, { memberCode: memberId }] },
+            });
             if (!member) {
-                throw new common_1.NotFoundException(`Member with ID '${memberId}' does not exist`);
+                throw new common_1.NotFoundException(`Member '${memberId}' does not exist`);
             }
             if (member.status !== client_1.MemberStatus.ACTIVE) {
-                throw new common_1.BadRequestException(`Member with ID '${memberId}' is not active (current status: ${member.status})`);
+                throw new common_1.BadRequestException(`Member '${member.name}' (${member.memberCode}) is not active (current status: ${member.status})`);
             }
+            updatedMemberId = member.id;
         }
         const updated = await this.prisma.repurchaseEntry.update({
             where: { id },
             data: {
                 ...(transactionRef ? { transactionRef } : {}),
-                ...(memberId ? { memberId } : {}),
+                memberId: updatedMemberId,
                 ...(amount ? { amount: new client_1.Prisma.Decimal(amount) } : {}),
                 ...(transactionDate ? { transactionDate: new Date(transactionDate) } : {}),
                 ...(remarks !== undefined ? { remarks } : {}),
@@ -184,12 +222,22 @@ let RepurchaseService = class RepurchaseService {
         return this.mapToResponseDto(updated);
     }
     async remove(id, actorId) {
-        const existing = await this.prisma.repurchaseEntry.findUnique({ where: { id } });
+        const existing = await this.prisma.repurchaseEntry.findFirst({
+            where: { id, deletedAt: null },
+        });
         if (!existing) {
             throw new common_1.NotFoundException(`Repurchase entry with ID '${id}' not found`);
         }
-        const deleted = await this.prisma.repurchaseEntry.delete({
+        const hasCommissions = await this.hasCommissionsGenerated(id);
+        if (hasCommissions) {
+            throw new common_1.BadRequestException(`Cannot delete repurchase entry '${existing.transactionRef}' because commissions have already been generated for this transaction.`);
+        }
+        const softDeleted = await this.prisma.repurchaseEntry.update({
             where: { id },
+            data: {
+                deletedAt: new Date(),
+                transactionRef: `${existing.transactionRef}_deleted_${Date.now()}`,
+            },
         });
         await this.auditService.logAction({
             actorId: actorId || null,
@@ -198,9 +246,10 @@ let RepurchaseService = class RepurchaseService {
             entityId: id,
             metadata: {
                 transactionRef: existing.transactionRef,
+                softDeleted: true,
             },
         });
-        return { message: `Repurchase entry '${existing.transactionRef}' deleted successfully` };
+        return { message: `Repurchase entry '${existing.transactionRef}' soft-deleted successfully` };
     }
     mapToResponseDto(entry) {
         return {
@@ -214,6 +263,7 @@ let RepurchaseService = class RepurchaseService {
             createdBy: entry.createdBy,
             createdAt: entry.createdAt,
             updatedAt: entry.updatedAt,
+            deletedAt: entry.deletedAt || undefined,
         };
     }
 };

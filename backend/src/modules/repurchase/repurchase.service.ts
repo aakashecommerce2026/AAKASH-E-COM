@@ -19,45 +19,60 @@ export class RepurchaseService {
   ) {}
 
   /**
+   * Helper to check if repurchase commission ledgers exist for an entry.
+   */
+  private async hasCommissionsGenerated(repurchaseEntryId: string): Promise<boolean> {
+    const count = await this.prisma.repurchaseCommissionLedger.count({
+      where: { repurchaseEntryId },
+    });
+    return count > 0;
+  }
+
+  /**
    * Creates an in-store repurchase entry.
    * Validates:
    * 1. transactionRef is unique.
-   * 2. memberId exists and is ACTIVE.
+   * 2. memberId / memberCode exists and is ACTIVE.
    */
   async create(dto: CreateRepurchaseEntryDto, actorId?: string) {
     const { transactionRef, memberId, amount, transactionDate, remarks, createdBy } = dto;
 
     // 1. Transaction reference uniqueness check
-    const existingRef = await this.prisma.repurchaseEntry.findUnique({
-      where: { transactionRef },
+    const existingRef = await (this.prisma as any).repurchaseEntry.findFirst({
+      where: { transactionRef, deletedAt: null },
     });
 
     if (existingRef) {
       throw new ConflictException(`Transaction reference '${transactionRef}' already exists`);
     }
 
-    // 2. Member existence & ACTIVE status check
-    const member = await this.prisma.member.findUnique({
-      where: { id: memberId },
+    // 2. Member existence & ACTIVE status check (supports UUID or memberCode lookup)
+    const member = await this.prisma.member.findFirst({
+      where: {
+        OR: [
+          { id: memberId },
+          { memberCode: memberId },
+        ],
+      },
     });
 
     if (!member) {
-      throw new NotFoundException(`Member with ID '${memberId}' does not exist`);
+      throw new NotFoundException(`Member '${memberId}' does not exist`);
     }
 
     if (member.status !== MemberStatus.ACTIVE) {
       throw new BadRequestException(
-        `Member with ID '${memberId}' is not active (current status: ${member.status})`,
+        `Member '${member.name}' (${member.memberCode}) is not active (current status: ${member.status})`,
       );
     }
 
     const creatorId = actorId || createdBy || null;
 
-    // 3. Create entry in DB
+    // 3. Create entry in DB using verified member.id
     const entry = await this.prisma.repurchaseEntry.create({
       data: {
         transactionRef,
-        memberId,
+        memberId: member.id,
         amount: new Prisma.Decimal(amount),
         transactionDate: transactionDate ? new Date(transactionDate) : new Date(),
         remarks: remarks || null,
@@ -87,16 +102,21 @@ export class RepurchaseService {
   }
 
   /**
-   * Retrieves paginated list of repurchase entries with search & filters.
+   * Retrieves paginated list of repurchase entries with search & filters (excluding soft-deleted).
    */
   async findAll(query: QueryRepurchaseEntryDto) {
     const { page = 1, limit = 10, memberId, search, startDate, endDate, sortBy = 'transactionDate', sortOrder = 'desc' } = query;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.RepurchaseEntryWhereInput = {};
+    const where: any = {
+      deletedAt: null,
+    };
 
     if (memberId) {
-      where.memberId = memberId;
+      where.OR = [
+        { memberId },
+        { member: { memberCode: memberId } },
+      ];
     }
 
     if (startDate || endDate) {
@@ -111,20 +131,32 @@ export class RepurchaseService {
 
     if (search && search.trim() !== '') {
       const term = search.trim();
-      where.OR = [
-        { transactionRef: { contains: term, mode: 'insensitive' } },
-        { member: { name: { contains: term, mode: 'insensitive' } } },
-        { member: { memberCode: { contains: term, mode: 'insensitive' } } },
-        { member: { mobile: { contains: term } } },
-      ];
+      const searchWhere: any = {
+        OR: [
+          { transactionRef: { contains: term, mode: 'insensitive' } },
+          { member: { name: { contains: term, mode: 'insensitive' } } },
+          { member: { memberCode: { contains: term, mode: 'insensitive' } } },
+          { member: { mobile: { contains: term } } },
+        ],
+      };
+
+      if (where.OR) {
+        where.AND = [
+          { OR: where.OR },
+          searchWhere,
+        ];
+        delete where.OR;
+      } else {
+        where.OR = searchWhere.OR;
+      }
     }
 
     const validSortFields = ['transactionDate', 'createdAt', 'amount', 'transactionRef'];
     const orderByField = validSortFields.includes(sortBy) ? sortBy : 'transactionDate';
 
     const [total, entries] = await Promise.all([
-      this.prisma.repurchaseEntry.count({ where }),
-      this.prisma.repurchaseEntry.findMany({
+      (this.prisma as any).repurchaseEntry.count({ where }),
+      (this.prisma as any).repurchaseEntry.findMany({
         where,
         skip,
         take: limit,
@@ -137,7 +169,7 @@ export class RepurchaseService {
       }),
     ]);
 
-    const data = entries.map((e) => this.mapToResponseDto(e));
+    const data = entries.map((e: any) => this.mapToResponseDto(e));
 
     return {
       data,
@@ -151,11 +183,11 @@ export class RepurchaseService {
   }
 
   /**
-   * Retrieves single repurchase entry by ID.
+   * Retrieves single repurchase entry by ID (excluding soft-deleted).
    */
   async findById(id: string) {
-    const entry = await this.prisma.repurchaseEntry.findUnique({
-      where: { id },
+    const entry = await (this.prisma as any).repurchaseEntry.findFirst({
+      where: { id, deletedAt: null },
       include: {
         member: {
           select: { id: true, memberCode: true, name: true, mobile: true, status: true },
@@ -172,19 +204,31 @@ export class RepurchaseService {
 
   /**
    * Updates existing repurchase entry.
+   * Lock safeguard: Editing is blocked if commission ledgers have already been generated.
    */
   async update(id: string, dto: UpdateRepurchaseEntryDto, actorId?: string) {
-    const existing = await this.prisma.repurchaseEntry.findUnique({ where: { id } });
+    const existing = await (this.prisma as any).repurchaseEntry.findFirst({
+      where: { id, deletedAt: null },
+    });
+
     if (!existing) {
       throw new NotFoundException(`Repurchase entry with ID '${id}' not found`);
+    }
+
+    // Check post-commission locking
+    const hasCommissions = await this.hasCommissionsGenerated(id);
+    if (hasCommissions) {
+      throw new BadRequestException(
+        `Repurchase entry '${existing.transactionRef}' is locked because commissions have already been calculated. Please issue a separate correction or reversal entry.`,
+      );
     }
 
     const { transactionRef, memberId, amount, transactionDate, remarks } = dto;
 
     // Check transactionRef collision if changing ref
     if (transactionRef && transactionRef !== existing.transactionRef) {
-      const collision = await this.prisma.repurchaseEntry.findUnique({
-        where: { transactionRef },
+      const collision = await (this.prisma as any).repurchaseEntry.findFirst({
+        where: { transactionRef, deletedAt: null },
       });
       if (collision) {
         throw new ConflictException(`Transaction reference '${transactionRef}' is already taken`);
@@ -192,23 +236,27 @@ export class RepurchaseService {
     }
 
     // Check member existence and status if changing memberId
+    let updatedMemberId = existing.memberId;
     if (memberId && memberId !== existing.memberId) {
-      const member = await this.prisma.member.findUnique({ where: { id: memberId } });
+      const member = await this.prisma.member.findFirst({
+        where: { OR: [{ id: memberId }, { memberCode: memberId }] },
+      });
       if (!member) {
-        throw new NotFoundException(`Member with ID '${memberId}' does not exist`);
+        throw new NotFoundException(`Member '${memberId}' does not exist`);
       }
       if (member.status !== MemberStatus.ACTIVE) {
         throw new BadRequestException(
-          `Member with ID '${memberId}' is not active (current status: ${member.status})`,
+          `Member '${member.name}' (${member.memberCode}) is not active (current status: ${member.status})`,
         );
       }
+      updatedMemberId = member.id;
     }
 
-    const updated = await this.prisma.repurchaseEntry.update({
+    const updated = await (this.prisma as any).repurchaseEntry.update({
       where: { id },
       data: {
         ...(transactionRef ? { transactionRef } : {}),
-        ...(memberId ? { memberId } : {}),
+        memberId: updatedMemberId,
         ...(amount ? { amount: new Prisma.Decimal(amount) } : {}),
         ...(transactionDate ? { transactionDate: new Date(transactionDate) } : {}),
         ...(remarks !== undefined ? { remarks } : {}),
@@ -234,16 +282,32 @@ export class RepurchaseService {
   }
 
   /**
-   * Removes repurchase entry by ID.
+   * Soft deletes repurchase entry by ID.
+   * Lock safeguard: Soft delete is only permitted BEFORE commission generation.
    */
   async remove(id: string, actorId?: string) {
-    const existing = await this.prisma.repurchaseEntry.findUnique({ where: { id } });
+    const existing = await (this.prisma as any).repurchaseEntry.findFirst({
+      where: { id, deletedAt: null },
+    });
+
     if (!existing) {
       throw new NotFoundException(`Repurchase entry with ID '${id}' not found`);
     }
 
-    const deleted = await this.prisma.repurchaseEntry.delete({
+    // Check pre-commission delete guard
+    const hasCommissions = await this.hasCommissionsGenerated(id);
+    if (hasCommissions) {
+      throw new BadRequestException(
+        `Cannot delete repurchase entry '${existing.transactionRef}' because commissions have already been generated for this transaction.`,
+      );
+    }
+
+    const softDeleted = await (this.prisma as any).repurchaseEntry.update({
       where: { id },
+      data: {
+        deletedAt: new Date(),
+        transactionRef: `${existing.transactionRef}_deleted_${Date.now()}`,
+      },
     });
 
     await this.auditService.logAction({
@@ -253,10 +317,11 @@ export class RepurchaseService {
       entityId: id,
       metadata: {
         transactionRef: existing.transactionRef,
+        softDeleted: true,
       },
     });
 
-    return { message: `Repurchase entry '${existing.transactionRef}' deleted successfully` };
+    return { message: `Repurchase entry '${existing.transactionRef}' soft-deleted successfully` };
   }
 
   private mapToResponseDto(entry: any) {
@@ -271,6 +336,7 @@ export class RepurchaseService {
       createdBy: entry.createdBy,
       createdAt: entry.createdAt,
       updatedAt: entry.updatedAt,
+      deletedAt: entry.deletedAt || undefined,
     };
   }
 }

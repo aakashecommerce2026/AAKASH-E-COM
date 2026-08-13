@@ -7,6 +7,7 @@ export declare class RepurchaseService {
     private readonly prisma;
     private readonly auditService;
     constructor(prisma: PrismaService, auditService: AuditService);
+    private hasCommissionsGenerated;
     create(dto: CreateRepurchaseEntryDto, actorId?: string): Promise<{
         id: any;
         transactionRef: any;
@@ -18,22 +19,12 @@ export declare class RepurchaseService {
         createdBy: any;
         createdAt: any;
         updatedAt: any;
+        deletedAt: any;
     }>;
     findAll(query: QueryRepurchaseEntryDto): Promise<{
-        data: {
-            id: any;
-            transactionRef: any;
-            memberId: any;
-            member: any;
-            amount: number;
-            transactionDate: any;
-            remarks: any;
-            createdBy: any;
-            createdAt: any;
-            updatedAt: any;
-        }[];
+        data: any;
         meta: {
-            total: number;
+            total: any;
             page: number;
             limit: number;
             totalPages: number;
@@ -50,6 +41,7 @@ export declare class RepurchaseService {
         createdBy: any;
         createdAt: any;
         updatedAt: any;
+        deletedAt: any;
     }>;
     update(id: string, dto: UpdateRepurchaseEntryDto, actorId?: string): Promise<{
         id: any;
@@ -62,6 +54,7 @@ export declare class RepurchaseService {
         createdBy: any;
         createdAt: any;
         updatedAt: any;
+        deletedAt: any;
     }>;
     remove(id: string, actorId?: string): Promise<{
         message: string;

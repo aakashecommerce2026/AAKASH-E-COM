@@ -5,7 +5,6 @@ import {
   IsNumber,
   IsOptional,
   IsString,
-  IsUUID,
   Min,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
@@ -15,17 +14,17 @@ export class CreateRepurchaseEntryDto {
     example: 'REP-2026-00001',
     description: 'Unique Transaction Reference Code',
   })
-  @Transform(({ obj, value }) => value || obj.transaction_ref)
+  @Transform(({ obj, value }) => value || obj?.transaction_ref || obj?.transactionRef)
   @IsString()
   @IsNotEmpty()
   transactionRef!: string;
 
   @ApiProperty({
     example: 'a1b2c3d4-e5f6-7890-abcd-1234567890ab',
-    description: 'Member UUID',
+    description: 'Member UUID or Member Code (e.g. AK10001)',
   })
-  @Transform(({ obj, value }) => value || obj.member_id)
-  @IsUUID()
+  @Transform(({ obj, value }) => value || obj?.member_id || obj?.memberId)
+  @IsString()
   @IsNotEmpty()
   memberId!: string;
 
@@ -39,7 +38,7 @@ export class CreateRepurchaseEntryDto {
     example: '2026-08-06T12:00:00.000Z',
     description: 'Transaction Date',
   })
-  @Transform(({ obj, value }) => value || obj.transaction_date)
+  @Transform(({ obj, value }) => value || obj?.transaction_date || obj?.transactionDate)
   @IsOptional()
   @IsDateString()
   transactionDate?: string;
@@ -57,6 +56,6 @@ export class CreateRepurchaseEntryDto {
     description: 'User/Admin UUID who recorded entry',
   })
   @IsOptional()
-  @IsUUID()
+  @IsString()
   createdBy?: string;
 }

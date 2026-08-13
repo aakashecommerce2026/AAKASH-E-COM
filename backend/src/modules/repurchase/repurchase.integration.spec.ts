@@ -1,12 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { RepurchaseController } from './repurchase.controller';
+import { AdminRepurchaseController } from './repurchase.controller';
 import { RepurchaseService } from './repurchase.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { MemberRole, MemberStatus } from '@prisma/client';
 
-describe('Admin In-Store Repurchase Integration Test Suite', () => {
-  let controller: RepurchaseController;
+describe('Admin In-Store Repurchase Core Endpoints Integration Test Suite', () => {
+  let controller: AdminRepurchaseController;
   let service: RepurchaseService;
   let prisma: any;
 
@@ -35,26 +35,32 @@ describe('Admin In-Store Repurchase Integration Test Suite', () => {
     createdBy: mockAdminUser.id,
     createdAt: new Date(),
     updatedAt: new Date(),
+    deletedAt: null,
   };
 
   beforeEach(async () => {
     prisma = {
       repurchaseEntry: {
-        findUnique: jest.fn().mockImplementation(async ({ where }: any) => {
-          if (where.transactionRef === 'REP-2026-00001') return null; // available
-          if (where.id === mockRepurchaseEntry.id) return mockRepurchaseEntry;
+        findFirst: jest.fn().mockImplementation(async ({ where }: any) => {
+          if (where.transactionRef === 'REP-2026-00001' && !where.id) return null; // available ref
+          if (where.id === mockRepurchaseEntry.id && where.deletedAt === null) return mockRepurchaseEntry;
           return null;
         }),
         findMany: jest.fn().mockResolvedValue([mockRepurchaseEntry]),
         count: jest.fn().mockResolvedValue(1),
         create: jest.fn().mockResolvedValue(mockRepurchaseEntry),
         update: jest.fn().mockResolvedValue({ ...mockRepurchaseEntry, amount: 3000 }),
-        delete: jest.fn().mockResolvedValue(mockRepurchaseEntry),
+      },
+      repurchaseCommissionLedger: {
+        count: jest.fn().mockResolvedValue(0), // 0 commissions generated
       },
       member: {
         findUnique: jest.fn().mockImplementation(async ({ where }: any) => {
           if (where.id === mockActiveMember.id) return mockActiveMember;
           return null;
+        }),
+        findFirst: jest.fn().mockImplementation(async ({ where }: any) => {
+          return mockActiveMember;
         }),
       },
     };
@@ -64,7 +70,7 @@ describe('Admin In-Store Repurchase Integration Test Suite', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [RepurchaseController],
+      controllers: [AdminRepurchaseController],
       providers: [
         RepurchaseService,
         { provide: PrismaService, useValue: prisma },
@@ -72,7 +78,7 @@ describe('Admin In-Store Repurchase Integration Test Suite', () => {
       ],
     }).compile();
 
-    controller = module.get<RepurchaseController>(RepurchaseController);
+    controller = module.get<AdminRepurchaseController>(AdminRepurchaseController);
     service = module.get<RepurchaseService>(RepurchaseService);
   });
 
@@ -81,7 +87,7 @@ describe('Admin In-Store Repurchase Integration Test Suite', () => {
     expect(service).toBeDefined();
   });
 
-  describe('1. POST /repurchases', () => {
+  describe('1. POST /admin/repurchase', () => {
     it('should create repurchase entry', async () => {
       const res = await controller.create(
         {
@@ -98,7 +104,7 @@ describe('Admin In-Store Repurchase Integration Test Suite', () => {
     });
   });
 
-  describe('2. GET /repurchases', () => {
+  describe('2. GET /admin/repurchase', () => {
     it('should return paginated list of repurchase entries', async () => {
       const res = await controller.findAll({ page: 1, limit: 10 });
 
@@ -107,16 +113,16 @@ describe('Admin In-Store Repurchase Integration Test Suite', () => {
     });
   });
 
-  describe('3. GET /repurchases/:id', () => {
-    it('should return single repurchase entry', async () => {
+  describe('3. GET /admin/repurchase/:id', () => {
+    it('should return single repurchase entry detail view', async () => {
       const res = await controller.findById(mockRepurchaseEntry.id);
 
       expect(res.id).toBe(mockRepurchaseEntry.id);
     });
   });
 
-  describe('4. PUT /repurchases/:id', () => {
-    it('should update repurchase entry', async () => {
+  describe('4. PUT /admin/repurchase/:id', () => {
+    it('should update repurchase entry before commission generation', async () => {
       const res = await controller.update(
         mockRepurchaseEntry.id,
         { amount: 3000 },
@@ -127,11 +133,11 @@ describe('Admin In-Store Repurchase Integration Test Suite', () => {
     });
   });
 
-  describe('5. DELETE /repurchases/:id', () => {
-    it('should delete repurchase entry', async () => {
+  describe('5. DELETE /admin/repurchase/:id', () => {
+    it('should soft-delete repurchase entry before commission generation', async () => {
       const res = await controller.remove(mockRepurchaseEntry.id, mockAdminUser.id);
 
-      expect(res.message).toContain('deleted successfully');
+      expect(res.message).toContain('soft-deleted successfully');
     });
   });
 });

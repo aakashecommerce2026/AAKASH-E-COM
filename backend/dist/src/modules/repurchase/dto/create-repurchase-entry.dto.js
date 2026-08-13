@@ -27,7 +27,7 @@ __decorate([
         example: 'REP-2026-00001',
         description: 'Unique Transaction Reference Code',
     }),
-    (0, class_transformer_1.Transform)(({ obj, value }) => value || obj.transaction_ref),
+    (0, class_transformer_1.Transform)(({ obj, value }) => value || obj?.transaction_ref || obj?.transactionRef),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
@@ -35,10 +35,10 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiProperty)({
         example: 'a1b2c3d4-e5f6-7890-abcd-1234567890ab',
-        description: 'Member UUID',
+        description: 'Member UUID or Member Code (e.g. AK10001)',
     }),
-    (0, class_transformer_1.Transform)(({ obj, value }) => value || obj.member_id),
-    (0, class_validator_1.IsUUID)(),
+    (0, class_transformer_1.Transform)(({ obj, value }) => value || obj?.member_id || obj?.memberId),
+    (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateRepurchaseEntryDto.prototype, "memberId", void 0);
@@ -54,7 +54,7 @@ __decorate([
         example: '2026-08-06T12:00:00.000Z',
         description: 'Transaction Date',
     }),
-    (0, class_transformer_1.Transform)(({ obj, value }) => value || obj.transaction_date),
+    (0, class_transformer_1.Transform)(({ obj, value }) => value || obj?.transaction_date || obj?.transactionDate),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
@@ -74,7 +74,7 @@ __decorate([
         description: 'User/Admin UUID who recorded entry',
     }),
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateRepurchaseEntryDto.prototype, "createdBy", void 0);
 //# sourceMappingURL=create-repurchase-entry.dto.js.map
