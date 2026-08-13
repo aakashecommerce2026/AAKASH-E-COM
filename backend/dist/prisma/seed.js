@@ -34,56 +34,54 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.seedMembershipCommissionConfig = seedMembershipCommissionConfig;
+exports.seedRepurchaseCommissionConfig = seedRepurchaseCommissionConfig;
 const client_1 = require("@prisma/client");
 const bcrypt = __importStar(require("bcrypt"));
 const prisma = new client_1.PrismaClient();
 async function main() {
-    console.log('🌱 Starting database seed...');
+    console.log('🌱 Seeding database...');
     const adminEmail = 'admin@aakashecom.com';
-    const adminMobile = '9999999999';
-    const adminCode = 'ADM-0001';
+    const adminMobile = '+919876543210';
+    const rawPassword = 'Admin@123456Password';
+    const hashedPassword = await bcrypt.hash(rawPassword, 10);
     const existingAdmin = await prisma.member.findFirst({
         where: {
-            OR: [
-                { email: adminEmail },
-                { mobile: adminMobile },
-                { memberCode: adminCode },
-            ],
+            OR: [{ email: adminEmail }, { mobile: adminMobile }, { role: client_1.MemberRole.ADMIN }],
         },
     });
+    let admin;
     if (existingAdmin) {
-        console.log(`ℹ️ Admin user already exists: ${existingAdmin.email} (${existingAdmin.memberCode})`);
-        return;
+        console.log('ℹ️ Admin user already exists:', existingAdmin.memberCode);
+        admin = existingAdmin;
     }
-    const rawPassword = 'Admin@123';
-    const saltRounds = 10;
-    const passwordHash = await bcrypt.hash(rawPassword, saltRounds);
-    const admin = await prisma.member.create({
-        data: {
-            memberCode: adminCode,
-            name: 'Super Admin',
-            mobile: adminMobile,
-            email: adminEmail,
-            address: 'Corporate Headquarters, AAKASH E-COM',
-            role: client_1.MemberRole.ADMIN,
-            status: client_1.MemberStatus.ACTIVE,
-            passwordHash: passwordHash,
-            upiId: 'admin@upi',
-            bankDetails: {
-                bankName: 'HDFC Bank',
-                accountNumber: '50100234567890',
-                ifscCode: 'HDFC0001234',
-                branch: 'Main Branch',
+    else {
+        admin = await prisma.member.create({
+            data: {
+                memberCode: 'AK100000',
+                name: 'System Administrator',
+                email: adminEmail,
+                mobile: adminMobile,
+                passwordHash: hashedPassword,
+                role: client_1.MemberRole.ADMIN,
+                status: client_1.MemberStatus.ACTIVE,
+                bankDetails: {
+                    accountName: 'System Administrator',
+                    accountNumber: '999900001111',
+                    ifscCode: 'SBIN0001234',
+                    bankName: 'State Bank of India',
+                    branch: 'Main Branch',
+                },
             },
-        },
-    });
-    console.log('✅ Initial Admin user created successfully!');
-    console.log(`   - Member Code: ${admin.memberCode}`);
-    console.log(`   - Email:       ${admin.email}`);
-    console.log(`   - Mobile:      ${admin.mobile}`);
-    console.log(`   - Password:    ${rawPassword}`);
-    console.log(`   - Role:        ${admin.role}`);
+        });
+        console.log('✅ Initial Admin user created successfully!');
+        console.log(`   - Member Code: ${admin.memberCode}`);
+        console.log(`   - Email:       ${admin.email}`);
+        console.log(`   - Mobile:      ${admin.mobile}`);
+        console.log(`   - Password:    ${rawPassword}`);
+        console.log(`   - Role:        ${admin.role}`);
+    }
     await seedMembershipCommissionConfig(prisma);
+    await seedRepurchaseCommissionConfig(prisma);
 }
 async function seedMembershipCommissionConfig(prismaClient) {
     const version = 1;
@@ -117,6 +115,43 @@ async function seedMembershipCommissionConfig(prismaClient) {
         })),
     });
     console.log(`✅ Seeded Version ${version} 20-Level Membership Commission Config (10%, 5%, 2.5%...0.5%)`);
+}
+async function seedRepurchaseCommissionConfig(prismaClient) {
+    const version = 1;
+    const existingConfig = await prismaClient.repurchaseCommissionConfig.findFirst({
+        where: { version },
+    });
+    if (existingConfig) {
+        console.log(`ℹ️ Version ${version} Repurchase Commission Config already seeded.`);
+        return;
+    }
+    const defaultRates = [
+        { level: 1, percentage: 1.50, description: 'Level 1 Repurchase Commission' },
+        { level: 2, percentage: 0.75, description: 'Level 2 Repurchase Commission' },
+        { level: 3, percentage: 0.45, description: 'Level 3 Repurchase Commission' },
+        { level: 4, percentage: 0.30, description: 'Level 4 Repurchase Commission' },
+        { level: 5, percentage: 0.20, description: 'Level 5 Repurchase Commission' },
+        ...Array.from({ length: 10 }, (_, i) => ({
+            level: i + 6,
+            percentage: 0.15,
+            description: `Level ${i + 6} Repurchase Commission`,
+        })),
+        { level: 16, percentage: 0.07, description: 'Level 16 Repurchase Commission' },
+        { level: 17, percentage: 0.06, description: 'Level 17 Repurchase Commission' },
+        { level: 18, percentage: 0.06, description: 'Level 18 Repurchase Commission' },
+        { level: 19, percentage: 0.06, description: 'Level 19 Repurchase Commission' },
+        { level: 20, percentage: 0.05, description: 'Level 20 Repurchase Commission' },
+    ];
+    await prismaClient.repurchaseCommissionConfig.createMany({
+        data: defaultRates.map((r) => ({
+            version,
+            level: r.level,
+            percentage: r.percentage,
+            isActive: true,
+            description: r.description,
+        })),
+    });
+    console.log(`✅ Seeded Version ${version} 20-Level Repurchase Commission Config (1.50%, 0.75%...0.05% = 5.00%)`);
 }
 main()
     .catch((e) => {

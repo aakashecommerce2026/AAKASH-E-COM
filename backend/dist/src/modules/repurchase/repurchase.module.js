@@ -10,6 +10,7 @@ exports.RepurchaseModule = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_module_1 = require("../../prisma/prisma.module");
 const audit_module_1 = require("../audit/audit.module");
+const repurchase_commission_module_1 = require("../repurchase-commission/repurchase-commission.module");
 const repurchase_service_1 = require("./repurchase.service");
 const repurchase_controller_1 = require("./repurchase.controller");
 let RepurchaseModule = class RepurchaseModule {
@@ -17,7 +18,7 @@ let RepurchaseModule = class RepurchaseModule {
 exports.RepurchaseModule = RepurchaseModule;
 exports.RepurchaseModule = RepurchaseModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule, audit_module_1.AuditModule],
+        imports: [prisma_module_1.PrismaModule, audit_module_1.AuditModule, repurchase_commission_module_1.RepurchaseCommissionModule],
         controllers: [repurchase_controller_1.AdminRepurchaseController],
         providers: [repurchase_service_1.RepurchaseService],
         exports: [repurchase_service_1.RepurchaseService],

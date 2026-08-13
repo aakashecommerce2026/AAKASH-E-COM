@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { RepurchaseCommissionService } from '../repurchase-commission/repurchase-commission.service';
 import { CreateRepurchaseEntryDto } from './dto/create-repurchase-entry.dto';
 import { UpdateRepurchaseEntryDto } from './dto/update-repurchase-entry.dto';
 import { QueryRepurchaseEntryDto } from './dto/query-repurchase-entry.dto';
@@ -16,6 +17,7 @@ export class RepurchaseService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
+    private readonly repurchaseCommissionService: RepurchaseCommissionService,
   ) {}
 
   /**
@@ -29,86 +31,92 @@ export class RepurchaseService {
   }
 
   /**
-   * Creates an in-store repurchase entry.
+   * Creates an in-store repurchase entry and triggers atomic commission calculation.
    * Validates:
    * 1. transactionRef is unique (enforced at service level + DB level P2002 error mapping).
    * 2. memberId / memberCode exists and is ACTIVE.
-   * 3. Logs CREATE_REPURCHASE_ENTRY action to activity_logs.
+   * 3. Calculates 20-level repurchase commissions atomically in DB transaction.
+   * 4. Logs CREATE_REPURCHASE_ENTRY action to activity_logs.
    */
   async create(dto: CreateRepurchaseEntryDto, actorId?: string, actorRole?: MemberRole) {
     const { transactionRef, memberId, amount, transactionDate, remarks, createdBy } = dto;
 
-    // 1. Transaction reference uniqueness check
-    const existingRef = await (this.prisma as any).repurchaseEntry.findFirst({
-      where: { transactionRef, deletedAt: null },
-    });
-
-    if (existingRef) {
-      throw new ConflictException(`Transaction reference '${transactionRef}' already exists`);
-    }
-
-    // 2. Member existence & ACTIVE status check (supports UUID or memberCode lookup)
-    const member = await this.prisma.member.findFirst({
-      where: {
-        OR: [
-          { id: memberId },
-          { memberCode: memberId },
-        ],
-      },
-    });
-
-    if (!member) {
-      throw new NotFoundException(`Member '${memberId}' does not exist`);
-    }
-
-    if (member.status !== MemberStatus.ACTIVE) {
-      throw new BadRequestException(
-        `Member '${member.name}' (${member.memberCode}) is not active (current status: ${member.status})`,
-      );
-    }
-
-    const creatorId = actorId || createdBy || null;
-
-    // 3. Create entry in DB using verified member.id (with DB-level P2002 error handling)
-    let entry: any;
-    try {
-      entry = await this.prisma.repurchaseEntry.create({
-        data: {
-          transactionRef,
-          memberId: member.id,
-          amount: new Prisma.Decimal(amount),
-          transactionDate: transactionDate ? new Date(transactionDate) : new Date(),
-          remarks: remarks || null,
-          createdBy: creatorId,
-        },
-        include: {
-          member: {
-            select: { id: true, memberCode: true, name: true, mobile: true, status: true },
-          },
-        },
+    return this.prisma.$transaction(async (tx: any) => {
+      // 1. Transaction reference uniqueness check
+      const existingRef = await tx.repurchaseEntry.findFirst({
+        where: { transactionRef, deletedAt: null },
       });
-    } catch (error: any) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+
+      if (existingRef) {
         throw new ConflictException(`Transaction reference '${transactionRef}' already exists`);
       }
-      throw error;
-    }
 
-    // 4. Log audit action
-    await this.auditService.logAction({
-      actorId: creatorId,
-      actorRole: actorRole || MemberRole.ADMIN,
-      actionType: 'CREATE_REPURCHASE_ENTRY',
-      entityType: 'RepurchaseEntry',
-      entityId: entry.id,
-      metadata: {
-        transactionRef: entry.transactionRef,
-        memberId: entry.memberId,
-        amount: Number(entry.amount),
-      },
+      // 2. Member existence & ACTIVE status check (supports UUID or memberCode lookup)
+      const member = await tx.member.findFirst({
+        where: {
+          OR: [
+            { id: memberId },
+            { memberCode: memberId },
+          ],
+        },
+      });
+
+      if (!member) {
+        throw new NotFoundException(`Member '${memberId}' does not exist`);
+      }
+
+      if (member.status !== MemberStatus.ACTIVE) {
+        throw new BadRequestException(
+          `Member '${member.name}' (${member.memberCode}) is not active (current status: ${member.status})`,
+        );
+      }
+
+      const creatorId = actorId || createdBy || null;
+
+      // 3. Create entry in DB using verified member.id (with DB-level P2002 error handling)
+      let entry: any;
+      try {
+        entry = await tx.repurchaseEntry.create({
+          data: {
+            transactionRef,
+            memberId: member.id,
+            amount: new Prisma.Decimal(amount),
+            transactionDate: transactionDate ? new Date(transactionDate) : new Date(),
+            remarks: remarks || null,
+            createdBy: creatorId,
+          },
+          include: {
+            member: {
+              select: { id: true, memberCode: true, name: true, mobile: true, status: true },
+            },
+          },
+        });
+      } catch (error: any) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+          throw new ConflictException(`Transaction reference '${transactionRef}' already exists`);
+        }
+        throw error;
+      }
+
+      // 4. Calculate 20-level repurchase commissions atomically within transaction
+      await this.repurchaseCommissionService.calculateForEntry(entry.id, tx);
+
+      // 5. Log audit action
+      await this.auditService.logAction({
+        actorId: creatorId,
+        actorRole: actorRole || MemberRole.ADMIN,
+        actionType: 'CREATE_REPURCHASE_ENTRY',
+        entityType: 'RepurchaseEntry',
+        entityId: entry.id,
+        metadata: {
+          transactionRef: entry.transactionRef,
+          memberId: entry.memberId,
+          amount: Number(entry.amount),
+        },
+      });
+
+      return this.mapToResponseDto(entry);
     });
-
-    return this.mapToResponseDto(entry);
   }
 
   /**

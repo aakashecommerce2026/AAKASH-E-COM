@@ -3,12 +3,14 @@ import { BadRequestException, ConflictException, NotFoundException } from '@nest
 import { RepurchaseService } from './repurchase.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { RepurchaseCommissionService } from '../repurchase-commission/repurchase-commission.service';
 import { MemberRole, MemberStatus, Prisma } from '@prisma/client';
 
 describe('RepurchaseService Unit Tests & Rules Verification', () => {
   let service: RepurchaseService;
   let prisma: any;
   let auditService: any;
+  let repurchaseCommissionService: any;
 
   const mockActiveMember = {
     id: 'active-member-uuid-1',
@@ -58,10 +60,15 @@ describe('RepurchaseService Unit Tests & Rules Verification', () => {
         findUnique: jest.fn(),
         findFirst: jest.fn(),
       },
+      $transaction: jest.fn((cb) => cb(prisma)),
     };
 
     auditService = {
       logAction: jest.fn().mockResolvedValue({ id: 'audit-log-1' }),
+    };
+
+    repurchaseCommissionService = {
+      calculateForEntry: jest.fn().mockResolvedValue([]),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -69,6 +76,7 @@ describe('RepurchaseService Unit Tests & Rules Verification', () => {
         RepurchaseService,
         { provide: PrismaService, useValue: prisma },
         { provide: AuditService, useValue: auditService },
+        { provide: RepurchaseCommissionService, useValue: repurchaseCommissionService },
       ],
     }).compile();
 
@@ -80,7 +88,7 @@ describe('RepurchaseService Unit Tests & Rules Verification', () => {
   });
 
   describe('1. create (POST /admin/repurchase) & DB Uniqueness', () => {
-    it('should create repurchase entry and log CREATE_REPURCHASE_ENTRY to activity_logs', async () => {
+    it('should create repurchase entry, trigger calculateForEntry, and log CREATE_REPURCHASE_ENTRY', async () => {
       prisma.repurchaseEntry.findFirst.mockResolvedValue(null);
       prisma.member.findFirst.mockResolvedValue(mockActiveMember);
       prisma.repurchaseEntry.create.mockResolvedValue(mockRepurchaseEntry);
@@ -97,6 +105,10 @@ describe('RepurchaseService Unit Tests & Rules Verification', () => {
       );
 
       expect(result.id).toEqual(mockRepurchaseEntry.id);
+      expect(repurchaseCommissionService.calculateForEntry).toHaveBeenCalledWith(
+        mockRepurchaseEntry.id,
+        expect.anything(),
+      );
       expect(auditService.logAction).toHaveBeenCalledWith(
         expect.objectContaining({
           actionType: 'CREATE_REPURCHASE_ENTRY',

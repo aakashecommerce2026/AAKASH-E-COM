@@ -3,6 +3,7 @@ import { AdminRepurchaseController } from './repurchase.controller';
 import { RepurchaseService } from './repurchase.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { RepurchaseCommissionService } from '../repurchase-commission/repurchase-commission.service';
 import { MemberRole, MemberStatus } from '@prisma/client';
 
 describe('Admin In-Store Repurchase Core Endpoints Integration Test Suite', () => {
@@ -63,10 +64,15 @@ describe('Admin In-Store Repurchase Core Endpoints Integration Test Suite', () =
           return mockActiveMember;
         }),
       },
+      $transaction: jest.fn((cb) => cb(prisma)),
     };
 
     const auditService = {
       logAction: jest.fn().mockResolvedValue({ id: 'log-1' }),
+    };
+
+    const repurchaseCommissionService = {
+      calculateForEntry: jest.fn().mockResolvedValue([]),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -75,6 +81,7 @@ describe('Admin In-Store Repurchase Core Endpoints Integration Test Suite', () =
         RepurchaseService,
         { provide: PrismaService, useValue: prisma },
         { provide: AuditService, useValue: auditService },
+        { provide: RepurchaseCommissionService, useValue: repurchaseCommissionService },
       ],
     }).compile();
 
@@ -97,6 +104,7 @@ describe('Admin In-Store Repurchase Core Endpoints Integration Test Suite', () =
           remarks: 'Store purchase',
         },
         mockAdminUser.id,
+        mockAdminUser.role,
       );
 
       expect(res.id).toBe(mockRepurchaseEntry.id);
@@ -127,6 +135,7 @@ describe('Admin In-Store Repurchase Core Endpoints Integration Test Suite', () =
         mockRepurchaseEntry.id,
         { amount: 3000 },
         mockAdminUser.id,
+        mockAdminUser.role,
       );
 
       expect(res.amount).toBe(3000);
@@ -135,7 +144,7 @@ describe('Admin In-Store Repurchase Core Endpoints Integration Test Suite', () =
 
   describe('5. DELETE /admin/repurchase/:id', () => {
     it('should soft-delete repurchase entry before commission generation', async () => {
-      const res = await controller.remove(mockRepurchaseEntry.id, mockAdminUser.id);
+      const res = await controller.remove(mockRepurchaseEntry.id, mockAdminUser.id, mockAdminUser.role);
 
       expect(res.message).toContain('soft-deleted successfully');
     });
