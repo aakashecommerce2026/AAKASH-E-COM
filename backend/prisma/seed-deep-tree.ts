@@ -1,5 +1,6 @@
 import { PrismaClient, MemberRole, MemberStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { seedMembershipCommissionConfig } from './seed';
 
 const prisma = new PrismaClient();
 
@@ -90,6 +91,8 @@ async function main() {
   }
 
   const totalMembers = await prisma.member.count();
+
+  await seedMembershipCommissionConfig(prisma);
 
   console.log(`✅ Deep referral tree seeded successfully!`);
   console.log(`   - Deepest Level Created: Level 22`);

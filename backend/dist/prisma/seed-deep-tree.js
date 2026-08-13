@@ -35,6 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const client_1 = require("@prisma/client");
 const bcrypt = __importStar(require("bcrypt"));
+const seed_1 = require("./seed");
 const prisma = new client_1.PrismaClient();
 async function main() {
     console.log('🌱 Starting deep referral tree seed script (22+ levels)...');
@@ -111,6 +112,7 @@ async function main() {
         }
     }
     const totalMembers = await prisma.member.count();
+    await (0, seed_1.seedMembershipCommissionConfig)(prisma);
     console.log(`✅ Deep referral tree seeded successfully!`);
     console.log(`   - Deepest Level Created: Level 22`);
     console.log(`   - Total Members in Database: ${totalMembers}`);

@@ -48,13 +48,16 @@ const bcrypt = __importStar(require("bcrypt"));
 const prisma_service_1 = require("../../prisma/prisma.service");
 const audit_service_1 = require("../audit/audit.service");
 const client_1 = require("@prisma/client");
+const membership_commission_service_1 = require("../membership-commission/membership-commission.service");
 let MembersService = class MembersService {
     prisma;
     auditService;
+    membershipCommissionService;
     BCRYPT_SALT_ROUNDS = 12;
-    constructor(prisma, auditService) {
+    constructor(prisma, auditService, membershipCommissionService) {
         this.prisma = prisma;
         this.auditService = auditService;
+        this.membershipCommissionService = membershipCommissionService;
     }
     async generateMemberCode() {
         const count = await this.prisma.member.count();
@@ -141,6 +144,12 @@ let MembersService = class MembersService {
                 bankDetails: bankDetails ? JSON.parse(JSON.stringify(bankDetails)) : undefined,
             },
         });
+        try {
+            await this.membershipCommissionService.processRegistrationCommissions(createdMember.id);
+        }
+        catch (err) {
+            console.error(`Failed to process registration commission for member ${createdMember.id}:`, err);
+        }
         await this.auditService.logAction({
             actorId: actorId || createdMember.id,
             actorRole: actorRole || createdMember.role,
@@ -462,6 +471,7 @@ exports.MembersService = MembersService;
 exports.MembersService = MembersService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        audit_service_1.AuditService])
+        audit_service_1.AuditService,
+        membership_commission_service_1.MembershipCommissionService])
 ], MembersService);
 //# sourceMappingURL=members.service.js.map

@@ -13,12 +13,13 @@ const members_controller_1 = require("./members.controller");
 const admin_members_controller_1 = require("./admin-members.controller");
 const prisma_module_1 = require("../../prisma/prisma.module");
 const audit_module_1 = require("../audit/audit.module");
+const membership_commission_module_1 = require("../membership-commission/membership-commission.module");
 let MembersModule = class MembersModule {
 };
 exports.MembersModule = MembersModule;
 exports.MembersModule = MembersModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule, audit_module_1.AuditModule],
+        imports: [prisma_module_1.PrismaModule, audit_module_1.AuditModule, membership_commission_module_1.MembershipCommissionModule],
         controllers: [members_controller_1.MembersController, admin_members_controller_1.AdminMembersController],
         providers: [members_service_1.MembersService],
         exports: [members_service_1.MembersService],

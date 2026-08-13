@@ -3,6 +3,7 @@ import { BadRequestException, ConflictException, NotFoundException } from '@nest
 import { MembersService } from './members.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { MembershipCommissionService } from '../membership-commission/membership-commission.service';
 import { MemberRole, MemberStatus } from '@prisma/client';
 
 describe('Admin Members Integration Test Suite', () => {
@@ -62,11 +63,16 @@ describe('Admin Members Integration Test Suite', () => {
       logAction: jest.fn().mockResolvedValue({ id: 'log-uuid-1' }),
     };
 
+    const mockMembershipCommissionService = {
+      processRegistrationCommissions: jest.fn().mockResolvedValue([]),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MembersService,
         { provide: PrismaService, useValue: prisma },
         { provide: AuditService, useValue: auditService },
+        { provide: MembershipCommissionService, useValue: mockMembershipCommissionService },
       ],
     }).compile();
 

@@ -308,3 +308,20 @@ model ActivityLog {
   @@map("activity_logs")
 }
 
+/// Membership Commission Level Configuration Table: Stores versioned 20-level percentage table
+model MembershipCommissionConfig {
+  id          String   @id @default(uuid())
+  version     Int      @default(1)
+  level       Int
+  percentage  Decimal  @db.Decimal(5, 2)
+  isActive    Boolean  @default(true) @map("is_active")
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([version, level])
+  @@index([version, isActive])
+  @@index([level])
+  @@map("membership_commission_configs")
+}
+

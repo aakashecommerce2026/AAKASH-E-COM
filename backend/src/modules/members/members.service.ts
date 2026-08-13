@@ -14,6 +14,7 @@ import { QueryMembersDto } from './dto/query-members.dto';
 import { ReassignReferrerDto } from './dto/reassign-referrer.dto';
 import { MemberResponseDto } from './dto/member-response.dto';
 import { MemberRole, MemberStatus, Prisma } from '@prisma/client';
+import { MembershipCommissionService } from '../membership-commission/membership-commission.service';
 
 @Injectable()
 export class MembersService {
@@ -22,6 +23,7 @@ export class MembersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
+    private readonly membershipCommissionService: MembershipCommissionService,
   ) {}
 
   /**
@@ -150,6 +152,14 @@ export class MembersService {
         bankDetails: bankDetails ? JSON.parse(JSON.stringify(bankDetails)) : undefined,
       },
     });
+
+    // Trigger-on-registration 20-level commission engine
+    try {
+      await this.membershipCommissionService.processRegistrationCommissions(createdMember.id);
+    } catch (err) {
+      // Log commission calculation warning if any error occurs to avoid crashing registration flow
+      console.error(`Failed to process registration commission for member ${createdMember.id}:`, err);
+    }
 
     // Log action to activity_logs
     await this.auditService.logAction({

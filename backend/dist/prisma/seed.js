@@ -33,6 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.seedMembershipCommissionConfig = seedMembershipCommissionConfig;
 const client_1 = require("@prisma/client");
 const bcrypt = __importStar(require("bcrypt"));
 const prisma = new client_1.PrismaClient();
@@ -82,6 +83,40 @@ async function main() {
     console.log(`   - Mobile:      ${admin.mobile}`);
     console.log(`   - Password:    ${rawPassword}`);
     console.log(`   - Role:        ${admin.role}`);
+    await seedMembershipCommissionConfig(prisma);
+}
+async function seedMembershipCommissionConfig(prismaClient) {
+    const version = 1;
+    const existingConfig = await prismaClient.membershipCommissionConfig.findFirst({
+        where: { version },
+    });
+    if (existingConfig) {
+        console.log(`ℹ️ Version ${version} Membership Commission Config already seeded.`);
+        return;
+    }
+    const defaultRates = [
+        { level: 1, percentage: 10.0, description: 'Level 1 Sponsor Commission' },
+        { level: 2, percentage: 5.0, description: 'Level 2 Direct Upline Commission' },
+        { level: 3, percentage: 2.5, description: 'Level 3 Upline Commission' },
+        { level: 4, percentage: 1.5, description: 'Level 4 Upline Commission' },
+        { level: 5, percentage: 1.0, description: 'Level 5 Upline Commission' },
+        { level: 6, percentage: 0.75, description: 'Level 6 Upline Commission' },
+        ...Array.from({ length: 14 }, (_, i) => ({
+            level: i + 7,
+            percentage: 0.5,
+            description: `Level ${i + 7} Upline Commission`,
+        })),
+    ];
+    await prismaClient.membershipCommissionConfig.createMany({
+        data: defaultRates.map((r) => ({
+            version,
+            level: r.level,
+            percentage: r.percentage,
+            isActive: true,
+            description: r.description,
+        })),
+    });
+    console.log(`✅ Seeded Version ${version} 20-Level Membership Commission Config (10%, 5%, 2.5%...0.5%)`);
 }
 main()
     .catch((e) => {
