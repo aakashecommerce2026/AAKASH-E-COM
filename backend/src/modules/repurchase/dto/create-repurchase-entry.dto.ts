@@ -8,13 +8,14 @@ import {
   IsUUID,
   Min,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 
 export class CreateRepurchaseEntryDto {
   @ApiProperty({
     example: 'REP-2026-00001',
     description: 'Unique Transaction Reference Code',
   })
+  @Transform(({ obj, value }) => value || obj.transaction_ref)
   @IsString()
   @IsNotEmpty()
   transactionRef!: string;
@@ -23,11 +24,12 @@ export class CreateRepurchaseEntryDto {
     example: 'a1b2c3d4-e5f6-7890-abcd-1234567890ab',
     description: 'Member UUID',
   })
+  @Transform(({ obj, value }) => value || obj.member_id)
   @IsUUID()
   @IsNotEmpty()
   memberId!: string;
 
-  @ApiProperty({ example: 1500.5, description: 'Repurchase Purchase Amount' })
+  @ApiProperty({ example: 1500.5, description: 'Repurchase Purchase Amount (must be > 0)' })
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0.01)
@@ -37,6 +39,7 @@ export class CreateRepurchaseEntryDto {
     example: '2026-08-06T12:00:00.000Z',
     description: 'Transaction Date',
   })
+  @Transform(({ obj, value }) => value || obj.transaction_date)
   @IsOptional()
   @IsDateString()
   transactionDate?: string;

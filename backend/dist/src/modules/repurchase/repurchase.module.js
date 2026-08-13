@@ -8,10 +8,19 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RepurchaseModule = void 0;
 const common_1 = require("@nestjs/common");
+const prisma_module_1 = require("../../prisma/prisma.module");
+const audit_module_1 = require("../audit/audit.module");
+const repurchase_service_1 = require("./repurchase.service");
+const repurchase_controller_1 = require("./repurchase.controller");
 let RepurchaseModule = class RepurchaseModule {
 };
 exports.RepurchaseModule = RepurchaseModule;
 exports.RepurchaseModule = RepurchaseModule = __decorate([
-    (0, common_1.Module)({})
+    (0, common_1.Module)({
+        imports: [prisma_module_1.PrismaModule, audit_module_1.AuditModule],
+        controllers: [repurchase_controller_1.RepurchaseController],
+        providers: [repurchase_service_1.RepurchaseService],
+        exports: [repurchase_service_1.RepurchaseService],
+    })
 ], RepurchaseModule);
 //# sourceMappingURL=repurchase.module.js.map

@@ -14,7 +14,7 @@ export declare class MembershipCommissionService {
     private readonly auditService;
     private readonly logger;
     constructor(prisma: PrismaService, auditService: AuditService);
-    getActiveConfig(version?: number): Promise<MembershipCommissionConfigResponseDto[]>;
+    getActiveConfig(version?: number, txClient?: Prisma.TransactionClient): Promise<MembershipCommissionConfigResponseDto[]>;
     publishConfigVersion(dto: CreateCommissionConfigDto, actorId?: string): Promise<MembershipCommissionConfigResponseDto[]>;
     calculateForNewMember(memberId: string, joiningFee?: number, txClient?: Prisma.TransactionClient): Promise<MembershipCommissionResponseDto[]>;
     processRegistrationCommissions(sourceMemberId: string, packageAmount?: number, txClient?: Prisma.TransactionClient): Promise<MembershipCommissionResponseDto[]>;

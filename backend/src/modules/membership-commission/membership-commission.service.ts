@@ -40,11 +40,15 @@ export class MembershipCommissionService {
   /**
    * Retrieves active or specified version of the 20-level membership commission rates schedule.
    */
-  async getActiveConfig(version?: number): Promise<MembershipCommissionConfigResponseDto[]> {
+  async getActiveConfig(
+    version?: number,
+    txClient?: Prisma.TransactionClient,
+  ): Promise<MembershipCommissionConfigResponseDto[]> {
+    const db: any = txClient || this.prisma;
     let targetVersion = version;
 
     if (!targetVersion) {
-      const latestActive = await (this.prisma as any).membershipCommissionConfig.findFirst({
+      const latestActive = await db.membershipCommissionConfig.findFirst({
         where: { isActive: true },
         orderBy: { version: 'desc' },
         select: { version: true },
@@ -56,7 +60,7 @@ export class MembershipCommissionService {
     }
 
     if (targetVersion) {
-      const configs = await (this.prisma as any).membershipCommissionConfig.findMany({
+      const configs = await db.membershipCommissionConfig.findMany({
         where: { version: targetVersion },
         orderBy: { level: 'asc' },
       });
@@ -207,7 +211,7 @@ export class MembershipCommissionService {
     }
 
     // 3. Fetch active 20-level percentage schedule
-    const activeConfigs = await this.getActiveConfig();
+    const activeConfigs = await this.getActiveConfig(undefined, txClient);
     const rateMap = new Map<number, number>();
     activeConfigs.forEach((c) => {
       rateMap.set(c.level, Number(c.percentage));

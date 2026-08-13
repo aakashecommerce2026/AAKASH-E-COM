@@ -36,10 +36,11 @@ let MembershipCommissionService = MembershipCommissionService_1 = class Membersh
         this.prisma = prisma;
         this.auditService = auditService;
     }
-    async getActiveConfig(version) {
+    async getActiveConfig(version, txClient) {
+        const db = txClient || this.prisma;
         let targetVersion = version;
         if (!targetVersion) {
-            const latestActive = await this.prisma.membershipCommissionConfig.findFirst({
+            const latestActive = await db.membershipCommissionConfig.findFirst({
                 where: { isActive: true },
                 orderBy: { version: 'desc' },
                 select: { version: true },
@@ -49,7 +50,7 @@ let MembershipCommissionService = MembershipCommissionService_1 = class Membersh
             }
         }
         if (targetVersion) {
-            const configs = await this.prisma.membershipCommissionConfig.findMany({
+            const configs = await db.membershipCommissionConfig.findMany({
                 where: { version: targetVersion },
                 orderBy: { level: 'asc' },
             });
@@ -158,7 +159,7 @@ let MembershipCommissionService = MembershipCommissionService_1 = class Membersh
             this.logger.log(`Member '${sourceMember.memberCode}' (${memberId}) has no referrer (Root/Direct). No upline commissions generated.`);
             return [];
         }
-        const activeConfigs = await this.getActiveConfig();
+        const activeConfigs = await this.getActiveConfig(undefined, txClient);
         const rateMap = new Map();
         activeConfigs.forEach((c) => {
             rateMap.set(c.level, Number(c.percentage));
@@ -172,6 +173,7 @@ let MembershipCommissionService = MembershipCommissionService_1 = class Membersh
               m.id,
               m.member_code AS "memberCode",
               m.referrer_id AS "referrerId",
+              m.status AS status,
               1 AS level
             FROM members target_m
             INNER JOIN members m ON target_m.referrer_id = m.id
@@ -183,18 +185,20 @@ let MembershipCommissionService = MembershipCommissionService_1 = class Membersh
               m.id,
               m.member_code AS "memberCode",
               m.referrer_id AS "referrerId",
+              m.status AS status,
               u.level + 1 AS level
             FROM members m
             INNER JOIN upline u ON m.id = u."referrerId"
             WHERE u.level < 20
           )
-          SELECT id, "memberCode", "referrerId", level FROM upline ORDER BY level ASC LIMIT 20;
+          SELECT id, "memberCode", "referrerId", status, level FROM upline ORDER BY level ASC LIMIT 20;
         `);
                 if (Array.isArray(rawNodes) && rawNodes.length > 0) {
                     uplineNodes = rawNodes.map((node) => ({
                         id: node.id,
                         memberCode: node.memberCode,
                         referrerId: node.referrerId,
+                        status: node.status,
                         level: Number(node.level),
                     }));
                 }
@@ -215,7 +219,7 @@ let MembershipCommissionService = MembershipCommissionService_1 = class Membersh
                 visited.add(currentRefId);
                 const parent = await db.member.findUnique({
                     where: { id: currentRefId },
-                    select: { id: true, referrerId: true, memberCode: true },
+                    select: { id: true, referrerId: true, memberCode: true, status: true },
                 });
                 if (!parent)
                     break;
@@ -223,6 +227,7 @@ let MembershipCommissionService = MembershipCommissionService_1 = class Membersh
                     id: parent.id,
                     memberCode: parent.memberCode,
                     referrerId: parent.referrerId,
+                    status: parent.status,
                     level: lvl,
                 });
                 currentRefId = parent.referrerId;
@@ -236,6 +241,9 @@ let MembershipCommissionService = MembershipCommissionService_1 = class Membersh
             const ratePercentage = rateMap.get(node.level) ?? 0;
             if (ratePercentage > 0) {
                 const commissionAmount = (joiningFee * ratePercentage) / 100;
+                const ledgerStatus = !node.status || node.status === client_1.MemberStatus.ACTIVE
+                    ? client_1.CommissionStatus.PENDING
+                    : client_1.CommissionStatus.HOLD;
                 const ledger = await db.membershipCommissionLedger.create({
                     data: {
                         sourceMemberId: memberId,
@@ -243,13 +251,13 @@ let MembershipCommissionService = MembershipCommissionService_1 = class Membersh
                         level: node.level,
                         percentage: new client_1.Prisma.Decimal(ratePercentage),
                         amount: new client_1.Prisma.Decimal(commissionAmount),
-                        status: client_1.CommissionStatus.PENDING,
+                        status: ledgerStatus,
                     },
                 });
                 generatedLedgers.push(ledger);
             }
         }
-        this.logger.log(`Successfully generated ${generatedLedgers.length} PENDING commission ledger entries for newly registered member '${sourceMember.memberCode}' (${memberId}).`);
+        this.logger.log(`Successfully generated ${generatedLedgers.length} commission ledger entries for newly registered member '${sourceMember.memberCode}' (${memberId}).`);
         return generatedLedgers.map((l) => this.mapLedgerToDto(l));
     }
     async processRegistrationCommissions(sourceMemberId, packageAmount = 1000, txClient) {
