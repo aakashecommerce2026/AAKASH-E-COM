@@ -12,13 +12,20 @@ const prisma_module_1 = require("../../prisma/prisma.module");
 const reports_service_1 = require("./reports.service");
 const admin_earnings_membership_controller_1 = require("./admin-earnings-membership.controller");
 const member_earnings_membership_controller_1 = require("./member-earnings-membership.controller");
+const admin_earnings_repurchase_controller_1 = require("./admin-earnings-repurchase.controller");
+const member_earnings_repurchase_controller_1 = require("./member-earnings-repurchase.controller");
 let ReportsModule = class ReportsModule {
 };
 exports.ReportsModule = ReportsModule;
 exports.ReportsModule = ReportsModule = __decorate([
     (0, common_1.Module)({
         imports: [prisma_module_1.PrismaModule],
-        controllers: [admin_earnings_membership_controller_1.AdminEarningsMembershipController, member_earnings_membership_controller_1.MemberEarningsMembershipController],
+        controllers: [
+            admin_earnings_membership_controller_1.AdminEarningsMembershipController,
+            member_earnings_membership_controller_1.MemberEarningsMembershipController,
+            admin_earnings_repurchase_controller_1.AdminEarningsRepurchaseController,
+            member_earnings_repurchase_controller_1.MemberEarningsRepurchaseController,
+        ],
         providers: [reports_service_1.ReportsService],
         exports: [reports_service_1.ReportsService],
     })

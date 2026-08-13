@@ -1,13 +1,20 @@
 import { ReportsService } from './reports.service';
-import { QueryAdminMembershipEarningsDto } from './dto/query-admin-membership-earnings.dto';
+import { QueryAdminRepurchaseEarningsDto } from './dto/query-admin-repurchase-earnings.dto';
 import { QueryEarningsAggregationDto } from './dto/query-earnings-aggregation.dto';
 import { QueryMemberWiseEarningsDto } from './dto/query-member-wise-earnings.dto';
-export declare class AdminEarningsMembershipController {
+export declare class AdminEarningsRepurchaseController {
     private readonly reportsService;
     constructor(reportsService: ReportsService);
-    getEarningsList(query: QueryAdminMembershipEarningsDto): Promise<{
+    getAdminRepurchaseEarnings(query: QueryAdminRepurchaseEarningsDto): Promise<{
         data: {
             id: string;
+            repurchaseEntryId: string;
+            repurchaseEntry: {
+                amount: number;
+                id: string;
+                transactionRef: string;
+                transactionDate: Date;
+            } | undefined;
             sourceMemberId: string;
             sourceMember: {
                 id: string;
@@ -44,7 +51,7 @@ export declare class AdminEarningsMembershipController {
             cancelledAmount: number;
         };
     }>;
-    getLevelWiseEarnings(query: QueryEarningsAggregationDto): Promise<{
+    getLevelWiseRepurchaseEarnings(query: QueryEarningsAggregationDto): Promise<{
         level: number;
         totalAmount: number;
         totalCount: number;
@@ -53,7 +60,7 @@ export declare class AdminEarningsMembershipController {
         disbursedAmount: number;
         cancelledAmount: number;
     }[]>;
-    getMemberWiseEarnings(query: QueryMemberWiseEarningsDto): Promise<{
+    getMemberWiseRepurchaseEarnings(query: QueryMemberWiseEarningsDto): Promise<{
         data: {
             member: any;
             totalEarned: number;
