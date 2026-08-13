@@ -62,6 +62,7 @@ describe('MembersService', () => {
       repurchaseCommissionLedger: {
         count: jest.fn().mockResolvedValue(0),
       },
+      $transaction: jest.fn((cb) => cb(prisma)),
     };
 
     auditService = {
@@ -70,6 +71,7 @@ describe('MembersService', () => {
 
     const mockMembershipCommissionService = {
       processRegistrationCommissions: jest.fn().mockResolvedValue([]),
+      calculateForNewMember: jest.fn().mockResolvedValue([]),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -130,6 +132,7 @@ describe('MembersService', () => {
       expect(result.id).toEqual(mockMember.id);
       expect(auditService.logAction).toHaveBeenCalledWith(
         expect.objectContaining({ actionType: 'CREATE_MEMBER' }),
+        expect.anything(),
       );
     });
 

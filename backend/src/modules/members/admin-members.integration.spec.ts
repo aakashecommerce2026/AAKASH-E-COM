@@ -57,6 +57,7 @@ describe('Admin Members Integration Test Suite', () => {
       repurchaseCommissionLedger: {
         count: jest.fn().mockResolvedValue(0),
       },
+      $transaction: jest.fn((cb) => cb(prisma)),
     };
 
     auditService = {
@@ -65,6 +66,7 @@ describe('Admin Members Integration Test Suite', () => {
 
     const mockMembershipCommissionService = {
       processRegistrationCommissions: jest.fn().mockResolvedValue([]),
+      calculateForNewMember: jest.fn().mockResolvedValue([]),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -112,6 +114,7 @@ describe('Admin Members Integration Test Suite', () => {
           entityId: mockMember.id,
           actorId: mockAdminUser.id,
         }),
+        expect.anything(),
       );
     });
 

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { MemberRole } from '@prisma/client';
+import { MemberRole, Prisma } from '@prisma/client';
 
 export interface LogActionParams {
   actorId?: string | null;
@@ -20,9 +20,10 @@ export class AuditService {
   /**
    * Writes an audit entry into activity_logs table.
    */
-  async logAction(params: LogActionParams) {
+  async logAction(params: LogActionParams, txClient?: Prisma.TransactionClient) {
+    const db: any = txClient || this.prisma;
     try {
-      const log = await this.prisma.activityLog.create({
+      const log = await db.activityLog.create({
         data: {
           actorId: params.actorId || null,
           actorRole: params.actorRole || null,

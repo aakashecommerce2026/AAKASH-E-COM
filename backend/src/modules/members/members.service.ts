@@ -142,41 +142,72 @@ export class MembersService {
     // Hash password with 12 salt rounds
     const passwordHash = await bcrypt.hash(password, this.BCRYPT_SALT_ROUNDS);
 
-    const createdMember = await this.prisma.member.create({
-      data: {
-        ...rest,
-        passwordHash,
-        referrerId: referrerId || null,
-        role: role || MemberRole.MEMBER,
-        status: status || MemberStatus.ACTIVE,
-        bankDetails: bankDetails ? JSON.parse(JSON.stringify(bankDetails)) : undefined,
-      },
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Create member record atomically
+      const createdMember = await tx.member.create({
+        data: {
+          ...rest,
+          passwordHash,
+          referrerId: referrerId || null,
+          role: role || MemberRole.MEMBER,
+          status: status || MemberStatus.ACTIVE,
+          bankDetails: bankDetails ? JSON.parse(JSON.stringify(bankDetails)) : undefined,
+        },
+      });
+
+      // 2. Trigger-on-registration 20-level commission engine atomically inside the same transaction
+      const generatedCommissions = await this.membershipCommissionService.calculateForNewMember(
+        createdMember.id,
+        1000,
+        tx,
+      );
+
+      // 3. Log member creation to activity_logs
+      await this.auditService.logAction(
+        {
+          actorId: actorId || createdMember.id,
+          actorRole: actorRole || createdMember.role,
+          actionType: 'CREATE_MEMBER',
+          entityType: 'Member',
+          entityId: createdMember.id,
+          metadata: {
+            memberCode: createdMember.memberCode,
+            name: createdMember.name,
+            referrerId: createdMember.referrerId,
+            role: createdMember.role,
+          },
+        },
+        tx,
+      );
+
+      // 4. Log commission generation event to activity_logs
+      if (generatedCommissions.length > 0) {
+        const totalAmount = generatedCommissions.reduce(
+          (sum, c) => sum + Number(c.amount),
+          0,
+        );
+
+        await this.auditService.logAction(
+          {
+            actorId: actorId || createdMember.id,
+            actorRole: actorRole || createdMember.role,
+            actionType: 'GENERATE_MEMBERSHIP_COMMISSIONS',
+            entityType: 'MembershipCommissionLedger',
+            entityId: createdMember.id,
+            metadata: {
+              sourceMemberId: createdMember.id,
+              memberCode: createdMember.memberCode,
+              commissionsCount: generatedCommissions.length,
+              totalCommissionAmount: totalAmount,
+              beneficiaryCount: generatedCommissions.length,
+            },
+          },
+          tx,
+        );
+      }
+
+      return this.mapToResponseDto(createdMember);
     });
-
-    // Trigger-on-registration 20-level commission engine
-    try {
-      await this.membershipCommissionService.processRegistrationCommissions(createdMember.id);
-    } catch (err) {
-      // Log commission calculation warning if any error occurs to avoid crashing registration flow
-      console.error(`Failed to process registration commission for member ${createdMember.id}:`, err);
-    }
-
-    // Log action to activity_logs
-    await this.auditService.logAction({
-      actorId: actorId || createdMember.id,
-      actorRole: actorRole || createdMember.role,
-      actionType: 'CREATE_MEMBER',
-      entityType: 'Member',
-      entityId: createdMember.id,
-      metadata: {
-        memberCode: createdMember.memberCode,
-        name: createdMember.name,
-        referrerId: createdMember.referrerId,
-        role: createdMember.role,
-      },
-    });
-
-    return this.mapToResponseDto(createdMember);
   }
 
   /**

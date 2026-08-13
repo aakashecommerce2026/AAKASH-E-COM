@@ -19,9 +19,10 @@ let AuditService = AuditService_1 = class AuditService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async logAction(params) {
+    async logAction(params, txClient) {
+        const db = txClient || this.prisma;
         try {
-            const log = await this.prisma.activityLog.create({
+            const log = await db.activityLog.create({
                 data: {
                     actorId: params.actorId || null,
                     actorRole: params.actorRole || null,
