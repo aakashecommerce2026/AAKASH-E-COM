@@ -60,7 +60,7 @@ let MembershipCommissionService = MembershipCommissionService_1 = class Membersh
                 }));
             }
         }
-        return exports.DEFAULT_20_LEVEL_RATES.map((r, index) => ({
+        return exports.DEFAULT_20_LEVEL_RATES.map((r) => ({
             id: `default-v1-lvl-${r.level}`,
             version: 1,
             level: r.level,
@@ -134,28 +134,28 @@ let MembershipCommissionService = MembershipCommissionService_1 = class Membersh
             }));
         });
     }
-    async processRegistrationCommissions(sourceMemberId, packageAmount = 1000, txClient) {
+    async calculateForNewMember(memberId, joiningFee = 1000, txClient) {
         const db = txClient || this.prisma;
         const existingCount = await db.membershipCommissionLedger.count({
-            where: { sourceMemberId },
+            where: { sourceMemberId: memberId },
         });
         if (existingCount > 0) {
-            this.logger.log(`Commissions already calculated for source member '${sourceMemberId}'. Skipping duplicate engine execution.`);
+            this.logger.log(`Commissions already calculated for member '${memberId}'. Skipping duplicate engine execution.`);
             const existingLedgers = await db.membershipCommissionLedger.findMany({
-                where: { sourceMemberId },
+                where: { sourceMemberId: memberId },
                 orderBy: { level: 'asc' },
             });
             return existingLedgers.map((l) => this.mapLedgerToDto(l));
         }
         const sourceMember = await db.member.findUnique({
-            where: { id: sourceMemberId },
+            where: { id: memberId },
             select: { id: true, referrerId: true, memberCode: true, status: true },
         });
         if (!sourceMember) {
-            throw new common_1.NotFoundException(`Source member with ID '${sourceMemberId}' not found`);
+            throw new common_1.NotFoundException(`Member with ID '${memberId}' not found`);
         }
         if (!sourceMember.referrerId) {
-            this.logger.log(`Source member '${sourceMember.memberCode}' (${sourceMemberId}) has no referrer (Root/Direct). No upline commissions generated.`);
+            this.logger.log(`Member '${sourceMember.memberCode}' (${memberId}) has no referrer (Root/Direct). No upline commissions generated.`);
             return [];
         }
         const activeConfigs = await this.getActiveConfig();
@@ -163,43 +163,97 @@ let MembershipCommissionService = MembershipCommissionService_1 = class Membersh
         activeConfigs.forEach((c) => {
             rateMap.set(c.level, Number(c.percentage));
         });
+        let uplineNodes = [];
+        try {
+            if (typeof db.$queryRaw === 'function') {
+                const rawNodes = await db.$queryRaw(client_1.Prisma.sql `
+          WITH RECURSIVE upline AS (
+            SELECT 
+              m.id,
+              m.member_code AS "memberCode",
+              m.referrer_id AS "referrerId",
+              1 AS level
+            FROM members target_m
+            INNER JOIN members m ON target_m.referrer_id = m.id
+            WHERE target_m.id = ${memberId}
+
+            UNION ALL
+
+            SELECT 
+              m.id,
+              m.member_code AS "memberCode",
+              m.referrer_id AS "referrerId",
+              u.level + 1 AS level
+            FROM members m
+            INNER JOIN upline u ON m.id = u."referrerId"
+            WHERE u.level < 20
+          )
+          SELECT id, "memberCode", "referrerId", level FROM upline ORDER BY level ASC LIMIT 20;
+        `);
+                if (Array.isArray(rawNodes) && rawNodes.length > 0) {
+                    uplineNodes = rawNodes.map((node) => ({
+                        id: node.id,
+                        memberCode: node.memberCode,
+                        referrerId: node.referrerId,
+                        level: Number(node.level),
+                    }));
+                }
+            }
+        }
+        catch (error) {
+            this.logger.warn(`CTE query unhandled or mock environment (${error.message}). Using iterative fallback.`);
+        }
+        if (uplineNodes.length === 0) {
+            let currentRefId = sourceMember.referrerId;
+            let lvl = 1;
+            const visited = new Set([memberId]);
+            while (currentRefId && lvl <= 20) {
+                if (visited.has(currentRefId)) {
+                    this.logger.warn(`Cycle detected in referral chain for member '${memberId}' at level ${lvl}. Aborting.`);
+                    break;
+                }
+                visited.add(currentRefId);
+                const parent = await db.member.findUnique({
+                    where: { id: currentRefId },
+                    select: { id: true, referrerId: true, memberCode: true },
+                });
+                if (!parent)
+                    break;
+                uplineNodes.push({
+                    id: parent.id,
+                    memberCode: parent.memberCode,
+                    referrerId: parent.referrerId,
+                    level: lvl,
+                });
+                currentRefId = parent.referrerId;
+                lvl++;
+            }
+        }
         const generatedLedgers = [];
-        let currentReferrerId = sourceMember.referrerId;
-        let currentLevel = 1;
-        const visited = new Set([sourceMemberId]);
-        while (currentReferrerId && currentLevel <= 20) {
-            if (visited.has(currentReferrerId)) {
-                this.logger.warn(`Cycle detected in referral chain for member '${sourceMemberId}' at level ${currentLevel} (Referrer ID: ${currentReferrerId}). Aborting upline traversal.`);
+        for (const node of uplineNodes) {
+            if (node.level > 20)
                 break;
-            }
-            visited.add(currentReferrerId);
-            const beneficiary = await db.member.findUnique({
-                where: { id: currentReferrerId },
-                select: { id: true, referrerId: true, status: true, memberCode: true },
-            });
-            if (!beneficiary) {
-                break;
-            }
-            const ratePercentage = rateMap.get(currentLevel) ?? 0;
+            const ratePercentage = rateMap.get(node.level) ?? 0;
             if (ratePercentage > 0) {
-                const commissionAmount = (packageAmount * ratePercentage) / 100;
+                const commissionAmount = (joiningFee * ratePercentage) / 100;
                 const ledger = await db.membershipCommissionLedger.create({
                     data: {
-                        sourceMemberId,
-                        beneficiaryMemberId: beneficiary.id,
-                        level: currentLevel,
+                        sourceMemberId: memberId,
+                        beneficiaryMemberId: node.id,
+                        level: node.level,
                         percentage: new client_1.Prisma.Decimal(ratePercentage),
                         amount: new client_1.Prisma.Decimal(commissionAmount),
-                        status: client_1.CommissionStatus.CALCULATED,
+                        status: client_1.CommissionStatus.PENDING,
                     },
                 });
                 generatedLedgers.push(ledger);
             }
-            currentReferrerId = beneficiary.referrerId;
-            currentLevel++;
         }
-        this.logger.log(`Successfully generated ${generatedLedgers.length} commission ledger entries for newly registered member '${sourceMember.memberCode}' (${sourceMemberId}).`);
+        this.logger.log(`Successfully generated ${generatedLedgers.length} PENDING commission ledger entries for newly registered member '${sourceMember.memberCode}' (${memberId}).`);
         return generatedLedgers.map((l) => this.mapLedgerToDto(l));
+    }
+    async processRegistrationCommissions(sourceMemberId, packageAmount = 1000, txClient) {
+        return this.calculateForNewMember(sourceMemberId, packageAmount, txClient);
     }
     async findAll(query) {
         const { page = 1, limit = 10, sourceMemberId, beneficiaryMemberId, level, status, sortBy = 'createdAt', sortOrder = 'desc', } = query;

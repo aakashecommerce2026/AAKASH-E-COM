@@ -121,7 +121,7 @@ export class MembershipCommissionController {
     @Query('packageAmount') packageAmount?: number,
   ): Promise<MembershipCommissionResponseDto[]> {
     const amount = packageAmount ? Number(packageAmount) : 1000;
-    return this.membershipCommissionService.processRegistrationCommissions(
+    return this.membershipCommissionService.calculateForNewMember(
       memberId,
       amount,
     );

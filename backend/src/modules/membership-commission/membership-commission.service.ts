@@ -44,7 +44,7 @@ export class MembershipCommissionService {
     let targetVersion = version;
 
     if (!targetVersion) {
-      const latestActive = await this.prisma.membershipCommissionConfig.findFirst({
+      const latestActive = await (this.prisma as any).membershipCommissionConfig.findFirst({
         where: { isActive: true },
         orderBy: { version: 'desc' },
         select: { version: true },
@@ -56,13 +56,13 @@ export class MembershipCommissionService {
     }
 
     if (targetVersion) {
-      const configs = await this.prisma.membershipCommissionConfig.findMany({
+      const configs = await (this.prisma as any).membershipCommissionConfig.findMany({
         where: { version: targetVersion },
         orderBy: { level: 'asc' },
       });
 
       if (configs.length > 0) {
-        return configs.map((c) => ({
+        return configs.map((c: any) => ({
           ...c,
           percentage: Number(c.percentage),
         }));
@@ -70,7 +70,7 @@ export class MembershipCommissionService {
     }
 
     // Fallback if database table has no version records yet
-    return DEFAULT_20_LEVEL_RATES.map((r, index) => ({
+    return DEFAULT_20_LEVEL_RATES.map((r) => ({
       id: `default-v1-lvl-${r.level}`,
       version: 1,
       level: r.level,
@@ -106,10 +106,10 @@ export class MembershipCommissionService {
       levelSet.add(r.level);
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx: any) => {
       if (isActive) {
         // Deactivate existing versions
-        await tx.membershipCommissionConfig.updateMany({
+        await (tx as any).membershipCommissionConfig.updateMany({
           where: { isActive: true },
           data: { isActive: false },
         });
@@ -118,7 +118,7 @@ export class MembershipCommissionService {
       // Upsert rates for the specified version
       const createdConfigs = [];
       for (const r of rates) {
-        const config = await tx.membershipCommissionConfig.upsert({
+        const config = await (tx as any).membershipCommissionConfig.upsert({
           where: {
             version_level: {
               version,
@@ -161,107 +161,178 @@ export class MembershipCommissionService {
   }
 
   /**
-   * Trigger-on-registration commission calculation engine.
-   * Walks up the referral chain for up to 20 levels and records commission ledgers.
+   * Calculates 20-level membership registration commission for a new member.
+   * Walks the upline via PostgreSQL Recursive CTE up to 20 levels.
+   * Writes one row per beneficiary into membership_commission_ledger with status = PENDING.
+   * If upline has fewer than 20 levels, stops cleanly with no phantom rows or errors.
    */
-  async processRegistrationCommissions(
-    sourceMemberId: string,
-    packageAmount: number = 1000,
+  async calculateForNewMember(
+    memberId: string,
+    joiningFee: number = 1000,
     txClient?: Prisma.TransactionClient,
   ): Promise<MembershipCommissionResponseDto[]> {
     const db: any = txClient || this.prisma;
 
-    // Idempotency check: Ensure commissions have not already been computed for this source member
+    // 1. Idempotency check: Ensure commissions have not already been computed for this source member
     const existingCount = await db.membershipCommissionLedger.count({
-      where: { sourceMemberId },
+      where: { sourceMemberId: memberId },
     });
 
     if (existingCount > 0) {
       this.logger.log(
-        `Commissions already calculated for source member '${sourceMemberId}'. Skipping duplicate engine execution.`,
+        `Commissions already calculated for member '${memberId}'. Skipping duplicate engine execution.`,
       );
       const existingLedgers = await db.membershipCommissionLedger.findMany({
-        where: { sourceMemberId },
+        where: { sourceMemberId: memberId },
         orderBy: { level: 'asc' },
       });
       return existingLedgers.map((l: any) => this.mapLedgerToDto(l));
     }
 
-    // Fetch newly registered source member
+    // 2. Fetch source member to verify existence and check referrer
     const sourceMember = await db.member.findUnique({
-      where: { id: sourceMemberId },
+      where: { id: memberId },
       select: { id: true, referrerId: true, memberCode: true, status: true },
     });
 
     if (!sourceMember) {
-      throw new NotFoundException(`Source member with ID '${sourceMemberId}' not found`);
+      throw new NotFoundException(`Member with ID '${memberId}' not found`);
     }
 
     if (!sourceMember.referrerId) {
       this.logger.log(
-        `Source member '${sourceMember.memberCode}' (${sourceMemberId}) has no referrer (Root/Direct). No upline commissions generated.`,
+        `Member '${sourceMember.memberCode}' (${memberId}) has no referrer (Root/Direct). No upline commissions generated.`,
       );
       return [];
     }
 
-    // Fetch active percentage schedule
+    // 3. Fetch active 20-level percentage schedule
     const activeConfigs = await this.getActiveConfig();
     const rateMap = new Map<number, number>();
     activeConfigs.forEach((c) => {
       rateMap.set(c.level, Number(c.percentage));
     });
 
+    // 4. Walk the upline up to 20 levels via Recursive CTE (with fallback for unit-test/mock environments)
+    let uplineNodes: { id: string; memberCode?: string; referrerId?: string | null; level: number }[] = [];
+
+    try {
+      if (typeof db.$queryRaw === 'function') {
+        const rawNodes = await db.$queryRaw(Prisma.sql`
+          WITH RECURSIVE upline AS (
+            SELECT 
+              m.id,
+              m.member_code AS "memberCode",
+              m.referrer_id AS "referrerId",
+              1 AS level
+            FROM members target_m
+            INNER JOIN members m ON target_m.referrer_id = m.id
+            WHERE target_m.id = ${memberId}
+
+            UNION ALL
+
+            SELECT 
+              m.id,
+              m.member_code AS "memberCode",
+              m.referrer_id AS "referrerId",
+              u.level + 1 AS level
+            FROM members m
+            INNER JOIN upline u ON m.id = u."referrerId"
+            WHERE u.level < 20
+          )
+          SELECT id, "memberCode", "referrerId", level FROM upline ORDER BY level ASC LIMIT 20;
+        `);
+        if (Array.isArray(rawNodes) && rawNodes.length > 0) {
+          uplineNodes = rawNodes.map((node: any) => ({
+            id: node.id,
+            memberCode: node.memberCode,
+            referrerId: node.referrerId,
+            level: Number(node.level),
+          }));
+        }
+      }
+    } catch (error) {
+      this.logger.warn(
+        `CTE query unhandled or mock environment (${(error as Error).message}). Using iterative fallback.`,
+      );
+    }
+
+    // Fallback if CTE did not return nodes or running in mock environment
+    if (uplineNodes.length === 0) {
+      let currentRefId: string | null = sourceMember.referrerId;
+      let lvl = 1;
+      const visited = new Set<string>([memberId]);
+
+      while (currentRefId && lvl <= 20) {
+        if (visited.has(currentRefId)) {
+          this.logger.warn(
+            `Cycle detected in referral chain for member '${memberId}' at level ${lvl}. Aborting.`,
+          );
+          break;
+        }
+        visited.add(currentRefId);
+
+        const parent = await db.member.findUnique({
+          where: { id: currentRefId },
+          select: { id: true, referrerId: true, memberCode: true },
+        });
+
+        if (!parent) break;
+
+        uplineNodes.push({
+          id: parent.id,
+          memberCode: parent.memberCode,
+          referrerId: parent.referrerId,
+          level: lvl,
+        });
+
+        currentRefId = parent.referrerId;
+        lvl++;
+      }
+    }
+
+    // 5. Compute amount = joiningFee * percentage for each level present and write ledger row with status PENDING
     const generatedLedgers: any[] = [];
-    let currentReferrerId: string | null = sourceMember.referrerId;
-    let currentLevel = 1;
-    const visited = new Set<string>([sourceMemberId]);
 
-    while (currentReferrerId && currentLevel <= 20) {
-      if (visited.has(currentReferrerId)) {
-        this.logger.warn(
-          `Cycle detected in referral chain for member '${sourceMemberId}' at level ${currentLevel} (Referrer ID: ${currentReferrerId}). Aborting upline traversal.`,
-        );
-        break;
-      }
-      visited.add(currentReferrerId);
+    for (const node of uplineNodes) {
+      if (node.level > 20) break;
 
-      const beneficiary = await db.member.findUnique({
-        where: { id: currentReferrerId },
-        select: { id: true, referrerId: true, status: true, memberCode: true },
-      });
-
-      if (!beneficiary) {
-        break;
-      }
-
-      const ratePercentage = rateMap.get(currentLevel) ?? 0;
+      const ratePercentage = rateMap.get(node.level) ?? 0;
 
       if (ratePercentage > 0) {
-        const commissionAmount = (packageAmount * ratePercentage) / 100;
+        const commissionAmount = (joiningFee * ratePercentage) / 100;
 
         const ledger = await db.membershipCommissionLedger.create({
           data: {
-            sourceMemberId,
-            beneficiaryMemberId: beneficiary.id,
-            level: currentLevel,
+            sourceMemberId: memberId,
+            beneficiaryMemberId: node.id,
+            level: node.level,
             percentage: new Prisma.Decimal(ratePercentage),
             amount: new Prisma.Decimal(commissionAmount),
-            status: CommissionStatus.CALCULATED,
+            status: CommissionStatus.PENDING,
           },
         });
 
         generatedLedgers.push(ledger);
       }
-
-      currentReferrerId = beneficiary.referrerId;
-      currentLevel++;
     }
 
     this.logger.log(
-      `Successfully generated ${generatedLedgers.length} commission ledger entries for newly registered member '${sourceMember.memberCode}' (${sourceMemberId}).`,
+      `Successfully generated ${generatedLedgers.length} PENDING commission ledger entries for newly registered member '${sourceMember.memberCode}' (${memberId}).`,
     );
 
-    return generatedLedgers.map((l) => this.mapLedgerToDto(l));
+    return generatedLedgers.map((l: any) => this.mapLedgerToDto(l));
+  }
+
+  /**
+   * Trigger-on-registration commission calculation engine (delegates to calculateForNewMember).
+   */
+  async processRegistrationCommissions(
+    sourceMemberId: string,
+    packageAmount: number = 1000,
+    txClient?: Prisma.TransactionClient,
+  ): Promise<MembershipCommissionResponseDto[]> {
+    return this.calculateForNewMember(sourceMemberId, packageAmount, txClient);
   }
 
   /**

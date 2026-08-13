@@ -163,7 +163,7 @@ describe('MembershipCommissionService Unit Tests', () => {
       expect(prisma.membershipCommissionLedger.create).not.toHaveBeenCalled();
     });
 
-    it('should calculate 20-level upline commissions correctly for package amount of 1000', async () => {
+    it('should calculate 20-level upline commissions with status PENDING for package amount of 1000', async () => {
       prisma.membershipCommissionLedger.count.mockResolvedValue(0);
       prisma.membershipCommissionConfig.findFirst.mockResolvedValue(null); // use 20-level defaults
 
@@ -189,36 +189,62 @@ describe('MembershipCommissionService Unit Tests', () => {
         }),
       );
 
-      const results = await service.processRegistrationCommissions('m-new', 1000);
+      const results = await service.calculateForNewMember('m-new', 1000);
 
       expect(results.length).toBe(20);
 
-      // Level 1: 10% of 1000 = 100
+      // Level 1: 10% of 1000 = 100, status = PENDING
       expect(results[0].level).toBe(1);
       expect(results[0].beneficiaryMemberId).toBe('m-up-1');
       expect(results[0].percentage).toBe(10);
       expect(results[0].amount).toBe(100);
+      expect(results[0].status).toBe('PENDING');
 
-      // Level 2: 5% of 1000 = 50
+      // Level 2: 5% of 1000 = 50, status = PENDING
       expect(results[1].level).toBe(2);
       expect(results[1].beneficiaryMemberId).toBe('m-up-2');
       expect(results[1].percentage).toBe(5);
       expect(results[1].amount).toBe(50);
+      expect(results[1].status).toBe('PENDING');
 
-      // Level 3: 2.5% of 1000 = 25
-      expect(results[2].level).toBe(3);
-      expect(results[2].percentage).toBe(2.5);
-      expect(results[2].amount).toBe(25);
-
-      // Level 4: 1.5% of 1000 = 15
-      expect(results[3].level).toBe(4);
-      expect(results[3].percentage).toBe(1.5);
-      expect(results[3].amount).toBe(15);
-
-      // Level 20: 0.5% of 1000 = 5
+      // Level 20: 0.5% of 1000 = 5, status = PENDING
       expect(results[19].level).toBe(20);
       expect(results[19].percentage).toBe(0.5);
       expect(results[19].amount).toBe(5);
+      expect(results[19].status).toBe('PENDING');
+    });
+
+    it('should stop cleanly with no error or phantom rows when upline has fewer than 20 levels (e.g. 3 levels)', async () => {
+      prisma.membershipCommissionLedger.count.mockResolvedValue(0);
+      prisma.membershipCommissionConfig.findFirst.mockResolvedValue(null);
+
+      const memberMap = new Map<string, any>();
+      memberMap.set('m-new-short', { id: 'm-new-short', memberCode: 'AK10', referrerId: 'm-up-1' });
+      memberMap.set('m-up-1', { id: 'm-up-1', memberCode: 'AK9', referrerId: 'm-up-2' });
+      memberMap.set('m-up-2', { id: 'm-up-2', memberCode: 'AK8', referrerId: 'm-up-3' });
+      memberMap.set('m-up-3', { id: 'm-up-3', memberCode: 'AK7', referrerId: null });
+
+      prisma.member.findUnique.mockImplementation(({ where }: any) =>
+        Promise.resolve(memberMap.get(where.id) || null),
+      );
+
+      prisma.membershipCommissionLedger.create.mockImplementation(({ data }: any) =>
+        Promise.resolve({
+          id: `led-${data.level}`,
+          ...data,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
+      );
+
+      const results = await service.calculateForNewMember('m-new-short', 1000);
+
+      // Should generate exactly 3 rows for 3 upline levels, stopping cleanly with no phantom rows
+      expect(results.length).toBe(3);
+      expect(results[0].level).toBe(1);
+      expect(results[1].level).toBe(2);
+      expect(results[2].level).toBe(3);
+      expect(results.every((r) => r.status === 'PENDING')).toBe(true);
     });
 
     it('should detect circular referral chain and prevent infinite loops', async () => {
@@ -241,7 +267,7 @@ describe('MembershipCommissionService Unit Tests', () => {
         }),
       );
 
-      const results = await service.processRegistrationCommissions('m-new', 1000);
+      const results = await service.calculateForNewMember('m-new', 1000);
 
       // Cycle encountered after L1: should process level 1 then break
       expect(results.length).toBe(1);

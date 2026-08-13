@@ -176,18 +176,21 @@ describe('MembershipCommission Engine Integration Test Suite', () => {
       expect(res[0].beneficiaryMemberId).toBe('member-upline-1');
       expect(res[0].percentage).toBe(10);
       expect(res[0].amount).toBe(100);
+      expect(res[0].status).toBe('PENDING');
 
       // Level 2: 5% of 1000 = 50
       expect(res[1].level).toBe(2);
       expect(res[1].beneficiaryMemberId).toBe('member-upline-2');
       expect(res[1].percentage).toBe(5);
       expect(res[1].amount).toBe(50);
+      expect(res[1].status).toBe('PENDING');
 
       // Level 3: 2.5% of 1000 = 25
       expect(res[2].level).toBe(3);
       expect(res[2].beneficiaryMemberId).toBe('member-upline-3');
       expect(res[2].percentage).toBe(2.5);
       expect(res[2].amount).toBe(25);
+      expect(res[2].status).toBe('PENDING');
     });
 
     it('should query generated ledgers via GET /ledger', async () => {

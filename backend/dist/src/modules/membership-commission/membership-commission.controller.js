@@ -43,7 +43,7 @@ let MembershipCommissionController = class MembershipCommissionController {
     }
     async triggerRegistrationCommission(memberId, packageAmount) {
         const amount = packageAmount ? Number(packageAmount) : 1000;
-        return this.membershipCommissionService.processRegistrationCommissions(memberId, amount);
+        return this.membershipCommissionService.calculateForNewMember(memberId, amount);
     }
 };
 exports.MembershipCommissionController = MembershipCommissionController;
