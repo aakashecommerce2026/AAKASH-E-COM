@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
-import { CommissionStatus, Prisma } from '@prisma/client';
+import { CommissionStatus, MemberStatus, Prisma } from '@prisma/client';
 import {
   CreateCommissionConfigDto,
   MembershipCommissionConfigResponseDto,
@@ -214,7 +214,7 @@ export class MembershipCommissionService {
     });
 
     // 4. Walk the upline up to 20 levels via Recursive CTE (with fallback for unit-test/mock environments)
-    let uplineNodes: { id: string; memberCode?: string; referrerId?: string | null; level: number }[] = [];
+    let uplineNodes: { id: string; memberCode?: string; referrerId?: string | null; status?: string; level: number }[] = [];
 
     try {
       if (typeof db.$queryRaw === 'function') {
@@ -224,6 +224,7 @@ export class MembershipCommissionService {
               m.id,
               m.member_code AS "memberCode",
               m.referrer_id AS "referrerId",
+              m.status AS status,
               1 AS level
             FROM members target_m
             INNER JOIN members m ON target_m.referrer_id = m.id
@@ -235,18 +236,20 @@ export class MembershipCommissionService {
               m.id,
               m.member_code AS "memberCode",
               m.referrer_id AS "referrerId",
+              m.status AS status,
               u.level + 1 AS level
             FROM members m
             INNER JOIN upline u ON m.id = u."referrerId"
             WHERE u.level < 20
           )
-          SELECT id, "memberCode", "referrerId", level FROM upline ORDER BY level ASC LIMIT 20;
+          SELECT id, "memberCode", "referrerId", status, level FROM upline ORDER BY level ASC LIMIT 20;
         `);
         if (Array.isArray(rawNodes) && rawNodes.length > 0) {
           uplineNodes = rawNodes.map((node: any) => ({
             id: node.id,
             memberCode: node.memberCode,
             referrerId: node.referrerId,
+            status: node.status,
             level: Number(node.level),
           }));
         }
@@ -274,7 +277,7 @@ export class MembershipCommissionService {
 
         const parent = await db.member.findUnique({
           where: { id: currentRefId },
-          select: { id: true, referrerId: true, memberCode: true },
+          select: { id: true, referrerId: true, memberCode: true, status: true },
         });
 
         if (!parent) break;
@@ -283,6 +286,7 @@ export class MembershipCommissionService {
           id: parent.id,
           memberCode: parent.memberCode,
           referrerId: parent.referrerId,
+          status: parent.status,
           level: lvl,
         });
 
@@ -291,7 +295,8 @@ export class MembershipCommissionService {
       }
     }
 
-    // 5. Compute amount = joiningFee * percentage for each level present and write ledger row with status PENDING
+    // 5. Compute amount = joiningFee * percentage for each level present and write ledger row
+    // Active members receive PENDING status; inactive/suspended members receive HOLD status (flagged money-in-transit)
     const generatedLedgers: any[] = [];
 
     for (const node of uplineNodes) {
@@ -302,6 +307,11 @@ export class MembershipCommissionService {
       if (ratePercentage > 0) {
         const commissionAmount = (joiningFee * ratePercentage) / 100;
 
+        const ledgerStatus =
+          !node.status || node.status === MemberStatus.ACTIVE
+            ? CommissionStatus.PENDING
+            : CommissionStatus.HOLD;
+
         const ledger = await db.membershipCommissionLedger.create({
           data: {
             sourceMemberId: memberId,
@@ -309,7 +319,7 @@ export class MembershipCommissionService {
             level: node.level,
             percentage: new Prisma.Decimal(ratePercentage),
             amount: new Prisma.Decimal(commissionAmount),
-            status: CommissionStatus.PENDING,
+            status: ledgerStatus,
           },
         });
 
@@ -318,7 +328,7 @@ export class MembershipCommissionService {
     }
 
     this.logger.log(
-      `Successfully generated ${generatedLedgers.length} PENDING commission ledger entries for newly registered member '${sourceMember.memberCode}' (${memberId}).`,
+      `Successfully generated ${generatedLedgers.length} commission ledger entries for newly registered member '${sourceMember.memberCode}' (${memberId}).`,
     );
 
     return generatedLedgers.map((l: any) => this.mapLedgerToDto(l));

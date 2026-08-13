@@ -165,6 +165,7 @@ model MembershipCommissionLedger {
   createdAt           DateTime            @default(now()) @map("created_at")
   updatedAt           DateTime            @updatedAt @map("updated_at")
 
+  @@unique([sourceMemberId, level])
   @@index([sourceMemberId])
   @@index([beneficiaryMemberId])
   @@index([beneficiaryMemberId, status])

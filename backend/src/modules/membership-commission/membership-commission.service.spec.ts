@@ -247,6 +247,107 @@ describe('MembershipCommissionService Unit Tests', () => {
       expect(results.every((r) => r.status === 'PENDING')).toBe(true);
     });
 
+    it('should calculate exactly 5 upline levels when member has 5 upline members', async () => {
+      prisma.membershipCommissionLedger.count.mockResolvedValue(0);
+      prisma.membershipCommissionConfig.findFirst.mockResolvedValue(null);
+
+      const memberMap = new Map<string, any>();
+      memberMap.set('m-new-5', { id: 'm-new-5', memberCode: 'AK5', referrerId: 'm-up-1' });
+      for (let i = 1; i <= 5; i++) {
+        const id = `m-up-${i}`;
+        const parentId = i < 5 ? `m-up-${i + 1}` : null;
+        memberMap.set(id, { id, memberCode: `AK${5 - i}`, referrerId: parentId, status: 'ACTIVE' });
+      }
+
+      prisma.member.findUnique.mockImplementation(({ where }: any) =>
+        Promise.resolve(memberMap.get(where.id) || null),
+      );
+
+      prisma.membershipCommissionLedger.create.mockImplementation(({ data }: any) =>
+        Promise.resolve({
+          id: `led-${data.level}`,
+          ...data,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
+      );
+
+      const results = await service.calculateForNewMember('m-new-5', 1000);
+
+      expect(results.length).toBe(5);
+      expect(results.map((r) => r.level)).toEqual([1, 2, 3, 4, 5]);
+      expect(results.every((r) => r.status === 'PENDING')).toBe(true);
+    });
+
+    it('should strictly cap at 20 levels when member has more than 20 upline levels (e.g. 25 levels)', async () => {
+      prisma.membershipCommissionLedger.count.mockResolvedValue(0);
+      prisma.membershipCommissionConfig.findFirst.mockResolvedValue(null);
+
+      const memberMap = new Map<string, any>();
+      memberMap.set('m-new-deep', { id: 'm-new-deep', memberCode: 'AK25', referrerId: 'm-up-1' });
+      for (let i = 1; i <= 25; i++) {
+        const id = `m-up-${i}`;
+        const parentId = i < 25 ? `m-up-${i + 1}` : null;
+        memberMap.set(id, { id, memberCode: `AK${25 - i}`, referrerId: parentId, status: 'ACTIVE' });
+      }
+
+      prisma.member.findUnique.mockImplementation(({ where }: any) =>
+        Promise.resolve(memberMap.get(where.id) || null),
+      );
+
+      prisma.membershipCommissionLedger.create.mockImplementation(({ data }: any) =>
+        Promise.resolve({
+          id: `led-${data.level}`,
+          ...data,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
+      );
+
+      const results = await service.calculateForNewMember('m-new-deep', 1000);
+
+      expect(results.length).toBe(20);
+      expect(results[0].level).toBe(1);
+      expect(results[19].level).toBe(20);
+      expect(results.find((r) => r.level > 20)).toBeUndefined();
+    });
+
+    it('should set commission status to HOLD for inactive or suspended upline beneficiaries', async () => {
+      prisma.membershipCommissionLedger.count.mockResolvedValue(0);
+      prisma.membershipCommissionConfig.findFirst.mockResolvedValue(null);
+
+      const memberMap = new Map<string, any>();
+      memberMap.set('m-new-inactive-test', { id: 'm-new-inactive-test', memberCode: 'AK100', referrerId: 'm-up-active' });
+      memberMap.set('m-up-active', { id: 'm-up-active', memberCode: 'AK101', referrerId: 'm-up-blocked', status: 'ACTIVE' });
+      memberMap.set('m-up-blocked', { id: 'm-up-blocked', memberCode: 'AK102', referrerId: null, status: 'BLOCKED' });
+
+      prisma.member.findUnique.mockImplementation(({ where }: any) =>
+        Promise.resolve(memberMap.get(where.id) || null),
+      );
+
+      prisma.membershipCommissionLedger.create.mockImplementation(({ data }: any) =>
+        Promise.resolve({
+          id: `led-${data.level}`,
+          ...data,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
+      );
+
+      const results = await service.calculateForNewMember('m-new-inactive-test', 1000);
+
+      expect(results.length).toBe(2);
+      // Level 1 upline is ACTIVE -> status = PENDING
+      expect(results[0].level).toBe(1);
+      expect(results[0].beneficiaryMemberId).toBe('m-up-active');
+      expect(results[0].status).toBe('PENDING');
+
+      // Level 2 upline is BLOCKED -> status = HOLD
+      expect(results[1].level).toBe(2);
+      expect(results[1].beneficiaryMemberId).toBe('m-up-blocked');
+      expect(results[1].status).toBe('HOLD');
+    });
+
     it('should detect circular referral chain and prevent infinite loops', async () => {
       prisma.membershipCommissionLedger.count.mockResolvedValue(0);
       prisma.membershipCommissionConfig.findFirst.mockResolvedValue(null);
