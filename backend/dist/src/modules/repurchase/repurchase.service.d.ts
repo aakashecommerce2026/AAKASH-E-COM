@@ -3,12 +3,13 @@ import { AuditService } from '../audit/audit.service';
 import { CreateRepurchaseEntryDto } from './dto/create-repurchase-entry.dto';
 import { UpdateRepurchaseEntryDto } from './dto/update-repurchase-entry.dto';
 import { QueryRepurchaseEntryDto } from './dto/query-repurchase-entry.dto';
+import { MemberRole } from '@prisma/client';
 export declare class RepurchaseService {
     private readonly prisma;
     private readonly auditService;
     constructor(prisma: PrismaService, auditService: AuditService);
     private hasCommissionsGenerated;
-    create(dto: CreateRepurchaseEntryDto, actorId?: string): Promise<{
+    create(dto: CreateRepurchaseEntryDto, actorId?: string, actorRole?: MemberRole): Promise<{
         id: any;
         transactionRef: any;
         memberId: any;
@@ -43,7 +44,7 @@ export declare class RepurchaseService {
         updatedAt: any;
         deletedAt: any;
     }>;
-    update(id: string, dto: UpdateRepurchaseEntryDto, actorId?: string): Promise<{
+    update(id: string, dto: UpdateRepurchaseEntryDto, actorId?: string, actorRole?: MemberRole): Promise<{
         id: any;
         transactionRef: any;
         memberId: any;
@@ -56,7 +57,7 @@ export declare class RepurchaseService {
         updatedAt: any;
         deletedAt: any;
     }>;
-    remove(id: string, actorId?: string): Promise<{
+    remove(id: string, actorId?: string, actorRole?: MemberRole): Promise<{
         message: string;
     }>;
     private mapToResponseDto;

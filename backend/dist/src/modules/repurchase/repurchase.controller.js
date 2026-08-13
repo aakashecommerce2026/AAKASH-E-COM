@@ -30,8 +30,8 @@ let AdminRepurchaseController = class AdminRepurchaseController {
     constructor(repurchaseService) {
         this.repurchaseService = repurchaseService;
     }
-    async create(dto, actorId) {
-        return this.repurchaseService.create(dto, actorId);
+    async create(dto, actorId, actorRole) {
+        return this.repurchaseService.create(dto, actorId, actorRole);
     }
     async findAll(query) {
         return this.repurchaseService.findAll(query);
@@ -39,11 +39,11 @@ let AdminRepurchaseController = class AdminRepurchaseController {
     async findById(id) {
         return this.repurchaseService.findById(id);
     }
-    async update(id, dto, actorId) {
-        return this.repurchaseService.update(id, dto, actorId);
+    async update(id, dto, actorId, actorRole) {
+        return this.repurchaseService.update(id, dto, actorId, actorRole);
     }
-    async remove(id, actorId) {
-        return this.repurchaseService.remove(id, actorId);
+    async remove(id, actorId, actorRole) {
+        return this.repurchaseService.remove(id, actorId, actorRole);
     }
 };
 exports.AdminRepurchaseController = AdminRepurchaseController;
@@ -52,23 +52,24 @@ __decorate([
     (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
     (0, swagger_1.ApiOperation)({
         summary: 'POST /admin/repurchase — Create in-store repurchase entry (Admin)',
-        description: 'Creates an in-store repurchase transaction. Validates that member exists & is ACTIVE, and transactionRef is unique. Triggers commission calculation on Day 9 engine.',
+        description: 'Creates an in-store repurchase transaction. Validates active member status, enforces DB-level transactionRef uniqueness (HTTP 409 on duplicate), and logs CREATE_REPURCHASE_ENTRY to activity_logs.',
     }),
     (0, swagger_1.ApiResponse)({ status: 201, description: 'Repurchase entry created successfully', type: repurchase_entry_response_dto_1.RepurchaseEntryResponseDto }),
     (0, swagger_1.ApiResponse)({ status: 400, description: 'Validation error or member is not ACTIVE' }),
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Member not found' }),
-    (0, swagger_1.ApiResponse)({ status: 409, description: 'Transaction reference collision' }),
+    (0, swagger_1.ApiResponse)({ status: 409, description: 'Transaction reference collision (DB level P2002)' }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, current_user_decorator_1.CurrentUser)('id')),
+    __param(2, (0, current_user_decorator_1.CurrentUser)('role')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_repurchase_entry_dto_1.CreateRepurchaseEntryDto, String]),
+    __metadata("design:paramtypes", [create_repurchase_entry_dto_1.CreateRepurchaseEntryDto, String, String]),
     __metadata("design:returntype", Promise)
 ], AdminRepurchaseController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
     (0, swagger_1.ApiOperation)({
         summary: 'GET /admin/repurchase — Paginated list with search by transaction_ref/member/date range',
-        description: 'Lists repurchase entries filtered by memberId, transactionRef/member search, or transaction date range (excluding soft-deleted items).',
+        description: 'Lists repurchase entries filtered by memberId/memberCode, transactionRef/member search, or transaction date range (excluding soft-deleted items).',
     }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Paginated repurchase entries response' }),
     __param(0, (0, common_1.Query)()),
@@ -91,7 +92,7 @@ __decorate([
     (0, common_1.Put)(':id'),
     (0, swagger_1.ApiOperation)({
         summary: 'PUT /admin/repurchase/:id — Edit entry (Locked once commission is generated)',
-        description: 'Updates repurchase entry details before commission calculation. Once commissions are generated, entry is locked against editing.',
+        description: 'Updates repurchase entry details before commission calculation. Once commissions are generated, entry is locked against editing and logs UPDATE_REPURCHASE_ENTRY to activity_logs.',
     }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'Repurchase Entry UUID' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Repurchase entry updated successfully', type: repurchase_entry_response_dto_1.RepurchaseEntryResponseDto }),
@@ -101,15 +102,16 @@ __decorate([
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, current_user_decorator_1.CurrentUser)('id')),
+    __param(3, (0, current_user_decorator_1.CurrentUser)('role')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, update_repurchase_entry_dto_1.UpdateRepurchaseEntryDto, String]),
+    __metadata("design:paramtypes", [String, update_repurchase_entry_dto_1.UpdateRepurchaseEntryDto, String, String]),
     __metadata("design:returntype", Promise)
 ], AdminRepurchaseController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, swagger_1.ApiOperation)({
         summary: 'DELETE /admin/repurchase/:id — Soft delete (Allowed only before commission generation)',
-        description: 'Soft-deletes repurchase entry. Only allowed BEFORE commission generation. If commissions exist, deletion is rejected.',
+        description: 'Soft-deletes repurchase entry (deletedAt timestamp). Allowed ONLY before commission generation. Logs DELETE_REPURCHASE_ENTRY to activity_logs.',
     }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'Repurchase Entry UUID' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Repurchase entry soft-deleted successfully' }),
@@ -117,8 +119,9 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Repurchase entry not found' }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, current_user_decorator_1.CurrentUser)('id')),
+    __param(2, (0, current_user_decorator_1.CurrentUser)('role')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", Promise)
 ], AdminRepurchaseController.prototype, "remove", null);
 exports.AdminRepurchaseController = AdminRepurchaseController = __decorate([

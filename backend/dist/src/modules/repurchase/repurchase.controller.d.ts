@@ -1,3 +1,4 @@
+import { MemberRole } from '@prisma/client';
 import { RepurchaseService } from './repurchase.service';
 import { CreateRepurchaseEntryDto } from './dto/create-repurchase-entry.dto';
 import { UpdateRepurchaseEntryDto } from './dto/update-repurchase-entry.dto';
@@ -5,7 +6,7 @@ import { QueryRepurchaseEntryDto } from './dto/query-repurchase-entry.dto';
 export declare class AdminRepurchaseController {
     private readonly repurchaseService;
     constructor(repurchaseService: RepurchaseService);
-    create(dto: CreateRepurchaseEntryDto, actorId: string): Promise<{
+    create(dto: CreateRepurchaseEntryDto, actorId: string, actorRole: MemberRole): Promise<{
         id: any;
         transactionRef: any;
         memberId: any;
@@ -40,7 +41,7 @@ export declare class AdminRepurchaseController {
         updatedAt: any;
         deletedAt: any;
     }>;
-    update(id: string, dto: UpdateRepurchaseEntryDto, actorId: string): Promise<{
+    update(id: string, dto: UpdateRepurchaseEntryDto, actorId: string, actorRole: MemberRole): Promise<{
         id: any;
         transactionRef: any;
         memberId: any;
@@ -53,7 +54,7 @@ export declare class AdminRepurchaseController {
         updatedAt: any;
         deletedAt: any;
     }>;
-    remove(id: string, actorId: string): Promise<{
+    remove(id: string, actorId: string, actorRole: MemberRole): Promise<{
         message: string;
     }>;
 }

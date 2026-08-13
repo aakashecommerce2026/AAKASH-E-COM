@@ -36,24 +36,25 @@ export class AdminRepurchaseController {
   @ApiOperation({
     summary: 'POST /admin/repurchase — Create in-store repurchase entry (Admin)',
     description:
-      'Creates an in-store repurchase transaction. Validates that member exists & is ACTIVE, and transactionRef is unique. Triggers commission calculation on Day 9 engine.',
+      'Creates an in-store repurchase transaction. Validates active member status, enforces DB-level transactionRef uniqueness (HTTP 409 on duplicate), and logs CREATE_REPURCHASE_ENTRY to activity_logs.',
   })
   @ApiResponse({ status: 201, description: 'Repurchase entry created successfully', type: RepurchaseEntryResponseDto })
   @ApiResponse({ status: 400, description: 'Validation error or member is not ACTIVE' })
   @ApiResponse({ status: 404, description: 'Member not found' })
-  @ApiResponse({ status: 409, description: 'Transaction reference collision' })
+  @ApiResponse({ status: 409, description: 'Transaction reference collision (DB level P2002)' })
   async create(
     @Body() dto: CreateRepurchaseEntryDto,
     @CurrentUser('id') actorId: string,
+    @CurrentUser('role') actorRole: MemberRole,
   ) {
-    return this.repurchaseService.create(dto, actorId);
+    return this.repurchaseService.create(dto, actorId, actorRole);
   }
 
   @Get()
   @ApiOperation({
     summary: 'GET /admin/repurchase — Paginated list with search by transaction_ref/member/date range',
     description:
-      'Lists repurchase entries filtered by memberId, transactionRef/member search, or transaction date range (excluding soft-deleted items).',
+      'Lists repurchase entries filtered by memberId/memberCode, transactionRef/member search, or transaction date range (excluding soft-deleted items).',
   })
   @ApiResponse({ status: 200, description: 'Paginated repurchase entries response' })
   async findAll(@Query() query: QueryRepurchaseEntryDto) {
@@ -73,7 +74,7 @@ export class AdminRepurchaseController {
   @ApiOperation({
     summary: 'PUT /admin/repurchase/:id — Edit entry (Locked once commission is generated)',
     description:
-      'Updates repurchase entry details before commission calculation. Once commissions are generated, entry is locked against editing.',
+      'Updates repurchase entry details before commission calculation. Once commissions are generated, entry is locked against editing and logs UPDATE_REPURCHASE_ENTRY to activity_logs.',
   })
   @ApiParam({ name: 'id', description: 'Repurchase Entry UUID' })
   @ApiResponse({ status: 200, description: 'Repurchase entry updated successfully', type: RepurchaseEntryResponseDto })
@@ -84,15 +85,16 @@ export class AdminRepurchaseController {
     @Param('id') id: string,
     @Body() dto: UpdateRepurchaseEntryDto,
     @CurrentUser('id') actorId: string,
+    @CurrentUser('role') actorRole: MemberRole,
   ) {
-    return this.repurchaseService.update(id, dto, actorId);
+    return this.repurchaseService.update(id, dto, actorId, actorRole);
   }
 
   @Delete(':id')
   @ApiOperation({
     summary: 'DELETE /admin/repurchase/:id — Soft delete (Allowed only before commission generation)',
     description:
-      'Soft-deletes repurchase entry. Only allowed BEFORE commission generation. If commissions exist, deletion is rejected.',
+      'Soft-deletes repurchase entry (deletedAt timestamp). Allowed ONLY before commission generation. Logs DELETE_REPURCHASE_ENTRY to activity_logs.',
   })
   @ApiParam({ name: 'id', description: 'Repurchase Entry UUID' })
   @ApiResponse({ status: 200, description: 'Repurchase entry soft-deleted successfully' })
@@ -101,7 +103,8 @@ export class AdminRepurchaseController {
   async remove(
     @Param('id') id: string,
     @CurrentUser('id') actorId: string,
+    @CurrentUser('role') actorRole: MemberRole,
   ) {
-    return this.repurchaseService.remove(id, actorId);
+    return this.repurchaseService.remove(id, actorId, actorRole);
   }
 }

@@ -9,7 +9,7 @@ import { AuditService } from '../audit/audit.service';
 import { CreateRepurchaseEntryDto } from './dto/create-repurchase-entry.dto';
 import { UpdateRepurchaseEntryDto } from './dto/update-repurchase-entry.dto';
 import { QueryRepurchaseEntryDto } from './dto/query-repurchase-entry.dto';
-import { MemberStatus, Prisma } from '@prisma/client';
+import { MemberRole, MemberStatus, Prisma } from '@prisma/client';
 
 @Injectable()
 export class RepurchaseService {
@@ -31,10 +31,11 @@ export class RepurchaseService {
   /**
    * Creates an in-store repurchase entry.
    * Validates:
-   * 1. transactionRef is unique.
+   * 1. transactionRef is unique (enforced at service level + DB level P2002 error mapping).
    * 2. memberId / memberCode exists and is ACTIVE.
+   * 3. Logs CREATE_REPURCHASE_ENTRY action to activity_logs.
    */
-  async create(dto: CreateRepurchaseEntryDto, actorId?: string) {
+  async create(dto: CreateRepurchaseEntryDto, actorId?: string, actorRole?: MemberRole) {
     const { transactionRef, memberId, amount, transactionDate, remarks, createdBy } = dto;
 
     // 1. Transaction reference uniqueness check
@@ -68,26 +69,35 @@ export class RepurchaseService {
 
     const creatorId = actorId || createdBy || null;
 
-    // 3. Create entry in DB using verified member.id
-    const entry = await this.prisma.repurchaseEntry.create({
-      data: {
-        transactionRef,
-        memberId: member.id,
-        amount: new Prisma.Decimal(amount),
-        transactionDate: transactionDate ? new Date(transactionDate) : new Date(),
-        remarks: remarks || null,
-        createdBy: creatorId,
-      },
-      include: {
-        member: {
-          select: { id: true, memberCode: true, name: true, mobile: true, status: true },
+    // 3. Create entry in DB using verified member.id (with DB-level P2002 error handling)
+    let entry: any;
+    try {
+      entry = await this.prisma.repurchaseEntry.create({
+        data: {
+          transactionRef,
+          memberId: member.id,
+          amount: new Prisma.Decimal(amount),
+          transactionDate: transactionDate ? new Date(transactionDate) : new Date(),
+          remarks: remarks || null,
+          createdBy: creatorId,
         },
-      },
-    });
+        include: {
+          member: {
+            select: { id: true, memberCode: true, name: true, mobile: true, status: true },
+          },
+        },
+      });
+    } catch (error: any) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new ConflictException(`Transaction reference '${transactionRef}' already exists`);
+      }
+      throw error;
+    }
 
     // 4. Log audit action
     await this.auditService.logAction({
       actorId: creatorId,
+      actorRole: actorRole || MemberRole.ADMIN,
       actionType: 'CREATE_REPURCHASE_ENTRY',
       entityType: 'RepurchaseEntry',
       entityId: entry.id,
@@ -205,8 +215,9 @@ export class RepurchaseService {
   /**
    * Updates existing repurchase entry.
    * Lock safeguard: Editing is blocked if commission ledgers have already been generated.
+   * Logs UPDATE_REPURCHASE_ENTRY action to activity_logs.
    */
-  async update(id: string, dto: UpdateRepurchaseEntryDto, actorId?: string) {
+  async update(id: string, dto: UpdateRepurchaseEntryDto, actorId?: string, actorRole?: MemberRole) {
     const existing = await (this.prisma as any).repurchaseEntry.findFirst({
       where: { id, deletedAt: null },
     });
@@ -252,24 +263,33 @@ export class RepurchaseService {
       updatedMemberId = member.id;
     }
 
-    const updated = await (this.prisma as any).repurchaseEntry.update({
-      where: { id },
-      data: {
-        ...(transactionRef ? { transactionRef } : {}),
-        memberId: updatedMemberId,
-        ...(amount ? { amount: new Prisma.Decimal(amount) } : {}),
-        ...(transactionDate ? { transactionDate: new Date(transactionDate) } : {}),
-        ...(remarks !== undefined ? { remarks } : {}),
-      },
-      include: {
-        member: {
-          select: { id: true, memberCode: true, name: true, mobile: true, status: true },
+    let updated: any;
+    try {
+      updated = await (this.prisma as any).repurchaseEntry.update({
+        where: { id },
+        data: {
+          ...(transactionRef ? { transactionRef } : {}),
+          memberId: updatedMemberId,
+          ...(amount ? { amount: new Prisma.Decimal(amount) } : {}),
+          ...(transactionDate ? { transactionDate: new Date(transactionDate) } : {}),
+          ...(remarks !== undefined ? { remarks } : {}),
         },
-      },
-    });
+        include: {
+          member: {
+            select: { id: true, memberCode: true, name: true, mobile: true, status: true },
+          },
+        },
+      });
+    } catch (error: any) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new ConflictException(`Transaction reference '${transactionRef}' is already taken`);
+      }
+      throw error;
+    }
 
     await this.auditService.logAction({
       actorId: actorId || null,
+      actorRole: actorRole || MemberRole.ADMIN,
       actionType: 'UPDATE_REPURCHASE_ENTRY',
       entityType: 'RepurchaseEntry',
       entityId: id,
@@ -284,8 +304,9 @@ export class RepurchaseService {
   /**
    * Soft deletes repurchase entry by ID.
    * Lock safeguard: Soft delete is only permitted BEFORE commission generation.
+   * Logs DELETE_REPURCHASE_ENTRY action to activity_logs.
    */
-  async remove(id: string, actorId?: string) {
+  async remove(id: string, actorId?: string, actorRole?: MemberRole) {
     const existing = await (this.prisma as any).repurchaseEntry.findFirst({
       where: { id, deletedAt: null },
     });
@@ -312,6 +333,7 @@ export class RepurchaseService {
 
     await this.auditService.logAction({
       actorId: actorId || null,
+      actorRole: actorRole || MemberRole.ADMIN,
       actionType: 'DELETE_REPURCHASE_ENTRY',
       entityType: 'RepurchaseEntry',
       entityId: id,
