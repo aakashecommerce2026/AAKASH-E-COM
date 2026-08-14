@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DashboardCacheService } from './dashboard-cache.service';
 import { QueryDashboardDto } from './dto/query-dashboard.dto';
@@ -82,6 +82,45 @@ export interface IActivityFeedResponse {
     limit: number;
     totalPages: number;
   };
+  calculatedAt: string;
+}
+
+export interface IMemberPersonalDashboardResponse {
+  memberInfo: {
+    id: string;
+    memberCode: string;
+    name: string;
+    email: string | null;
+    mobile: string;
+    status: string;
+    role: string;
+    joiningDate: string;
+    referrer: { id: string; memberCode: string; name: string } | null;
+  };
+  referrals: {
+    totalDirectReferrals: number;
+    activeDirectReferrals: number;
+    totalDownlineMembers: number;
+    activeDownlineMembers: number;
+  };
+  earnings: {
+    membershipEarnings: number;
+    repurchaseEarnings: number;
+    totalEarnings: number;
+    totalDisbursed: number;
+    totalPending: number;
+    membershipBreakdown: Record<string, number>;
+    repurchaseBreakdown: Record<string, number>;
+  };
+  recentCommissions: Array<{
+    id: string;
+    type: 'MEMBERSHIP' | 'REPURCHASE';
+    amount: number;
+    level: number;
+    status: string;
+    sourceMember: { id: string; memberCode: string; name: string } | null;
+    createdAt: string;
+  }>;
   calculatedAt: string;
 }
 
@@ -670,6 +709,223 @@ export class DashboardService {
         limit,
         totalPages: Math.ceil(total / limit) || 1,
       },
+      calculatedAt: new Date().toISOString(),
+    };
+
+    await this.cacheService.set(cacheKey, result, 60);
+    return result;
+  }
+
+  /**
+   * 5. GET /member/dashboard
+   * Member Personal Dashboard derived strictly using authenticated memberId from JWT payload.
+   */
+  async getMemberPersonalDashboard(
+    memberId: string,
+    refresh?: boolean,
+  ): Promise<IMemberPersonalDashboardResponse> {
+    const cacheKey = `member:dashboard:${memberId}`;
+
+    if (!refresh) {
+      const cached = await this.cacheService.get<IMemberPersonalDashboardResponse>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+    }
+
+    const member = await this.prisma.member.findUnique({
+      where: { id: memberId },
+      select: {
+        id: true,
+        memberCode: true,
+        name: true,
+        email: true,
+        mobile: true,
+        status: true,
+        role: true,
+        joiningDate: true,
+        referrer: { select: { id: true, memberCode: true, name: true } },
+      },
+    });
+
+    if (!member) {
+      throw new NotFoundException(`Member with ID '${memberId}' not found`);
+    }
+
+    // Parallel fetch for member personal metrics
+    const [
+      directReferralsCount,
+      activeDirectReferralsCount,
+      membershipGroups,
+      repurchaseGroups,
+      recentMembershipLedgers,
+      recentRepurchaseLedgers,
+    ] = await Promise.all([
+      this.prisma.member.count({ where: { referrerId: memberId } }),
+      this.prisma.member.count({ where: { referrerId: memberId, status: MemberStatus.ACTIVE } }),
+      this.prisma.membershipCommissionLedger.groupBy({
+        by: ['status'],
+        where: { beneficiaryMemberId: memberId },
+        _sum: { amount: true },
+      }),
+      this.prisma.repurchaseCommissionLedger.groupBy({
+        by: ['status'],
+        where: { beneficiaryMemberId: memberId },
+        _sum: { amount: true },
+      }),
+      this.prisma.membershipCommissionLedger.findMany({
+        where: { beneficiaryMemberId: memberId },
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          amount: true,
+          level: true,
+          status: true,
+          createdAt: true,
+          sourceMember: { select: { id: true, memberCode: true, name: true } },
+        },
+      }),
+      this.prisma.repurchaseCommissionLedger.findMany({
+        where: { beneficiaryMemberId: memberId },
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          amount: true,
+          level: true,
+          status: true,
+          createdAt: true,
+          sourceMember: { select: { id: true, memberCode: true, name: true } },
+        },
+      }),
+    ]);
+
+    // Downline calculation via recursive CTE query
+    let totalDownlineMembers = directReferralsCount;
+    let activeDownlineMembers = activeDirectReferralsCount;
+
+    try {
+      if (typeof this.prisma.$queryRaw === 'function') {
+        const downlineNodes = await this.prisma.$queryRaw<Array<{ id: string; status: string }>>`
+          WITH RECURSIVE downline AS (
+            SELECT id, status, 1 AS level
+            FROM members
+            WHERE referrer_id = ${memberId}
+
+            UNION ALL
+
+            SELECT m.id, m.status, d.level + 1
+            FROM members m
+            INNER JOIN downline d ON m.referrer_id = d.id
+            WHERE d.level < 20
+          )
+          SELECT id, status FROM downline;
+        `;
+
+        totalDownlineMembers = downlineNodes.length;
+        activeDownlineMembers = downlineNodes.filter((n) => n.status === MemberStatus.ACTIVE).length;
+      }
+    } catch (err: any) {
+      this.logger.debug(`Downline CTE query skipped or error: ${err?.message}`);
+    }
+
+    // Process Membership Earnings
+    let membershipEarnings = 0;
+    const membershipBreakdown: Record<string, number> = {
+      DISBURSED: 0,
+      PENDING: 0,
+      HOLD: 0,
+      CANCELLED: 0,
+    };
+
+    membershipGroups.forEach((g) => {
+      const sum = Number(g._sum?.amount ?? 0);
+      membershipEarnings += sum;
+      if (g.status in membershipBreakdown) {
+        membershipBreakdown[g.status] = sum;
+      }
+    });
+
+    // Process Repurchase Earnings
+    let repurchaseEarnings = 0;
+    const repurchaseBreakdown: Record<string, number> = {
+      DISBURSED: 0,
+      PENDING: 0,
+      HOLD: 0,
+      CANCELLED: 0,
+    };
+
+    repurchaseGroups.forEach((g) => {
+      const sum = Number(g._sum?.amount ?? 0);
+      repurchaseEarnings += sum;
+      if (g.status in repurchaseBreakdown) {
+        repurchaseBreakdown[g.status] = sum;
+      }
+    });
+
+    const totalEarnings = membershipEarnings + repurchaseEarnings;
+    const totalDisbursed = (membershipBreakdown.DISBURSED || 0) + (repurchaseBreakdown.DISBURSED || 0);
+    const totalPending = (membershipBreakdown.PENDING || 0) + (repurchaseBreakdown.PENDING || 0);
+
+    // Merge recent commissions
+    const recentCommissions: IMemberPersonalDashboardResponse['recentCommissions'] = [];
+
+    recentMembershipLedgers.forEach((m: any) => {
+      recentCommissions.push({
+        id: m.id,
+        type: 'MEMBERSHIP',
+        amount: Number(m.amount),
+        level: m.level,
+        status: m.status,
+        sourceMember: m.sourceMember,
+        createdAt: m.createdAt.toISOString(),
+      });
+    });
+
+    recentRepurchaseLedgers.forEach((r: any) => {
+      recentCommissions.push({
+        id: r.id,
+        type: 'REPURCHASE',
+        amount: Number(r.amount),
+        level: r.level,
+        status: r.status,
+        sourceMember: r.sourceMember,
+        createdAt: r.createdAt.toISOString(),
+      });
+    });
+
+    recentCommissions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const topRecentCommissions = recentCommissions.slice(0, 5);
+
+    const result: IMemberPersonalDashboardResponse = {
+      memberInfo: {
+        id: member.id,
+        memberCode: member.memberCode,
+        name: member.name,
+        email: member.email,
+        mobile: member.mobile,
+        status: member.status,
+        role: member.role,
+        joiningDate: member.joiningDate.toISOString(),
+        referrer: member.referrer,
+      },
+      referrals: {
+        totalDirectReferrals: directReferralsCount,
+        activeDirectReferrals: activeDirectReferralsCount,
+        totalDownlineMembers,
+        activeDownlineMembers,
+      },
+      earnings: {
+        membershipEarnings,
+        repurchaseEarnings,
+        totalEarnings,
+        totalDisbursed,
+        totalPending,
+        membershipBreakdown,
+        repurchaseBreakdown,
+      },
+      recentCommissions: topRecentCommissions,
       calculatedAt: new Date().toISOString(),
     };
 

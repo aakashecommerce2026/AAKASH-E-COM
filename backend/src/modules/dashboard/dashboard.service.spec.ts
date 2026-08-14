@@ -5,6 +5,7 @@ import { DashboardCacheService } from './dashboard-cache.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MemberStatus, CommissionStatus } from '@prisma/client';
 import { ActivityCategory } from './dto/query-activity.dto';
+import { NotFoundException } from '@nestjs/common';
 
 describe('DashboardService', () => {
   let service: DashboardService;
@@ -16,12 +17,15 @@ describe('DashboardService', () => {
       count: jest.fn(),
       groupBy: jest.fn(),
       findMany: jest.fn(),
+      findUnique: jest.fn(),
     },
     membershipCommissionLedger: {
       groupBy: jest.fn(),
+      findMany: jest.fn(),
     },
     repurchaseCommissionLedger: {
       groupBy: jest.fn(),
+      findMany: jest.fn(),
     },
     distributionRecord: {
       aggregate: jest.fn(),
@@ -284,6 +288,79 @@ describe('DashboardService', () => {
       expect(res.data[1].category).toBe(ActivityCategory.MEMBER_REGISTRATION);
       expect(res.data[2].category).toBe(ActivityCategory.DISTRIBUTION);
       expect(res.data[3].category).toBe(ActivityCategory.SYSTEM_ACTIVITY);
+    });
+  });
+
+  describe('getMemberPersonalDashboard', () => {
+    it('should throw NotFoundException if member does not exist', async () => {
+      mockPrismaService.member.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.getMemberPersonalDashboard('non-existent-id')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should return member-scoped dashboard metrics', async () => {
+      mockPrismaService.member.findUnique.mockResolvedValueOnce({
+        id: 'mem-101',
+        memberCode: 'AK10101',
+        name: 'John Doe',
+        email: 'john@example.com',
+        mobile: '+919876543210',
+        status: 'ACTIVE',
+        role: 'MEMBER',
+        joiningDate: new Date('2026-01-01'),
+        referrer: { id: 'sponsor-1', memberCode: 'AK10001', name: 'Sponsor User' },
+      });
+
+      mockPrismaService.member.count
+        .mockResolvedValueOnce(5)  // direct referrals total
+        .mockResolvedValueOnce(4); // active direct referrals
+
+      mockPrismaService.membershipCommissionLedger.groupBy.mockResolvedValueOnce([
+        { status: CommissionStatus.DISBURSED, _sum: { amount: 1000 } },
+        { status: CommissionStatus.PENDING, _sum: { amount: 250 } },
+      ]);
+
+      mockPrismaService.repurchaseCommissionLedger.groupBy.mockResolvedValueOnce([
+        { status: CommissionStatus.DISBURSED, _sum: { amount: 500 } },
+      ]);
+
+      mockPrismaService.membershipCommissionLedger.findMany.mockResolvedValueOnce([
+        {
+          id: 'mled-1',
+          amount: 100,
+          level: 1,
+          status: 'DISBURSED',
+          createdAt: new Date('2026-08-14T08:00:00Z'),
+          sourceMember: { id: 'm-2', memberCode: 'AK10002', name: 'Ref 1' },
+        },
+      ]);
+
+      mockPrismaService.repurchaseCommissionLedger.findMany.mockResolvedValueOnce([]);
+
+      mockPrismaService.$queryRaw.mockResolvedValueOnce([
+        { id: 'm-1', status: 'ACTIVE' },
+        { id: 'm-2', status: 'ACTIVE' },
+        { id: 'm-3', status: 'INACTIVE' },
+      ]);
+
+      const res = await service.getMemberPersonalDashboard('mem-101', true);
+
+      expect(res.memberInfo.memberCode).toBe('AK10101');
+      expect(res.memberInfo.referrer?.name).toBe('Sponsor User');
+      expect(res.referrals.totalDirectReferrals).toBe(5);
+      expect(res.referrals.activeDirectReferrals).toBe(4);
+      expect(res.referrals.totalDownlineMembers).toBe(3);
+      expect(res.referrals.activeDownlineMembers).toBe(2);
+
+      expect(res.earnings.membershipEarnings).toBe(1250);
+      expect(res.earnings.repurchaseEarnings).toBe(500);
+      expect(res.earnings.totalEarnings).toBe(1750);
+      expect(res.earnings.totalDisbursed).toBe(1500);
+      expect(res.earnings.totalPending).toBe(250);
+
+      expect(res.recentCommissions.length).toBe(1);
     });
   });
 });

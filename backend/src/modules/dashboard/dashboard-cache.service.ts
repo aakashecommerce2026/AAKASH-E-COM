@@ -107,6 +107,70 @@ export class DashboardCacheService implements OnModuleDestroy {
     }
   }
 
+  /**
+   * Clears in-memory and Redis keys matching prefix patterns
+   */
+  async clearByPatterns(prefixes: string[]): Promise<void> {
+    // Clear memory cache keys matching any prefix
+    for (const key of this.memoryCache.keys()) {
+      if (prefixes.some((prefix) => key.startsWith(prefix.replace('*', '')))) {
+        this.memoryCache.delete(key);
+      }
+    }
+
+    if (this.isRedisConnected && this.redisClient) {
+      try {
+        for (const pattern of prefixes) {
+          const keys = await this.redisClient.keys(pattern);
+          if (keys.length > 0) {
+            await this.redisClient.del(...keys);
+          }
+        }
+      } catch (err) {
+        this.isRedisConnected = false;
+      }
+    }
+  }
+
+  /**
+   * Invalidate member, business, and activity dashboard caches on new member creation/update
+   */
+  async invalidateMemberCache(): Promise<void> {
+    this.logger.log('Invalidating member, business, and activity dashboard caches');
+    await this.clearByPatterns([
+      'admin:dashboard:members:*',
+      'admin:dashboard:business:*',
+      'admin:dashboard:activity:*',
+    ]);
+  }
+
+  /**
+   * Invalidate earnings, business, and activity dashboard caches on new repurchase entry
+   */
+  async invalidateRepurchaseCache(): Promise<void> {
+    this.logger.log('Invalidating earnings, business, and activity dashboard caches');
+    await this.clearByPatterns([
+      'admin:dashboard:earnings:*',
+      'admin:dashboard:business:*',
+      'admin:dashboard:activity:*',
+    ]);
+  }
+
+  /**
+   * Invalidate earnings, business, and activity dashboard caches on payout distribution batch
+   */
+  async invalidateDistributionCache(): Promise<void> {
+    this.logger.log('Invalidating earnings, business, and activity dashboard caches');
+    await this.clearByPatterns([
+      'admin:dashboard:earnings:*',
+      'admin:dashboard:business:*',
+      'admin:dashboard:activity:*',
+    ]);
+  }
+
+  /**
+   * Clears all dashboard cache entries
+   */
   async clearDashboardCache(): Promise<void> {
     this.memoryCache.clear();
     if (this.isRedisConnected && this.redisClient) {
