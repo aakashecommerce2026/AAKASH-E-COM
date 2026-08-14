@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { MemberRole } from '@prisma/client';
 import { DashboardService } from './dashboard.service';
 import { QueryDashboardDto } from './dto/query-dashboard.dto';
+import { QueryActivityDto } from './dto/query-activity.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -46,5 +47,16 @@ export class DashboardController {
   @ApiResponse({ status: 200, description: 'Combined business overview statistics returned successfully' })
   async getBusinessStats(@Query() query: QueryDashboardDto) {
     return this.dashboardService.getBusinessStats(query);
+  }
+
+  @Get('activity')
+  @ApiOperation({
+    summary: 'GET /admin/dashboard/activity — Unified paginated activity feed (recent registrations, repurchases, distributions, system activities)',
+    description:
+      'Provides a unified, real-time, paginated activity feed aggregated across registrations, repurchase transactions, distribution payout runs, and audit logs.',
+  })
+  @ApiResponse({ status: 200, description: 'Paginated activity feed returned successfully' })
+  async getActivityFeed(@Query() query: QueryActivityDto) {
+    return this.dashboardService.getActivityFeed(query);
   }
 }

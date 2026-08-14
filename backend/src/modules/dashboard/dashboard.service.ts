@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DashboardCacheService } from './dashboard-cache.service';
 import { QueryDashboardDto } from './dto/query-dashboard.dto';
+import { QueryActivityDto, ActivityCategory } from './dto/query-activity.dto';
 import { MemberStatus, CommissionStatus, DistributionRecordStatus, Prisma } from '@prisma/client';
 
 export interface IMemberStatsResponse {
@@ -60,6 +61,26 @@ export interface IBusinessStatsResponse {
     totalDistributed: number;
     pendingDistributions: number;
     payoutRatio: number;
+  };
+  calculatedAt: string;
+}
+
+export interface IActivityFeedItem {
+  id: string;
+  category: ActivityCategory;
+  action: string;
+  timestamp: string;
+  actor: { id: string; memberCode: string; name: string; role?: string } | null;
+  details: Record<string, any>;
+}
+
+export interface IActivityFeedResponse {
+  data: IActivityFeedItem[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
   };
   calculatedAt: string;
 }
@@ -432,6 +453,222 @@ export class DashboardService {
         totalDistributed: earningsStats.totalDistributed,
         pendingDistributions: earningsStats.pendingDistributions,
         payoutRatio,
+      },
+      calculatedAt: new Date().toISOString(),
+    };
+
+    await this.cacheService.set(cacheKey, result, 60);
+    return result;
+  }
+
+  /**
+   * 4. GET /admin/dashboard/activity
+   * Unified activity feed pulling recent registrations, repurchases, distributions, and system activity logs.
+   */
+  async getActivityFeed(query: QueryActivityDto): Promise<IActivityFeedResponse> {
+    const cacheKey = `admin:dashboard:activity:${JSON.stringify(query)}`;
+
+    if (!query.refresh) {
+      const cached = await this.cacheService.get<IActivityFeedResponse>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+    }
+
+    const { type = ActivityCategory.ALL, page = 1, limit = 10, startDate, endDate } = query;
+    const items: IActivityFeedItem[] = [];
+
+    const dateFilter = this.buildDateWhere(startDate, endDate);
+
+    const fetchAll = type === ActivityCategory.ALL;
+    const fetchRegistrations = fetchAll || type === ActivityCategory.MEMBER_REGISTRATION;
+    const fetchRepurchases = fetchAll || type === ActivityCategory.REPURCHASE;
+    const fetchDistributions = fetchAll || type === ActivityCategory.DISTRIBUTION;
+    const fetchSystemActivities = fetchAll || type === ActivityCategory.SYSTEM_ACTIVITY;
+
+    const promises: Promise<void>[] = [];
+
+    // 1. Fetch recent member registrations
+    if (fetchRegistrations) {
+      promises.push(
+        (async () => {
+          const members = await this.prisma.member.findMany({
+            where: dateFilter ? { joiningDate: dateFilter } : undefined,
+            take: 50,
+            orderBy: { joiningDate: 'desc' },
+            select: {
+              id: true,
+              memberCode: true,
+              name: true,
+              mobile: true,
+              role: true,
+              status: true,
+              joiningDate: true,
+              referrer: { select: { id: true, memberCode: true, name: true } },
+            },
+          });
+
+          members.forEach((m) => {
+            items.push({
+              id: `reg-${m.id}`,
+              category: ActivityCategory.MEMBER_REGISTRATION,
+              action: `New member registered: ${m.name} (${m.memberCode})`,
+              timestamp: m.joiningDate.toISOString(),
+              actor: m.referrer ? { id: m.referrer.id, memberCode: m.referrer.memberCode, name: m.referrer.name } : null,
+              details: {
+                memberId: m.id,
+                memberCode: m.memberCode,
+                name: m.name,
+                mobile: m.mobile,
+                status: m.status,
+                role: m.role,
+                referrer: m.referrer,
+              },
+            });
+          });
+        })(),
+      );
+    }
+
+    // 2. Fetch recent repurchase entries
+    if (fetchRepurchases) {
+      promises.push(
+        (async () => {
+          const repurchases = await this.prisma.repurchaseEntry.findMany({
+            where: {
+              deletedAt: null,
+              ...(dateFilter ? { transactionDate: dateFilter } : {}),
+            },
+            take: 50,
+            orderBy: { transactionDate: 'desc' },
+            select: {
+              id: true,
+              transactionRef: true,
+              amount: true,
+              transactionDate: true,
+              remarks: true,
+              member: { select: { id: true, memberCode: true, name: true, role: true } },
+            },
+          });
+
+          repurchases.forEach((r) => {
+            items.push({
+              id: `rep-${r.id}`,
+              category: ActivityCategory.REPURCHASE,
+              action: `Repurchase recorded for ${r.member?.name || 'Member'} (${r.member?.memberCode}): ₹${Number(r.amount).toLocaleString('en-IN')}`,
+              timestamp: r.transactionDate.toISOString(),
+              actor: r.member ? { id: r.member.id, memberCode: r.member.memberCode, name: r.member.name, role: r.member.role } : null,
+              details: {
+                repurchaseId: r.id,
+                transactionRef: r.transactionRef,
+                amount: Number(r.amount),
+                remarks: r.remarks,
+              },
+            });
+          });
+        })(),
+      );
+    }
+
+    // 3. Fetch recent distribution batches
+    if (fetchDistributions) {
+      promises.push(
+        (async () => {
+          const batches = await this.prisma.distributionBatch.findMany({
+            where: dateFilter ? { createdAt: dateFilter } : undefined,
+            take: 50,
+            orderBy: { createdAt: 'desc' },
+            select: {
+              id: true,
+              batchNo: true,
+              totalMembers: true,
+              totalGrossAmount: true,
+              totalNetAmount: true,
+              status: true,
+              createdAt: true,
+              completedAt: true,
+              processor: { select: { id: true, memberCode: true, name: true, role: true } },
+            },
+          });
+
+          batches.forEach((b) => {
+            const time = b.completedAt || b.createdAt;
+            items.push({
+              id: `dist-${b.id}`,
+              category: ActivityCategory.DISTRIBUTION,
+              action: `Payout Batch ${b.batchNo} (${b.status}): Net ₹${Number(b.totalNetAmount).toLocaleString('en-IN')} for ${b.totalMembers} members`,
+              timestamp: time.toISOString(),
+              actor: b.processor ? { id: b.processor.id, memberCode: b.processor.memberCode, name: b.processor.name, role: b.processor.role } : null,
+              details: {
+                batchId: b.id,
+                batchNo: b.batchNo,
+                status: b.status,
+                totalMembers: b.totalMembers,
+                totalGrossAmount: Number(b.totalGrossAmount),
+                totalNetAmount: Number(b.totalNetAmount),
+              },
+            });
+          });
+        })(),
+      );
+    }
+
+    // 4. Fetch recent system activity logs
+    if (fetchSystemActivities) {
+      promises.push(
+        (async () => {
+          const logs = await this.prisma.activityLog.findMany({
+            where: dateFilter ? { createdAt: dateFilter } : undefined,
+            take: 50,
+            orderBy: { createdAt: 'desc' },
+            select: {
+              id: true,
+              actionType: true,
+              entityType: true,
+              entityId: true,
+              actorRole: true,
+              metadata: true,
+              createdAt: true,
+              actor: { select: { id: true, memberCode: true, name: true, role: true } },
+            },
+          });
+
+          logs.forEach((l) => {
+            items.push({
+              id: `sys-${l.id}`,
+              category: ActivityCategory.SYSTEM_ACTIVITY,
+              action: `System Activity: ${l.actionType} on ${l.entityType}${l.entityId ? ':' + l.entityId : ''}`,
+              timestamp: l.createdAt.toISOString(),
+              actor: l.actor ? { id: l.actor.id, memberCode: l.actor.memberCode, name: l.actor.name, role: l.actor.role || l.actorRole } : null,
+              details: {
+                actionType: l.actionType,
+                entityType: l.entityType,
+                entityId: l.entityId,
+                metadata: l.metadata,
+              },
+            });
+          });
+        })(),
+      );
+    }
+
+    await Promise.all(promises);
+
+    // Sort combined activities most-recent-first (descending timestamp)
+    items.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+    // Paginate results
+    const total = items.length;
+    const skip = (page - 1) * limit;
+    const paginatedItems = items.slice(skip, skip + limit);
+
+    const result: IActivityFeedResponse = {
+      data: paginatedItems,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit) || 1,
       },
       calculatedAt: new Date().toISOString(),
     };

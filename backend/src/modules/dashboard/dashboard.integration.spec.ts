@@ -5,6 +5,7 @@ import { DashboardService } from './dashboard.service';
 import { DashboardCacheService } from './dashboard-cache.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MemberStatus, CommissionStatus, DistributionRecordStatus } from '@prisma/client';
+import { ActivityCategory } from './dto/query-activity.dto';
 
 describe('Admin Dashboard Integration Test Suite', () => {
   let controller: DashboardController;
@@ -22,6 +23,18 @@ describe('Admin Dashboard Integration Test Suite', () => {
         groupBy: jest.fn().mockResolvedValue([
           { status: MemberStatus.ACTIVE, _count: { id: 40 } },
           { status: MemberStatus.INACTIVE, _count: { id: 10 } },
+        ]),
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'm-10',
+            memberCode: 'AK10010',
+            name: 'Alice',
+            mobile: '+919999999999',
+            role: 'MEMBER',
+            status: 'ACTIVE',
+            joiningDate: new Date('2026-08-14T10:00:00Z'),
+            referrer: null,
+          },
         ]),
       },
       membershipCommissionLedger: {
@@ -52,6 +65,22 @@ describe('Admin Dashboard Integration Test Suite', () => {
       repurchaseEntry: {
         count: jest.fn().mockResolvedValue(15),
         aggregate: jest.fn().mockResolvedValue({ _sum: { amount: 15000 } }),
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'rep-1',
+            transactionRef: 'REF-001',
+            amount: 2000,
+            transactionDate: new Date('2026-08-14T10:30:00Z'),
+            remarks: 'Test purchase',
+            member: { id: 'm-10', memberCode: 'AK10010', name: 'Alice', role: 'MEMBER' },
+          },
+        ]),
+      },
+      distributionBatch: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      activityLog: {
+        findMany: jest.fn().mockResolvedValue([]),
       },
       $queryRaw: jest.fn().mockResolvedValue([
         { date: new Date('2026-08-14'), count: 5 },
@@ -115,7 +144,7 @@ describe('Admin Dashboard Integration Test Suite', () => {
       expect(res.totalGrossDistributed).toBe(8000);
       expect(res.totalTdsDeducted).toBe(400);
       expect(res.totalAdminFeeDeducted).toBe(600);
-      expect(res.pendingDistributions).toBe(2000); // 1000 pending membership ledger + 1000 pending distribution record
+      expect(res.pendingDistributions).toBe(2000);
     });
   });
 
@@ -135,6 +164,18 @@ describe('Admin Dashboard Integration Test Suite', () => {
       expect(res.earningsSummary.totalEarnings).toBe(9000);
       expect(res.earningsSummary.totalDistributed).toBe(7000);
       expect(res.earningsSummary.payoutRatio).toBe(77.78);
+    });
+  });
+
+  describe('4. GET /admin/dashboard/activity', () => {
+    it('should return unified activity feed sorted most-recent-first', async () => {
+      const res = await controller.getActivityFeed({ type: ActivityCategory.ALL, page: 1, limit: 10, refresh: true });
+
+      expect(res).toBeDefined();
+      expect(res.data.length).toBe(2);
+      expect(res.meta.total).toBe(2);
+      expect(res.data[0].category).toBe(ActivityCategory.REPURCHASE); // 10:30:00 is more recent than 10:00:00
+      expect(res.data[1].category).toBe(ActivityCategory.MEMBER_REGISTRATION);
     });
   });
 });

@@ -3,7 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { DashboardService } from './dashboard.service';
 import { DashboardCacheService } from './dashboard-cache.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { MemberStatus, CommissionStatus, DistributionRecordStatus } from '@prisma/client';
+import { MemberStatus, CommissionStatus } from '@prisma/client';
+import { ActivityCategory } from './dto/query-activity.dto';
 
 describe('DashboardService', () => {
   let service: DashboardService;
@@ -14,6 +15,7 @@ describe('DashboardService', () => {
     member: {
       count: jest.fn(),
       groupBy: jest.fn(),
+      findMany: jest.fn(),
     },
     membershipCommissionLedger: {
       groupBy: jest.fn(),
@@ -27,6 +29,13 @@ describe('DashboardService', () => {
     repurchaseEntry: {
       count: jest.fn(),
       aggregate: jest.fn(),
+      findMany: jest.fn(),
+    },
+    distributionBatch: {
+      findMany: jest.fn(),
+    },
+    activityLog: {
+      findMany: jest.fn(),
     },
     $queryRaw: jest.fn(),
   };
@@ -130,11 +139,11 @@ describe('DashboardService', () => {
         .mockResolvedValueOnce({
           _sum: { netAmount: 7000, grossAmount: 8000, tdsAmount: 400, adminFee: 600 },
           _count: { id: 15 },
-        }) // disbursed records (PAID)
+        })
         .mockResolvedValueOnce({
           _sum: { netAmount: 1200, grossAmount: 1500 },
           _count: { id: 3 },
-        }); // pending records
+        });
 
       const res = await service.getEarningsStats({ refresh: true });
 
@@ -145,19 +154,17 @@ describe('DashboardService', () => {
       expect(res.totalGrossDistributed).toBe(8000);
       expect(res.totalTdsDeducted).toBe(400);
       expect(res.totalAdminFeeDeducted).toBe(600);
-      // Pending = (1000 membership pending + 500 repurchase pending) + 1200 pending records = 2700
       expect(res.pendingDistributions).toBe(2700);
     });
   });
 
   describe('getBusinessStats', () => {
     it('should return combined repurchase, growth, and earnings summary', async () => {
-      // Mock member stats & earnings stats via internal methods or prisma
       mockPrismaService.member.count
-        .mockResolvedValueOnce(50) // total
-        .mockResolvedValueOnce(2)  // today
-        .mockResolvedValueOnce(10) // week
-        .mockResolvedValueOnce(30); // month
+        .mockResolvedValueOnce(50)
+        .mockResolvedValueOnce(2)
+        .mockResolvedValueOnce(10)
+        .mockResolvedValueOnce(30);
 
       mockPrismaService.member.groupBy.mockResolvedValueOnce([
         { status: MemberStatus.ACTIVE, _count: { id: 40 } },
@@ -185,10 +192,10 @@ describe('DashboardService', () => {
 
       mockPrismaService.repurchaseEntry.count.mockResolvedValueOnce(10);
       mockPrismaService.repurchaseEntry.aggregate
-        .mockResolvedValueOnce({ _sum: { amount: 10000 } }) // total volume
-        .mockResolvedValueOnce({ _sum: { amount: 500 } })   // today volume
-        .mockResolvedValueOnce({ _sum: { amount: 2500 } })  // week volume
-        .mockResolvedValueOnce({ _sum: { amount: 8000 } }); // month volume
+        .mockResolvedValueOnce({ _sum: { amount: 10000 } })
+        .mockResolvedValueOnce({ _sum: { amount: 500 } })
+        .mockResolvedValueOnce({ _sum: { amount: 2500 } })
+        .mockResolvedValueOnce({ _sum: { amount: 8000 } });
 
       const res = await service.getBusinessStats({ refresh: true });
 
@@ -199,11 +206,84 @@ describe('DashboardService', () => {
 
       expect(res.growthSummary.totalMembers).toBe(50);
       expect(res.growthSummary.activeMembers).toBe(40);
-      expect(res.growthSummary.activationRate).toBe(80); // (40/50)*100
+      expect(res.growthSummary.activationRate).toBe(80);
 
       expect(res.earningsSummary.totalEarnings).toBe(3000);
       expect(res.earningsSummary.totalDistributed).toBe(2500);
       expect(res.earningsSummary.payoutRatio).toBe(83.33);
+    });
+  });
+
+  describe('getActivityFeed', () => {
+    it('should return unified, most-recent-first paginated activity feed', async () => {
+      const now = new Date();
+      const tenMinsAgo = new Date(now.getTime() - 10 * 60 * 1000);
+      const twentyMinsAgo = new Date(now.getTime() - 20 * 60 * 1000);
+      const thirtyMinsAgo = new Date(now.getTime() - 30 * 60 * 1000);
+
+      mockPrismaService.member.findMany.mockResolvedValueOnce([
+        {
+          id: 'm-100',
+          memberCode: 'AK10100',
+          name: 'Jane Doe',
+          mobile: '+919876543210',
+          role: 'MEMBER',
+          status: 'ACTIVE',
+          joiningDate: tenMinsAgo,
+          referrer: { id: 'm-1', memberCode: 'AK10001', name: 'Sponsor' },
+        },
+      ]);
+
+      mockPrismaService.repurchaseEntry.findMany.mockResolvedValueOnce([
+        {
+          id: 'rep-200',
+          transactionRef: 'TXN-999',
+          amount: 1500,
+          transactionDate: now,
+          remarks: 'Monthly repurchase',
+          member: { id: 'm-100', memberCode: 'AK10100', name: 'Jane Doe', role: 'MEMBER' },
+        },
+      ]);
+
+      mockPrismaService.distributionBatch.findMany.mockResolvedValueOnce([
+        {
+          id: 'batch-300',
+          batchNo: 'BATCH-2026-001',
+          totalMembers: 10,
+          totalGrossAmount: 5000,
+          totalNetAmount: 4500,
+          status: 'COMPLETED',
+          createdAt: twentyMinsAgo,
+          completedAt: twentyMinsAgo,
+          processor: { id: 'admin-1', memberCode: 'ADM001', name: 'Admin', role: 'ADMIN' },
+        },
+      ]);
+
+      mockPrismaService.activityLog.findMany.mockResolvedValueOnce([
+        {
+          id: 'log-400',
+          actionType: 'UPDATE_COMMISSION_CONFIG',
+          entityType: 'MembershipCommissionConfig',
+          entityId: 'cfg-1',
+          actorRole: 'ADMIN',
+          metadata: { version: 2 },
+          createdAt: thirtyMinsAgo,
+          actor: { id: 'admin-1', memberCode: 'ADM001', name: 'Admin', role: 'ADMIN' },
+        },
+      ]);
+
+      const res = await service.getActivityFeed({ type: ActivityCategory.ALL, page: 1, limit: 10, refresh: true });
+
+      expect(res.data.length).toBe(4);
+      expect(res.meta.total).toBe(4);
+      expect(res.meta.page).toBe(1);
+      expect(res.meta.totalPages).toBe(1);
+
+      // Most recent first: Repurchase (now) -> Member (10m ago) -> Distribution (20m ago) -> System (30m ago)
+      expect(res.data[0].category).toBe(ActivityCategory.REPURCHASE);
+      expect(res.data[1].category).toBe(ActivityCategory.MEMBER_REGISTRATION);
+      expect(res.data[2].category).toBe(ActivityCategory.DISTRIBUTION);
+      expect(res.data[3].category).toBe(ActivityCategory.SYSTEM_ACTIVITY);
     });
   });
 });
