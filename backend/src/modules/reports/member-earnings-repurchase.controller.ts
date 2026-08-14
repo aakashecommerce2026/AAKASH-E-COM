@@ -1,28 +1,29 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { ReportsService } from './reports.service';
-import { QueryMemberEarningsDto } from './dto/query-member-earnings.dto';
+import { MemberPortalReportsService } from './member-portal-reports.service';
+import { QueryMemberEarningsBreakdownDto } from './dto/query-member-earnings-breakdown.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
-@ApiTags('Member Repurchase Earnings')
+@ApiTags('Member Self-Service Earnings Reports')
 @Controller('member/earnings/repurchase')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class MemberEarningsRepurchaseController {
-  constructor(private readonly reportsService: ReportsService) {}
+  constructor(private readonly memberPortalReportsService: MemberPortalReportsService) {}
 
   @Get()
   @ApiOperation({
-    summary: 'GET /member/earnings/repurchase — Logged-in member repurchase earnings history',
+    summary: 'GET /member/earnings/repurchase?range=daily|weekly|monthly — Repurchase earnings breakdown',
     description:
-      'Returns paginated list of repurchase commission ledgers earned by the logged-in member, scoped strictly by JWT payload member ID.',
+      'Grouped aggregation queries on repurchase_commission_ledger scoped strictly to beneficiary_member_id = self derived from JWT payload.',
   })
-  @ApiResponse({ status: 200, description: 'Member repurchase earnings list and summary totals' })
-  async getMemberRepurchaseEarnings(
-    @CurrentUser('id') loggedInUserId: string,
-    @Query() query: QueryMemberEarningsDto,
+  @ApiResponse({ status: 200, description: 'Authenticated member repurchase earnings breakdown returned successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getMyRepurchaseEarnings(
+    @CurrentUser('id') memberId: string,
+    @Query() query: QueryMemberEarningsBreakdownDto,
   ) {
-    return this.reportsService.getMemberRepurchaseEarnings(loggedInUserId, query);
+    return this.memberPortalReportsService.getRepurchaseEarningsBreakdown(memberId, query);
   }
 }
