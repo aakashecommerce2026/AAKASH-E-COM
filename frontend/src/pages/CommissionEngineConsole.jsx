@@ -257,7 +257,7 @@ const CommissionEngineConsole = () => {
 
       {/* KPI Overview Metrics */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid xs={12} sm={6} md={3}>
           <Card sx={{ bgcolor: '#F0FDF4', borderColor: '#BBF7D0', height: '100%' }}>
             <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Avatar sx={{ bgcolor: 'primary.main', width: 44, height: 44 }}>
@@ -275,7 +275,7 @@ const CommissionEngineConsole = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid xs={12} sm={6} md={3}>
           <Card sx={{ bgcolor: '#FEFCE8', borderColor: '#FEF08A', height: '100%' }}>
             <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Avatar sx={{ bgcolor: 'secondary.main', width: 44, height: 44 }}>
@@ -293,7 +293,7 @@ const CommissionEngineConsole = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid xs={12} sm={6} md={3}>
           <Card sx={{ height: '100%' }}>
             <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Avatar sx={{ bgcolor: '#059669', width: 44, height: 44 }}>
@@ -311,7 +311,7 @@ const CommissionEngineConsole = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid xs={12} sm={6} md={3}>
           <Card sx={{ height: '100%' }}>
             <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Avatar sx={{ bgcolor: '#0284C7', width: 44, height: 44 }}>
@@ -419,7 +419,7 @@ const CommissionEngineConsole = () => {
                   : 'Admin Tax Deductions are currently TURNED OFF. Gross commissions are distributed directly to beneficiaries without any TDS or Admin fee reductions.'}
               </Typography>
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={4}>
+                <Grid xs={12} sm={4}>
                   <Box sx={{ p: 1.5, bgcolor: 'white', borderRadius: 2, border: `1px solid ${enableDeductions ? '#FEF08A' : '#BBF7D0'}` }}>
                     <Typography variant="caption" sx={{ color: enableDeductions ? '#92400E' : '#166534', fontWeight: 700, display: 'block' }}>
                       TDS Deduction (Sec 194H)
@@ -429,7 +429,7 @@ const CommissionEngineConsole = () => {
                     </Typography>
                   </Box>
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid xs={12} sm={4}>
                   <Box sx={{ p: 1.5, bgcolor: 'white', borderRadius: 2, border: `1px solid ${enableDeductions ? '#FEF08A' : '#BBF7D0'}` }}>
                     <Typography variant="caption" sx={{ color: enableDeductions ? '#92400E' : '#166534', fontWeight: 700, display: 'block' }}>
                       Admin Service Charges
@@ -439,7 +439,7 @@ const CommissionEngineConsole = () => {
                     </Typography>
                   </Box>
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid xs={12} sm={4}>
                   <Box sx={{ p: 1.5, bgcolor: 'white', borderRadius: 2, border: `1px solid ${enableDeductions ? '#FEF08A' : '#BBF7D0'}` }}>
                     <Typography variant="caption" sx={{ color: enableDeductions ? '#92400E' : '#166534', fontWeight: 700, display: 'block' }}>
                       Net Payout Formula
@@ -455,7 +455,7 @@ const CommissionEngineConsole = () => {
             {/* Admin Benchmark Amount Controls */}
             <Paper variant="outlined" sx={{ p: 2.5, mb: 3, borderRadius: 2.5, bgcolor: '#FAF9F6' }}>
               <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid xs={12} sm={6} md={4}>
                   <TextField
                     label="Benchmark Transaction Value (₹)"
                     type="number"
@@ -464,10 +464,10 @@ const CommissionEngineConsole = () => {
                     value={benchmarkAmount}
                     onChange={(e) => setBenchmarkAmount(e.target.value)}
                     helperText="Type any fee amount to check payouts"
-                    inputProps={{ min: 0 }}
+                    slotProps={{ htmlInput: { min: 0 } }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6} md={8}>
+                <Grid xs={12} sm={6} md={8}>
                   <Typography variant="caption" color="text.secondary" display="block" sx={{ fontWeight: 700, mb: 0.75 }}>
                     Quick Preset Fee Tiers (Click to test):
                   </Typography>
@@ -535,7 +535,7 @@ const CommissionEngineConsole = () => {
                             type="number"
                             value={rateVal}
                             onChange={(e) => handleLevelRateChange(lvl, e.target.value)}
-                            inputProps={{ step: '0.05', min: '0', max: '100', style: { textAlign: 'center', fontWeight: 700 } }}
+                            slotProps={{ htmlInput: { step: '0.05', min: '0', max: '100', style: { textAlign: 'center', fontWeight: 700 } } }}
                             sx={{ width: 110 }}
                           />
                         </TableCell>
@@ -554,7 +554,7 @@ const CommissionEngineConsole = () => {
             {/* Total 20-Level Payout Summary Box */}
             <Box sx={{ mt: 3, p: 2.5, borderRadius: 2.5, bgcolor: '#0F172A', color: 'white' }}>
               <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} sm={4}>
+                <Grid xs={12} sm={4}>
                   <Typography variant="caption" sx={{ color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>
                     Total 20-Level Commission Pool
                   </Typography>
@@ -563,7 +563,7 @@ const CommissionEngineConsole = () => {
                   </Typography>
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid xs={12} sm={4}>
                   <Typography variant="caption" sx={{ color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>
                     Max Total Payout ({formatINR(benchmarkAmount)})
                   </Typography>
@@ -572,7 +572,7 @@ const CommissionEngineConsole = () => {
                   </Typography>
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid xs={12} sm={4}>
                   <Typography variant="caption" sx={{ color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>
                     Admin Retention Margin
                   </Typography>
@@ -590,7 +590,7 @@ const CommissionEngineConsole = () => {
       {activeTab === 1 && (
         <Grid container spacing={3.5}>
           {/* Simulator Controls Form */}
-          <Grid item xs={12} md={5}>
+          <Grid xs={12} md={5}>
             <Paper variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
               <Typography variant="h6" sx={{ fontWeight: 800, color: 'primary.main', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                 <PlayArrowIcon color="secondary" /> Engine Test & Simulator Console
@@ -704,7 +704,7 @@ const CommissionEngineConsole = () => {
           </Grid>
 
           {/* Traversal Results Display */}
-          <Grid item xs={12} md={7}>
+          <Grid xs={12} md={7}>
             <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, minHeight: 450 }}>
               <Typography variant="h6" sx={{ fontWeight: 800, color: 'primary.main', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                 <AccountTreeIcon color="primary" /> Traversal & Payout Execution Results

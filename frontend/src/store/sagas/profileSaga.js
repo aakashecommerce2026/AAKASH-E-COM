@@ -1,21 +1,21 @@
-import { call, put, delay, takeLatest } from 'redux-saga/effects';
+import { call, put, takeLatest } from 'redux-saga/effects';
 import * as types from '../actionTypes';
 import * as actions from '../actions';
-
-// Mock DB Profile API call
-const mockUpdateProfileApi = (profileData) => {
-  return new Promise((resolve) => {
-    // Simulated DB write
-    resolve(profileData);
-  });
-};
+import { membersApi } from '../../services/api';
 
 function* updateProfileWorker(action) {
   try {
-    // Program Redux-Saga latency delay (900ms)
-    yield delay(900);
+    const response = yield call(membersApi.updateProfile, action.payload);
 
-    const updatedUser = yield call(mockUpdateProfileApi, action.payload);
+    const updatedUser = {
+      id: response.id,
+      name: response.name,
+      email: response.email,
+      mobile: response.mobile,
+      role: response.role === 'ADMIN' ? 'Admin' : 'Member',
+      referralCode: response.memberCode,
+      status: response.status,
+    };
 
     // Save to localStorage session
     const storedAuth = localStorage.getItem('auth');

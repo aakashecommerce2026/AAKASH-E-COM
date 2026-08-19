@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Param,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -15,6 +16,7 @@ import {
 import { MemberRole } from '@prisma/client';
 import { MembersService } from './members.service';
 import { CreateMemberDto } from './dto/create-member.dto';
+import { QueryMembersDto } from './dto/query-members.dto';
 import { MemberResponseDto } from './dto/member-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -37,6 +39,13 @@ export class MembersController {
   @ApiResponse({ status: 409, description: 'Member code, mobile, or email already exists' })
   async create(@Body() createMemberDto: CreateMemberDto): Promise<MemberResponseDto> {
     return this.membersService.create(createMemberDto);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get paginated member list with search and filters' })
+  @ApiResponse({ status: 200, description: 'Paginated members response' })
+  async findAll(@Query() query: QueryMembersDto) {
+    return this.membersService.findAll(query);
   }
 
   @Get(':id')

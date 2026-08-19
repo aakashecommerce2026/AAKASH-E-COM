@@ -18,6 +18,7 @@ const swagger_1 = require("@nestjs/swagger");
 const client_1 = require("@prisma/client");
 const members_service_1 = require("./members.service");
 const create_member_dto_1 = require("./dto/create-member.dto");
+const query_members_dto_1 = require("./dto/query-members.dto");
 const member_response_dto_1 = require("./dto/member-response.dto");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const roles_guard_1 = require("../auth/guards/roles.guard");
@@ -30,6 +31,9 @@ let MembersController = class MembersController {
     }
     async create(createMemberDto) {
         return this.membersService.create(createMemberDto);
+    }
+    async findAll(query) {
+        return this.membersService.findAll(query);
     }
     async findOne(id) {
         return this.membersService.findById(id);
@@ -51,6 +55,15 @@ __decorate([
     __metadata("design:paramtypes", [create_member_dto_1.CreateMemberDto]),
     __metadata("design:returntype", Promise)
 ], MembersController.prototype, "create", null);
+__decorate([
+    (0, common_1.Get)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Get paginated member list with search and filters' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Paginated members response' }),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [query_members_dto_1.QueryMembersDto]),
+    __metadata("design:returntype", Promise)
+], MembersController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':id'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard, ownership_guard_1.OwnershipGuard),
