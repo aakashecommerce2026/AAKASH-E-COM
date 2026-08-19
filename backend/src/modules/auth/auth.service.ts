@@ -2,11 +2,13 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  Optional,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -21,6 +23,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    @Optional() private readonly auditService?: AuditService,
   ) {}
 
   /**
@@ -72,6 +75,17 @@ export class AuthService {
    */
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     const member = await this.validateUser(loginDto.identifier, loginDto.password);
+
+    if (this.auditService) {
+      await this.auditService.logAction({
+        actorId: member.id,
+        actorRole: member.role,
+        actionType: 'MEMBER_LOGIN',
+        entityType: 'Member',
+        entityId: member.id,
+        metadata: { memberCode: member.memberCode },
+      });
+    }
 
     return this.generateAuthTokens(member);
   }

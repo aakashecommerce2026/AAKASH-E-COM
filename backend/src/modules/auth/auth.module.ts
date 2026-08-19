@@ -8,10 +8,12 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { RolesGuard } from './guards/roles.guard';
 import { OwnershipGuard } from './guards/ownership.guard';
 import { PrismaModule } from '../../prisma/prisma.module';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
     PrismaModule,
+    AuditModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
