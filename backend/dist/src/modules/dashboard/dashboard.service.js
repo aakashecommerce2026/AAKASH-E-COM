@@ -487,6 +487,186 @@ let DashboardService = DashboardService_1 = class DashboardService {
         await this.cacheService.set(cacheKey, result, 60);
         return result;
     }
+    async getMemberPersonalDashboard(memberId, refresh) {
+        const cacheKey = `member:dashboard:${memberId}`;
+        if (!refresh) {
+            const cached = await this.cacheService.get(cacheKey);
+            if (cached) {
+                return cached;
+            }
+        }
+        const member = await this.prisma.member.findUnique({
+            where: { id: memberId },
+            select: {
+                id: true,
+                memberCode: true,
+                name: true,
+                email: true,
+                mobile: true,
+                status: true,
+                role: true,
+                joiningDate: true,
+                referrer: { select: { id: true, memberCode: true, name: true } },
+            },
+        });
+        if (!member) {
+            throw new common_1.NotFoundException(`Member with ID '${memberId}' not found`);
+        }
+        const [directReferralsCount, activeDirectReferralsCount, membershipGroups, repurchaseGroups, recentMembershipLedgers, recentRepurchaseLedgers,] = await Promise.all([
+            this.prisma.member.count({ where: { referrerId: memberId } }),
+            this.prisma.member.count({ where: { referrerId: memberId, status: client_1.MemberStatus.ACTIVE } }),
+            this.prisma.membershipCommissionLedger.groupBy({
+                by: ['status'],
+                where: { beneficiaryMemberId: memberId },
+                _sum: { amount: true },
+            }),
+            this.prisma.repurchaseCommissionLedger.groupBy({
+                by: ['status'],
+                where: { beneficiaryMemberId: memberId },
+                _sum: { amount: true },
+            }),
+            this.prisma.membershipCommissionLedger.findMany({
+                where: { beneficiaryMemberId: memberId },
+                take: 5,
+                orderBy: { createdAt: 'desc' },
+                select: {
+                    id: true,
+                    amount: true,
+                    level: true,
+                    status: true,
+                    createdAt: true,
+                    sourceMember: { select: { id: true, memberCode: true, name: true } },
+                },
+            }),
+            this.prisma.repurchaseCommissionLedger.findMany({
+                where: { beneficiaryMemberId: memberId },
+                take: 5,
+                orderBy: { createdAt: 'desc' },
+                select: {
+                    id: true,
+                    amount: true,
+                    level: true,
+                    status: true,
+                    createdAt: true,
+                    sourceMember: { select: { id: true, memberCode: true, name: true } },
+                },
+            }),
+        ]);
+        let totalDownlineMembers = directReferralsCount;
+        let activeDownlineMembers = activeDirectReferralsCount;
+        try {
+            if (typeof this.prisma.$queryRaw === 'function') {
+                const downlineNodes = await this.prisma.$queryRaw `
+          WITH RECURSIVE downline AS (
+            SELECT id, status, 1 AS level
+            FROM members
+            WHERE referrer_id = ${memberId}
+
+            UNION ALL
+
+            SELECT m.id, m.status, d.level + 1
+            FROM members m
+            INNER JOIN downline d ON m.referrer_id = d.id
+            WHERE d.level < 20
+          )
+          SELECT id, status FROM downline;
+        `;
+                totalDownlineMembers = downlineNodes.length;
+                activeDownlineMembers = downlineNodes.filter((n) => n.status === client_1.MemberStatus.ACTIVE).length;
+            }
+        }
+        catch (err) {
+            this.logger.debug(`Downline CTE query skipped or error: ${err?.message}`);
+        }
+        let membershipEarnings = 0;
+        const membershipBreakdown = {
+            DISBURSED: 0,
+            PENDING: 0,
+            HOLD: 0,
+            CANCELLED: 0,
+        };
+        membershipGroups.forEach((g) => {
+            const sum = Number(g._sum?.amount ?? 0);
+            membershipEarnings += sum;
+            if (g.status in membershipBreakdown) {
+                membershipBreakdown[g.status] = sum;
+            }
+        });
+        let repurchaseEarnings = 0;
+        const repurchaseBreakdown = {
+            DISBURSED: 0,
+            PENDING: 0,
+            HOLD: 0,
+            CANCELLED: 0,
+        };
+        repurchaseGroups.forEach((g) => {
+            const sum = Number(g._sum?.amount ?? 0);
+            repurchaseEarnings += sum;
+            if (g.status in repurchaseBreakdown) {
+                repurchaseBreakdown[g.status] = sum;
+            }
+        });
+        const totalEarnings = membershipEarnings + repurchaseEarnings;
+        const totalDisbursed = (membershipBreakdown.DISBURSED || 0) + (repurchaseBreakdown.DISBURSED || 0);
+        const totalPending = (membershipBreakdown.PENDING || 0) + (repurchaseBreakdown.PENDING || 0);
+        const recentCommissions = [];
+        recentMembershipLedgers.forEach((m) => {
+            recentCommissions.push({
+                id: m.id,
+                type: 'MEMBERSHIP',
+                amount: Number(m.amount),
+                level: m.level,
+                status: m.status,
+                sourceMember: m.sourceMember,
+                createdAt: m.createdAt.toISOString(),
+            });
+        });
+        recentRepurchaseLedgers.forEach((r) => {
+            recentCommissions.push({
+                id: r.id,
+                type: 'REPURCHASE',
+                amount: Number(r.amount),
+                level: r.level,
+                status: r.status,
+                sourceMember: r.sourceMember,
+                createdAt: r.createdAt.toISOString(),
+            });
+        });
+        recentCommissions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        const topRecentCommissions = recentCommissions.slice(0, 5);
+        const result = {
+            memberInfo: {
+                id: member.id,
+                memberCode: member.memberCode,
+                name: member.name,
+                email: member.email,
+                mobile: member.mobile,
+                status: member.status,
+                role: member.role,
+                joiningDate: member.joiningDate.toISOString(),
+                referrer: member.referrer,
+            },
+            referrals: {
+                totalDirectReferrals: directReferralsCount,
+                activeDirectReferrals: activeDirectReferralsCount,
+                totalDownlineMembers,
+                activeDownlineMembers,
+            },
+            earnings: {
+                membershipEarnings,
+                repurchaseEarnings,
+                totalEarnings,
+                totalDisbursed,
+                totalPending,
+                membershipBreakdown,
+                repurchaseBreakdown,
+            },
+            recentCommissions: topRecentCommissions,
+            calculatedAt: new Date().toISOString(),
+        };
+        await this.cacheService.set(cacheKey, result, 60);
+        return result;
+    }
 };
 exports.DashboardService = DashboardService;
 exports.DashboardService = DashboardService = DashboardService_1 = __decorate([

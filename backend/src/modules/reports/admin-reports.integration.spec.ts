@@ -5,6 +5,9 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ReportType } from './dto/query-period-report.dto';
 import { MemberStatus, CommissionStatus } from '@prisma/client';
 
+import { PdfExportService } from './pdf-export.service';
+import { ExcelExportService } from './excel-export.service';
+
 describe('Admin Periodic Reports Integration Test Suite', () => {
   let controller: AdminReportsController;
   let service: AdminReportsService;
@@ -81,6 +84,8 @@ describe('Admin Periodic Reports Integration Test Suite', () => {
       controllers: [AdminReportsController],
       providers: [
         AdminReportsService,
+        PdfExportService,
+        ExcelExportService,
         { provide: PrismaService, useValue: prisma },
       ],
     }).compile();
@@ -96,7 +101,7 @@ describe('Admin Periodic Reports Integration Test Suite', () => {
 
   describe('1. GET /admin/reports/daily?type=member-registrations', () => {
     it('should return structured daily member registrations report', async () => {
-      const result = await controller.getDailyReport({
+      const result: any = await controller.getDailyReport({
         type: ReportType.MEMBER_REGISTRATIONS,
       });
 
@@ -110,7 +115,7 @@ describe('Admin Periodic Reports Integration Test Suite', () => {
 
   describe('2. GET /admin/reports/daily?type=repurchase-activities', () => {
     it('should return structured daily repurchase activities report', async () => {
-      const result = await controller.getDailyReport({
+      const result: any = await controller.getDailyReport({
         type: ReportType.REPURCHASE_ACTIVITIES,
       });
 
@@ -124,7 +129,7 @@ describe('Admin Periodic Reports Integration Test Suite', () => {
 
   describe('3. GET /admin/reports/daily?type=earnings-summary', () => {
     it('should return structured daily earnings summary report', async () => {
-      const result = await controller.getDailyReport({
+      const result: any = await controller.getDailyReport({
         type: ReportType.EARNINGS_SUMMARY,
       });
 
@@ -139,7 +144,7 @@ describe('Admin Periodic Reports Integration Test Suite', () => {
 
   describe('4. GET /admin/reports/daily?type=business-summary', () => {
     it('should return combined business summary report', async () => {
-      const result = await controller.getDailyReport({
+      const result: any = await controller.getDailyReport({
         type: ReportType.BUSINESS_SUMMARY,
       });
 
@@ -154,7 +159,7 @@ describe('Admin Periodic Reports Integration Test Suite', () => {
 
   describe('5. GET /admin/reports/weekly & GET /admin/reports/monthly', () => {
     it('should return weekly business summary report', async () => {
-      const result = await controller.getWeeklyReport({
+      const result: any = await controller.getWeeklyReport({
         type: ReportType.BUSINESS_SUMMARY,
       });
 
@@ -163,7 +168,7 @@ describe('Admin Periodic Reports Integration Test Suite', () => {
     });
 
     it('should return monthly earnings summary report', async () => {
-      const result = await controller.getMonthlyReport({
+      const result: any = await controller.getMonthlyReport({
         type: ReportType.EARNINGS_SUMMARY,
       });
 

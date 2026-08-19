@@ -62,6 +62,69 @@ let AuditService = AuditService_1 = class AuditService {
             this.logger.error(`Failed to write activity log: ${message}`);
         }
     }
+    async getAuditLogs(query) {
+        const { actorId, actorRole, actionType, entityType, entityId, startDate, endDate, search, page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', } = query;
+        const skip = (page - 1) * limit;
+        const where = {};
+        if (actorId)
+            where.actorId = actorId;
+        if (actorRole)
+            where.actorRole = actorRole;
+        if (actionType)
+            where.actionType = actionType;
+        if (entityType)
+            where.entityType = entityType;
+        if (entityId)
+            where.entityId = entityId;
+        if (startDate || endDate) {
+            const createdAtFilter = {};
+            if (startDate)
+                createdAtFilter.gte = new Date(startDate);
+            if (endDate) {
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999);
+                createdAtFilter.lte = end;
+            }
+            where.createdAt = createdAtFilter;
+        }
+        if (search && search.trim() !== '') {
+            const term = search.trim();
+            where.OR = [
+                { actionType: { contains: term, mode: 'insensitive' } },
+                { entityType: { contains: term, mode: 'insensitive' } },
+            ];
+        }
+        const validSortFields = ['createdAt', 'actionType', 'entityType'];
+        const orderByField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+        const [total, logs] = await Promise.all([
+            this.prisma.activityLog.count({ where }),
+            this.prisma.activityLog.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { [orderByField]: sortOrder },
+                include: {
+                    actor: {
+                        select: {
+                            id: true,
+                            memberCode: true,
+                            name: true,
+                            role: true,
+                        },
+                    },
+                },
+            }),
+        ]);
+        return {
+            data: logs,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+            },
+        };
+    }
 };
 exports.AuditService = AuditService;
 exports.AuditService = AuditService = AuditService_1 = __decorate([

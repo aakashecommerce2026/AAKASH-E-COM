@@ -9,8 +9,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MembersModule = void 0;
 const common_1 = require("@nestjs/common");
 const members_service_1 = require("./members.service");
+const member_profile_service_1 = require("./member-profile.service");
 const members_controller_1 = require("./members.controller");
 const admin_members_controller_1 = require("./admin-members.controller");
+const member_profile_controller_1 = require("./member-profile.controller");
 const prisma_module_1 = require("../../prisma/prisma.module");
 const audit_module_1 = require("../audit/audit.module");
 const membership_commission_module_1 = require("../membership-commission/membership-commission.module");
@@ -20,9 +22,9 @@ exports.MembersModule = MembersModule;
 exports.MembersModule = MembersModule = __decorate([
     (0, common_1.Module)({
         imports: [prisma_module_1.PrismaModule, audit_module_1.AuditModule, membership_commission_module_1.MembershipCommissionModule],
-        controllers: [members_controller_1.MembersController, admin_members_controller_1.AdminMembersController],
-        providers: [members_service_1.MembersService],
-        exports: [members_service_1.MembersService],
+        controllers: [members_controller_1.MembersController, admin_members_controller_1.AdminMembersController, member_profile_controller_1.MemberProfileController],
+        providers: [members_service_1.MembersService, member_profile_service_1.MemberProfileService],
+        exports: [members_service_1.MembersService, member_profile_service_1.MemberProfileService],
     })
 ], MembersModule);
 //# sourceMappingURL=members.module.js.map

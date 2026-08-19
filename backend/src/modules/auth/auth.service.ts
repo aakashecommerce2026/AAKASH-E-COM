@@ -77,10 +77,15 @@ export class AuthService {
     const member = await this.validateUser(loginDto.identifier, loginDto.password);
 
     if (this.auditService) {
+      const actionType =
+        member.role === 'ADMIN' || member.role === 'SUB_ADMIN'
+          ? 'ADMIN_LOGIN'
+          : 'MEMBER_LOGIN';
+
       await this.auditService.logAction({
         actorId: member.id,
         actorRole: member.role,
-        actionType: 'MEMBER_LOGIN',
+        actionType,
         entityType: 'Member',
         entityId: member.id,
         metadata: { memberCode: member.memberCode },
@@ -153,6 +158,17 @@ export class AuthService {
       where: { id: userId },
       data: { passwordHash: newPasswordHash },
     });
+
+    if (this.auditService) {
+      await this.auditService.logAction({
+        actorId: member.id,
+        actorRole: member.role,
+        actionType: 'CHANGE_PASSWORD',
+        entityType: 'Member',
+        entityId: member.id,
+        metadata: { memberCode: member.memberCode },
+      });
+    }
 
     return { message: 'Password changed successfully' };
   }

@@ -17,6 +17,7 @@ const jwt_strategy_1 = require("./strategies/jwt.strategy");
 const roles_guard_1 = require("./guards/roles.guard");
 const ownership_guard_1 = require("./guards/ownership.guard");
 const prisma_module_1 = require("../../prisma/prisma.module");
+const audit_module_1 = require("../audit/audit.module");
 let AuthModule = class AuthModule {
 };
 exports.AuthModule = AuthModule;
@@ -24,6 +25,7 @@ exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
         imports: [
             prisma_module_1.PrismaModule,
+            audit_module_1.AuditModule,
             passport_1.PassportModule.register({ defaultStrategy: 'jwt' }),
             jwt_1.JwtModule.registerAsync({
                 imports: [config_1.ConfigModule],

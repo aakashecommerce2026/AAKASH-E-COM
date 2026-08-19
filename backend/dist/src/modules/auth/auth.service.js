@@ -41,6 +41,9 @@ var __importStar = (this && this.__importStar) || (function () {
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
@@ -48,15 +51,18 @@ const jwt_1 = require("@nestjs/jwt");
 const config_1 = require("@nestjs/config");
 const bcrypt = __importStar(require("bcrypt"));
 const prisma_service_1 = require("../../prisma/prisma.service");
+const audit_service_1 = require("../audit/audit.service");
 let AuthService = class AuthService {
     prisma;
     jwtService;
     configService;
+    auditService;
     BCRYPT_SALT_ROUNDS = 12;
-    constructor(prisma, jwtService, configService) {
+    constructor(prisma, jwtService, configService, auditService) {
         this.prisma = prisma;
         this.jwtService = jwtService;
         this.configService = configService;
+        this.auditService = auditService;
     }
     async hashPassword(password) {
         return bcrypt.hash(password, this.BCRYPT_SALT_ROUNDS);
@@ -88,6 +94,19 @@ let AuthService = class AuthService {
     }
     async login(loginDto) {
         const member = await this.validateUser(loginDto.identifier, loginDto.password);
+        if (this.auditService) {
+            const actionType = member.role === 'ADMIN' || member.role === 'SUB_ADMIN'
+                ? 'ADMIN_LOGIN'
+                : 'MEMBER_LOGIN';
+            await this.auditService.logAction({
+                actorId: member.id,
+                actorRole: member.role,
+                actionType,
+                entityType: 'Member',
+                entityId: member.id,
+                metadata: { memberCode: member.memberCode },
+            });
+        }
         return this.generateAuthTokens(member);
     }
     async refreshToken(refreshTokenDto) {
@@ -130,6 +149,16 @@ let AuthService = class AuthService {
             where: { id: userId },
             data: { passwordHash: newPasswordHash },
         });
+        if (this.auditService) {
+            await this.auditService.logAction({
+                actorId: member.id,
+                actorRole: member.role,
+                actionType: 'CHANGE_PASSWORD',
+                entityType: 'Member',
+                entityId: member.id,
+                metadata: { memberCode: member.memberCode },
+            });
+        }
         return { message: 'Password changed successfully' };
     }
     async generateAuthTokens(member) {
@@ -172,8 +201,10 @@ let AuthService = class AuthService {
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
+    __param(3, (0, common_1.Optional)()),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         jwt_1.JwtService,
-        config_1.ConfigService])
+        config_1.ConfigService,
+        audit_service_1.AuditService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

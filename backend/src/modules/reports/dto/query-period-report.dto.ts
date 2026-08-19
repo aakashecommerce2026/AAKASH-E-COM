@@ -1,5 +1,5 @@
-import { IsOptional, IsString, IsInt, IsEnum, IsDateString, Min, Max } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsOptional, IsString, IsInt, IsEnum, IsDateString, IsBoolean, Min, Max } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export enum ReportType {
@@ -9,13 +9,28 @@ export enum ReportType {
   BUSINESS_SUMMARY = 'business-summary',
 }
 
+export enum PeriodTypeEnum {
+  DAILY = 'daily',
+  WEEKLY = 'weekly',
+  MONTHLY = 'monthly',
+}
+
 export class QueryPeriodReportDto {
   @ApiProperty({
     enum: ReportType,
     description: 'Type of report to generate (member-registrations, repurchase-activities, earnings-summary, business-summary)',
   })
   @IsEnum(ReportType)
-  type: ReportType;
+  type!: ReportType;
+
+  @ApiPropertyOptional({
+    enum: PeriodTypeEnum,
+    description: 'Periodicity bucket for reporting (daily, weekly, monthly)',
+    default: PeriodTypeEnum.DAILY,
+  })
+  @IsOptional()
+  @IsEnum(PeriodTypeEnum)
+  period?: PeriodTypeEnum = PeriodTypeEnum.DAILY;
 
   @ApiPropertyOptional({ description: 'Filter by start date (ISO string e.g. 2026-01-01)' })
   @IsOptional()
@@ -26,6 +41,12 @@ export class QueryPeriodReportDto {
   @IsOptional()
   @IsDateString()
   endDate?: string;
+
+  @ApiPropertyOptional({ description: 'Run export asynchronously via Bull queue', default: false })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  async?: boolean = false;
 
   @ApiPropertyOptional({ description: 'Page number for paginated list items', default: 1 })
   @IsOptional()
@@ -39,6 +60,6 @@ export class QueryPeriodReportDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(100)
+  @Max(1000)
   limit?: number = 10;
 }

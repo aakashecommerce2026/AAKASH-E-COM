@@ -86,6 +86,52 @@ export interface IActivityFeedResponse {
     };
     calculatedAt: string;
 }
+export interface IMemberPersonalDashboardResponse {
+    memberInfo: {
+        id: string;
+        memberCode: string;
+        name: string;
+        email: string | null;
+        mobile: string;
+        status: string;
+        role: string;
+        joiningDate: string;
+        referrer: {
+            id: string;
+            memberCode: string;
+            name: string;
+        } | null;
+    };
+    referrals: {
+        totalDirectReferrals: number;
+        activeDirectReferrals: number;
+        totalDownlineMembers: number;
+        activeDownlineMembers: number;
+    };
+    earnings: {
+        membershipEarnings: number;
+        repurchaseEarnings: number;
+        totalEarnings: number;
+        totalDisbursed: number;
+        totalPending: number;
+        membershipBreakdown: Record<string, number>;
+        repurchaseBreakdown: Record<string, number>;
+    };
+    recentCommissions: Array<{
+        id: string;
+        type: 'MEMBERSHIP' | 'REPURCHASE';
+        amount: number;
+        level: number;
+        status: string;
+        sourceMember: {
+            id: string;
+            memberCode: string;
+            name: string;
+        } | null;
+        createdAt: string;
+    }>;
+    calculatedAt: string;
+}
 export declare class DashboardService {
     private readonly prisma;
     private readonly cacheService;
@@ -97,4 +143,5 @@ export declare class DashboardService {
     getEarningsStats(query: QueryDashboardDto): Promise<IEarningsStatsResponse>;
     getBusinessStats(query: QueryDashboardDto): Promise<IBusinessStatsResponse>;
     getActivityFeed(query: QueryActivityDto): Promise<IActivityFeedResponse>;
+    getMemberPersonalDashboard(memberId: string, refresh?: boolean): Promise<IMemberPersonalDashboardResponse>;
 }

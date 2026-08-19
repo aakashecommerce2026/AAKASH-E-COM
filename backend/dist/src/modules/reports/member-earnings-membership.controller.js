@@ -15,31 +15,32 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MemberEarningsMembershipController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
-const reports_service_1 = require("./reports.service");
-const query_member_earnings_dto_1 = require("./dto/query-member-earnings.dto");
+const member_portal_reports_service_1 = require("./member-portal-reports.service");
+const query_member_earnings_breakdown_dto_1 = require("./dto/query-member-earnings-breakdown.dto");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const current_user_decorator_1 = require("../auth/decorators/current-user.decorator");
 let MemberEarningsMembershipController = class MemberEarningsMembershipController {
-    reportsService;
-    constructor(reportsService) {
-        this.reportsService = reportsService;
+    memberPortalReportsService;
+    constructor(memberPortalReportsService) {
+        this.memberPortalReportsService = memberPortalReportsService;
     }
     async getMyMembershipEarnings(memberId, query) {
-        return this.reportsService.getMemberEarnings(memberId, query);
+        return this.memberPortalReportsService.getMembershipEarningsBreakdown(memberId, query);
     }
 };
 exports.MemberEarningsMembershipController = MemberEarningsMembershipController;
 __decorate([
     (0, common_1.Get)(),
     (0, swagger_1.ApiOperation)({
-        summary: 'GET /member/earnings/membership — Member self-service earnings',
-        description: 'Fetches membership commission earnings ledgers scoped strictly to the authenticated user ID (from JWT payload req.user.sub).',
+        summary: 'GET /member/earnings/membership?range=daily|weekly|monthly — Membership earnings breakdown',
+        description: 'Grouped aggregation queries on membership_commission_ledger scoped strictly to beneficiary_member_id = self derived from JWT payload.',
     }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Authenticated member membership earnings list and personal summary' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Authenticated member membership earnings breakdown returned successfully' }),
+    (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized' }),
     __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
     __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, query_member_earnings_dto_1.QueryMemberEarningsDto]),
+    __metadata("design:paramtypes", [String, query_member_earnings_breakdown_dto_1.QueryMemberEarningsBreakdownDto]),
     __metadata("design:returntype", Promise)
 ], MemberEarningsMembershipController.prototype, "getMyMembershipEarnings", null);
 exports.MemberEarningsMembershipController = MemberEarningsMembershipController = __decorate([
@@ -47,6 +48,6 @@ exports.MemberEarningsMembershipController = MemberEarningsMembershipController 
     (0, common_1.Controller)('member/earnings/membership'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),
-    __metadata("design:paramtypes", [reports_service_1.ReportsService])
+    __metadata("design:paramtypes", [member_portal_reports_service_1.MemberPortalReportsService])
 ], MemberEarningsMembershipController);
 //# sourceMappingURL=member-earnings-membership.controller.js.map

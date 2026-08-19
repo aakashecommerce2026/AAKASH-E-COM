@@ -1,9 +1,9 @@
-import { ReportsService } from './reports.service';
-import { QueryMemberEarningsDto } from './dto/query-member-earnings.dto';
+import { MemberPortalReportsService } from './member-portal-reports.service';
+import { QueryMemberEarningsBreakdownDto } from './dto/query-member-earnings-breakdown.dto';
 export declare class MemberEarningsMembershipController {
-    private readonly reportsService;
-    constructor(reportsService: ReportsService);
-    getMyMembershipEarnings(memberId: string, query: QueryMemberEarningsDto): Promise<{
+    private readonly memberPortalReportsService;
+    constructor(memberPortalReportsService: MemberPortalReportsService);
+    getMyMembershipEarnings(memberId: string, query: QueryMemberEarningsBreakdownDto): Promise<{
         data: {
             id: string;
             sourceMemberId: string;
@@ -18,8 +18,7 @@ export declare class MemberEarningsMembershipController {
             percentage: number;
             amount: number;
             status: import("@prisma/client").$Enums.CommissionStatus;
-            createdAt: Date;
-            updatedAt: Date;
+            createdAt: string;
         }[];
         meta: {
             total: number;
@@ -29,10 +28,10 @@ export declare class MemberEarningsMembershipController {
         };
         summary: {
             totalEarned: number;
-            pendingAmount: number;
-            holdAmount: number;
-            disbursedAmount: number;
-            cancelledAmount: number;
+            statusBreakdown: Record<string, number>;
+            levelBreakdown: Record<string, number>;
         };
+        timeSeries: import("./member-portal-reports.service").IEarningsTimeSeriesPoint[];
+        calculatedAt: string;
     }>;
 }
