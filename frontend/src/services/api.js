@@ -35,7 +35,7 @@ apiClient.interceptors.response.use(
 export const authApi = {
   login: (credentials) => apiClient.post('/auth/login', credentials),
   refreshToken: (refreshToken) => apiClient.post('/auth/refresh', { refreshToken }),
-  changePassword: (data) => apiClient.post('/auth/change-password', data),
+  changePassword: (data) => apiClient.put('/member/change-password', data),
 };
 
 // Members API Endpoints
@@ -45,10 +45,10 @@ export const membersApi = {
   getById: (id) => apiClient.get(`/members/${id}`),
   create: (data) => apiClient.post('/members', data),
   createByAdmin: (data) => apiClient.post('/admin/members', data),
-  update: (id, data) => apiClient.put(`/members/${id}`, data),
+  update: (id, data) => apiClient.put(`/admin/members/${id}`, data),
   reassignReferrer: (id, data) => apiClient.post(`/admin/members/${id}/reassign-referrer`, data),
-  getProfile: () => apiClient.get('/members/profile/me'),
-  updateProfile: (data) => apiClient.put('/members/profile/me', data),
+  getProfile: () => apiClient.get('/member/profile'),
+  updateProfile: (data) => apiClient.put('/member/profile', data),
 };
 
 // Repurchase API Endpoints
@@ -88,3 +88,26 @@ export const reportsApi = {
 export const auditApi = {
   getLogs: (params) => apiClient.get('/admin/audit-logs', { params }),
 };
+
+// Commission API Endpoints
+export const commissionApi = {
+  getMembershipLedger: (params) => apiClient.get('/membership-commissions/ledger', { params }),
+  getMembershipConfig: (params) => apiClient.get('/membership-commissions/config', { params }),
+  triggerMembershipCommission: (memberId, params) =>
+    apiClient.post(`/membership-commissions/trigger/${memberId}`, null, { params }),
+  getRepurchaseLedger: (params) => apiClient.get('/repurchase-commissions/ledger', { params }),
+  getRepurchaseConfig: (params) => apiClient.get('/repurchase-commissions/config', { params }),
+  triggerRepurchaseCommission: (entryId) =>
+    apiClient.post(`/repurchase-commissions/trigger/${entryId}`),
+};
+
+// Hierarchy & Downline Network API Endpoints
+export const hierarchyApi = {
+  getDownline: (memberId, params) => apiClient.get(`/admin/hierarchy/${memberId}/downline`, { params }),
+  getSummary: (memberId, params) => apiClient.get(`/admin/hierarchy/${memberId}/summary`, { params }),
+  getDirectReferrals: (memberId) => apiClient.get(`/admin/hierarchy/${memberId}/direct-referrals`),
+  getMemberDownline: (params) => apiClient.get('/members/network/downline', { params }),
+  getMemberSummary: () => apiClient.get('/members/network/summary'),
+  getMemberReferrals: () => apiClient.get('/members/network/referrals'),
+};
+

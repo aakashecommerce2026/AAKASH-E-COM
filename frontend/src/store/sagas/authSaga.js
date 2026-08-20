@@ -40,9 +40,9 @@ function* loginWorker(action) {
 }
 
 function* logoutWorker() {
-  localStorage.removeItem('auth');
-  localStorage.removeItem('token');
-  localStorage.removeItem('accessToken');
+  yield call([localStorage, 'removeItem'], 'auth');
+  yield call([localStorage, 'removeItem'], 'token');
+  yield call([localStorage, 'removeItem'], 'accessToken');
 }
 
 function* checkSessionWorker() {

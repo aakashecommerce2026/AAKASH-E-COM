@@ -13,15 +13,11 @@ import {
   CircularProgress,
   IconButton,
   InputAdornment,
-  Chip,
-  Divider,
   FormControlLabel,
   Checkbox
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import LockOpenIcon from '@mui/icons-material/LockOpen';
-import KeyIcon from '@mui/icons-material/Key';
 import { loginRequest } from '../store/actions';
 
 const Login = () => {
@@ -41,12 +37,7 @@ const Login = () => {
   // Validate inputs
   const validateEmail = (value) => {
     if (!value) {
-      setEmailError('Email is required');
-      return false;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(value)) {
-      setEmailError('Please enter a valid email address');
+      setEmailError('Email or Member Code is required');
       return false;
     }
     setEmailError('');
@@ -74,13 +65,6 @@ const Login = () => {
     if (isEmailValid && isPasswordValid) {
       dispatch(loginRequest(email, password, 'Member'));
     }
-  };
-
-  const handleFillDemo = () => {
-    setEmail('arun@example.com');
-    setPassword('password');
-    setEmailError('');
-    setPasswordError('');
   };
 
   if (token) {
@@ -150,8 +134,8 @@ const Login = () => {
             <form onSubmit={handleSubmit}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
                 <TextField
-                  label="Member Email Address"
-                  type="email"
+                  label="Email or Member Code"
+                  type="text"
                   variant="outlined"
                   fullWidth
                   required
@@ -164,7 +148,7 @@ const Login = () => {
                   error={Boolean(emailError)}
                   helperText={emailError}
                   disabled={loading}
-                  placeholder="arun@example.com"
+                  placeholder="Enter email or member code"
                 />
 
                 <TextField
@@ -212,13 +196,6 @@ const Login = () => {
                     }
                     label={<Typography variant="caption" color="text.secondary">Remember me</Typography>}
                   />
-                  <Typography
-                    variant="caption"
-                    sx={{ color: 'secondary.dark', fontWeight: 600, cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
-                    onClick={handleFillDemo}
-                  >
-                    Quick Demo Credentials
-                  </Typography>
                 </Box>
 
                 <Button
@@ -234,74 +211,6 @@ const Login = () => {
                 </Button>
               </Box>
             </form>
-
-            <Divider sx={{ my: 3 }}>
-              <Chip label="Demo Helper" size="small" sx={{ fontSize: '0.75rem' }} />
-            </Divider>
-
-            <Box
-              sx={{
-                bgcolor: '#FEF3C7',
-                border: '1px solid #FDE68A',
-                borderRadius: 2,
-                p: 2,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 1.5
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <KeyIcon sx={{ color: '#B45309', fontSize: 20 }} />
-                <Typography variant="caption" sx={{ fontWeight: 700, color: '#92400E' }}>
-                  Demo Member Credentials
-                </Typography>
-              </Box>
-
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography variant="caption" display="block" sx={{ fontWeight: 700, color: '#78350F' }}>
-                    ID 2: Priya Chandran
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: '#92400E' }}>
-                    priya@example.com / password
-                  </Typography>
-                </Box>
-                <Button
-                  size="small"
-                  variant="contained"
-                  color="warning"
-                  onClick={() => {
-                    setEmail('priya@example.com');
-                    setPassword('password');
-                    setEmailError('');
-                    setPasswordError('');
-                  }}
-                  sx={{ fontSize: '0.75rem', px: 1.5, py: 0.5, bgcolor: '#D97706', color: 'white', '&:hover': { bgcolor: '#B45309' } }}
-                >
-                  Fill ID 2
-                </Button>
-              </Box>
-
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px dashed #FCD34D', pt: 1 }}>
-                <Box>
-                  <Typography variant="caption" display="block" sx={{ fontWeight: 700, color: '#78350F' }}>
-                    ID 1: Arun Kumar
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: '#92400E' }}>
-                    arun@example.com / password
-                  </Typography>
-                </Box>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="warning"
-                  onClick={handleFillDemo}
-                  sx={{ fontSize: '0.75rem', px: 1.5, py: 0.5, borderColor: '#D97706', color: '#92400E' }}
-                >
-                  Fill ID 1
-                </Button>
-              </Box>
-            </Box>
           </CardContent>
         </Card>
       </Container>

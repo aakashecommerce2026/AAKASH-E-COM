@@ -1,255 +1,113 @@
-import { put, delay, takeLatest, select } from 'redux-saga/effects';
+import { call, put, all, takeLatest, select } from 'redux-saga/effects';
 import * as types from '../actionTypes';
 import * as actions from '../actions';
+import { commissionApi } from '../../services/api';
 import { CommissionProcessor } from '../../services/commissionEngine/CommissionProcessor';
 import { MembershipCommissionStrategy } from '../../services/commissionEngine/MembershipCommissionStrategy';
 
-// Initial Mock Commission Dataset with Audit Trail Metadata
-const mockCommissionsData = [
-  // Level Earnings Tiers
-  { 
-    id: 'COMM-101', 
-    transactionId: 'TX-20260601-1',
-    membershipTxId: 'MTX-801',
-    memberId: 1, 
-    memberName: 'Arun Kumar', 
-    beneficiaryName: 'Arun Kumar',
-    sourceMember: 'Priya Chandran', 
-    sourceName: 'Priya Chandran',
-    amount: 1000.00, 
-    calculatedAmount: 1000.00,
-    membershipAmount: 10000.00,
-    commissionPercentage: 10.0,
-    referrerRelationship: 'Level 1 Direct Sponsor',
-    commissionType: 'Membership', 
-    category: 'Level', 
-    level: 1,
-    levelTier: 'Level 1 Direct (10%)', 
-    status: 'Distributed', 
-    date: '2026-06-01',
-    createdAt: '2026-06-01T10:00:00.000Z',
-    auditInfo: {
-      traversalLevel: 1,
-      referrerRelationship: 'Level 1 Direct Sponsor',
-      rateApplied: '10%',
-      formula: '(10000 * 10%) = 1000',
-      idempotencyHash: 'MTX-801_L1_B1',
-      rulesVersion: '1.0.0-Unilevel-20L',
-      validatedAt: '2026-06-01T10:00:00.000Z',
-    }
-  },
-  { 
-    id: 'COMM-102', 
-    transactionId: 'TX-20260605-1',
-    membershipTxId: 'MTX-802',
-    memberId: 2, 
-    memberName: 'Priya Chandran', 
-    beneficiaryName: 'Priya Chandran',
-    sourceMember: 'Vignesh Balaji', 
-    sourceName: 'Vignesh Balaji',
-    amount: 1000.00, 
-    calculatedAmount: 1000.00,
-    membershipAmount: 10000.00,
-    commissionPercentage: 10.0,
-    referrerRelationship: 'Level 1 Direct Sponsor',
-    commissionType: 'Membership', 
-    category: 'Level', 
-    level: 1,
-    levelTier: 'Level 1 Direct (10%)', 
-    status: 'Pending', 
-    date: '2026-06-05',
-    createdAt: '2026-06-05T11:30:00.000Z',
-    auditInfo: {
-      traversalLevel: 1,
-      referrerRelationship: 'Level 1 Direct Sponsor',
-      rateApplied: '10%',
-      formula: '(10000 * 10%) = 1000',
-      idempotencyHash: 'MTX-802_L1_B2',
-      rulesVersion: '1.0.0-Unilevel-20L',
-      validatedAt: '2026-06-05T11:30:00.000Z',
-    }
-  },
-  { 
-    id: 'COMM-103', 
-    transactionId: 'TX-20260608-2',
-    membershipTxId: 'MTX-802',
-    memberId: 1, 
-    memberName: 'Arun Kumar', 
-    beneficiaryName: 'Arun Kumar',
-    sourceMember: 'Vignesh Balaji', 
-    sourceName: 'Vignesh Balaji',
-    amount: 500.00, 
-    calculatedAmount: 500.00,
-    membershipAmount: 10000.00,
-    commissionPercentage: 5.0,
-    referrerRelationship: 'Level 2 Indirect Sponsor',
-    commissionType: 'Membership', 
-    category: 'Level', 
-    level: 2,
-    levelTier: 'Level 2 Indirect (5%)', 
-    status: 'Distributed', 
-    date: '2026-06-08',
-    createdAt: '2026-06-08T14:15:00.000Z',
-    auditInfo: {
-      traversalLevel: 2,
-      referrerRelationship: 'Level 2 Indirect Sponsor',
-      rateApplied: '5%',
-      formula: '(10000 * 5%) = 500',
-      idempotencyHash: 'MTX-802_L2_B1',
-      rulesVersion: '1.0.0-Unilevel-20L',
-      validatedAt: '2026-06-08T14:15:00.000Z',
-    }
-  },
-  { 
-    id: 'COMM-104', 
-    transactionId: 'TX-20260615-3',
-    membershipTxId: 'MTX-803',
-    memberId: 1, 
-    memberName: 'Arun Kumar', 
-    beneficiaryName: 'Arun Kumar',
-    sourceMember: 'Deepa Sundar', 
-    sourceName: 'Deepa Sundar',
-    amount: 250.00, 
-    calculatedAmount: 250.00,
-    membershipAmount: 10000.00,
-    commissionPercentage: 2.5,
-    referrerRelationship: 'Level 3 Direct Upline',
-    commissionType: 'Membership', 
-    category: 'Level', 
-    level: 3,
-    levelTier: 'Level 3 Tier 3-6 (2.5%)', 
-    status: 'Distributed', 
-    date: '2026-06-15',
-    createdAt: '2026-06-15T09:20:00.000Z',
-    auditInfo: {
-      traversalLevel: 3,
-      referrerRelationship: 'Level 3 Direct Upline',
-      rateApplied: '2.5%',
-      formula: '(10000 * 2.5%) = 250',
-      idempotencyHash: 'MTX-803_L3_B1',
-      rulesVersion: '1.0.0-Unilevel-20L',
-      validatedAt: '2026-06-15T09:20:00.000Z',
-    }
-  },
-
-  // Downline Repurchase Commission Records
-  { 
-    id: 'RCOMM-201-L1', 
-    transactionId: 'TX-REP-20260715-L1',
-    repurchaseTxId: 'REF-20260715-02',
-    memberId: 1, 
-    memberName: 'Arun Kumar', 
-    beneficiaryName: 'Arun Kumar',
-    sourceMemberId: 2,
-    sourceMember: 'Priya Chandran', 
-    sourceName: 'Priya Chandran',
-    amount: 63.75, 
-    calculatedAmount: 63.75,
-    repurchaseAmount: 4250.00,
-    bvPoints: 106.25,
-    commissionPercentage: 1.50,
-    referrerRelationship: 'Level 1 Direct Sponsor',
-    commissionType: 'Repurchase', 
-    category: 'Repurchase', 
-    level: 1,
-    levelTier: 'Level 1 Repurchase (1.50%)', 
-    status: 'Paid', 
-    date: '2026-07-15',
-    createdAt: '2026-07-15T10:00:00.000Z',
-    auditInfo: {
-      traversalLevel: 1,
-      referrerRelationship: 'Level 1 Direct Sponsor',
-      rateApplied: '1.5%',
-      formula: 'Repurchase (4250.00) * 1.5% = 63.75',
-      idempotencyHash: 'REF-20260715-02_L1_B1',
-      rulesVersion: '1.0.0-Unilevel-Repurchase-20L',
-      validatedAt: '2026-07-15T10:00:00.000Z',
-    }
-  },
-  { 
-    id: 'RCOMM-205-L1', 
-    transactionId: 'TX-REP-20260705-L1',
-    repurchaseTxId: 'REF-20260705-05',
-    memberId: 2, 
-    memberName: 'Priya Chandran', 
-    beneficiaryName: 'Priya Chandran',
-    sourceMemberId: 5,
-    sourceMember: 'Vignesh Balaji', 
-    sourceName: 'Vignesh Balaji',
-    amount: 120.00, 
-    calculatedAmount: 120.00,
-    repurchaseAmount: 8000.00,
-    bvPoints: 200.00,
-    commissionPercentage: 1.50,
-    referrerRelationship: 'Level 1 Direct Sponsor',
-    commissionType: 'Repurchase', 
-    category: 'Repurchase', 
-    level: 1,
-    levelTier: 'Level 1 Repurchase (1.50%)', 
-    status: 'Paid', 
-    date: '2026-07-05',
-    createdAt: '2026-07-05T14:00:00.000Z',
-    auditInfo: {
-      traversalLevel: 1,
-      referrerRelationship: 'Level 1 Direct Sponsor',
-      rateApplied: '1.5%',
-      formula: 'Repurchase (8000.00) * 1.5% = 120.00',
-      idempotencyHash: 'REF-20260705-05_L1_B2',
-      rulesVersion: '1.0.0-Unilevel-Repurchase-20L',
-      validatedAt: '2026-07-05T14:00:00.000Z',
-    }
-  },
-  { 
-    id: 'RCOMM-205-L2', 
-    transactionId: 'TX-REP-20260705-L2',
-    repurchaseTxId: 'REF-20260705-05',
-    memberId: 1, 
-    memberName: 'Arun Kumar', 
-    beneficiaryName: 'Arun Kumar',
-    sourceMemberId: 5,
-    sourceMember: 'Vignesh Balaji', 
-    sourceName: 'Vignesh Balaji',
-    amount: 60.00, 
-    calculatedAmount: 60.00,
-    repurchaseAmount: 8000.00,
-    bvPoints: 200.00,
-    commissionPercentage: 0.75,
-    referrerRelationship: 'Level 2 Indirect Sponsor',
-    commissionType: 'Repurchase', 
-    category: 'Repurchase', 
-    level: 2,
-    levelTier: 'Level 2 Repurchase (0.75%)', 
-    status: 'Paid', 
-    date: '2026-07-05',
-    createdAt: '2026-07-05T14:00:00.000Z',
-    auditInfo: {
-      traversalLevel: 2,
-      referrerRelationship: 'Level 2 Indirect Sponsor',
-      rateApplied: '0.75%',
-      formula: 'Repurchase (8000.00) * 0.75% = 60.00',
-      idempotencyHash: 'REF-20260705-05_L2_B1',
-      rulesVersion: '1.0.0-Unilevel-Repurchase-20L',
-      validatedAt: '2026-07-05T14:00:00.000Z',
-    }
-  },
-];
-
-// Worker Saga with Redux-Saga DB Latency Simulation
+// Worker Saga fetching live ledgers from NestJS backend
 function* fetchCommissions() {
   try {
-    yield delay(500); // 500ms DB latency
-    yield put(actions.fetchCommissionsSuccess(mockCommissionsData));
-  } catch (error) {
-    yield put(actions.fetchCommissionsFailure(error.message || 'Failed to fetch financial commissions ledger'));
+    const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
+    if (!token) {
+      yield put(actions.fetchCommissionsSuccess([]));
+      return;
+    }
+
+    const [memResponse, repResponse] = yield all([
+      call(commissionApi.getMembershipLedger, { limit: 100 }),
+      call(commissionApi.getRepurchaseLedger, { limit: 100 }),
+    ]);
+
+    const memList = Array.isArray(memResponse) ? memResponse : memResponse?.data || [];
+    const repList = Array.isArray(repResponse) ? repResponse : repResponse?.data || [];
+
+    const mappedMemCommissions = memList.map((m) => ({
+      id: m.id,
+      transactionId: m.id,
+      membershipTxId: `MTX-${m.sourceMemberId.slice(0, 6)}`,
+      memberId: m.beneficiaryMemberId,
+      memberName: m.beneficiaryMember?.name || 'Beneficiary Member',
+      beneficiaryName: m.beneficiaryMember?.name || 'Beneficiary Member',
+      sourceMember: m.sourceMember?.name || 'Source Member',
+      sourceName: m.sourceMember?.name || 'Source Member',
+      amount: Number(m.amount),
+      calculatedAmount: Number(m.amount),
+      membershipAmount: 10000.0,
+      commissionPercentage: Number(m.percentage),
+      referrerRelationship: `Level ${m.level} Sponsor`,
+      commissionType: 'Membership',
+      category: 'Level',
+      level: m.level,
+      levelTier: `Level ${m.level} (${m.percentage}%)`,
+      status: m.status === 'DISBURSED' ? 'Paid' : m.status === 'PENDING' ? 'Pending' : 'Hold',
+      date: m.createdAt ? m.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
+      createdAt: m.createdAt,
+      auditInfo: {
+        traversalLevel: m.level,
+        referrerRelationship: `Level ${m.level} Sponsor`,
+        rateApplied: `${m.percentage}%`,
+        formula: `Joining Fee * ${m.percentage}% = ${m.amount}`,
+        idempotencyHash: `LEDGER_${m.id}`,
+        rulesVersion: '1.0.0-Unilevel-20L',
+        validatedAt: m.createdAt,
+      },
+    }));
+
+    const mappedRepCommissions = repList.map((r) => ({
+      id: r.id,
+      transactionId: r.id,
+      repurchaseTxId: r.repurchaseEntry?.transactionRef || r.repurchaseEntryId,
+      memberId: r.beneficiaryMemberId,
+      memberName: r.beneficiaryMember?.name || 'Beneficiary Member',
+      beneficiaryName: r.beneficiaryMember?.name || 'Beneficiary Member',
+      sourceMemberId: r.sourceMemberId,
+      sourceMember: r.sourceMember?.name || 'Purchaser',
+      sourceName: r.sourceMember?.name || 'Purchaser',
+      amount: Number(r.amount),
+      calculatedAmount: Number(r.amount),
+      repurchaseAmount: Number(r.repurchaseEntry?.amount || 0),
+      bvPoints: Math.round(Number(r.repurchaseEntry?.amount || 0) * 0.025 * 100) / 100,
+      commissionPercentage: Number(r.percentage),
+      referrerRelationship: `Level ${r.level} Upline`,
+      commissionType: 'Repurchase',
+      category: 'Repurchase',
+      level: r.level,
+      levelTier: `Level ${r.level} Repurchase (${r.percentage}%)`,
+      status: r.status === 'DISBURSED' ? 'Paid' : r.status === 'PENDING' ? 'Pending' : 'Hold',
+      date: r.createdAt ? r.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
+      createdAt: r.createdAt,
+      auditInfo: {
+        traversalLevel: r.level,
+        referrerRelationship: `Level ${r.level} Upline`,
+        rateApplied: `${r.percentage}%`,
+        formula: `Repurchase (${r.repurchaseEntry?.amount || 0}) * ${r.percentage}% = ${r.amount}`,
+        idempotencyHash: `RLEDGER_${r.id}`,
+        rulesVersion: '1.0.0-Unilevel-Repurchase-20L',
+        validatedAt: r.createdAt,
+      },
+    }));
+
+    const allCommissions = [...mappedMemCommissions, ...mappedRepCommissions];
+
+    yield put(actions.fetchCommissionsSuccess(allCommissions));
+  } catch (err) {
+    yield put(actions.fetchCommissionsFailure(err.message || 'Failed to fetch financial commissions ledger'));
   }
 }
 
 // Saga for generating commissions using CommissionProcessor
 function* generateMembershipCommissionsSaga(action) {
   try {
-    yield delay(400); // DB execution simulation latency
-
     const { member, membershipTxId, membershipAmount, isPaymentConfirmed, simulateFault } = action.payload;
+
+    if (member?.id && typeof member.id === 'string' && member.id.includes('-')) {
+      try {
+        yield call(commissionApi.triggerMembershipCommission, member.id, { packageAmount: membershipAmount });
+      } catch {
+        // Fallback to client processor if member id is non-UUID simulation
+      }
+    }
 
     const membersState = yield select((state) => state.membership.members || []);
     const strategyRules = yield select((state) => state.commission.strategyRules);
@@ -281,6 +139,10 @@ function* generateMembershipCommissionsSaga(action) {
     yield put(actions.generateMembershipCommissionsFailure(err.message || 'Commission Engine Execution Exception'));
   }
 }
+
+
+
+
 
 // Watcher Saga
 export default function* commissionSaga() {

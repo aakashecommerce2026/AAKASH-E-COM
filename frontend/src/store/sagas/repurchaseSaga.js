@@ -1,21 +1,15 @@
 import { call, put, takeLatest, select } from 'redux-saga/effects';
 import * as types from '../actionTypes';
 import * as actions from '../actions';
-import { repurchaseApi } from '../../services/api';
+import { repurchaseApi, commissionApi } from '../../services/api';
 import { RepurchaseCommissionProcessor } from '../../services/commissionEngine/RepurchaseCommissionProcessor';
 import { RepurchaseCommissionStrategy } from '../../services/commissionEngine/RepurchaseCommissionStrategy';
-
-const fallbackRepurchases = [
-  { id: 'REP-1001', memberId: 'mem-1', memberCode: 'AK10001', memberName: 'Arun Kumar', productName: 'Groceries & Household Super Pack', category: 'Groceries/Household', quantity: 1, unitPrice: 4998, totalAmount: 4998, businessVolume: 124.95, paymentMethod: 'UPI', status: 'Completed', date: '2026-07-18', orderRef: 'REF-20260718-01', remarks: 'Monthly Groceries Supply' },
-  { id: 'REP-1002', memberId: 'mem-2', memberCode: 'AK10002', memberName: 'Priya Chandran', productName: 'Household Essentials Bundle', category: 'Groceries/Household', quantity: 1, unitPrice: 4250, totalAmount: 4250, businessVolume: 106.25, paymentMethod: 'Bank Transfer', status: 'Completed', date: '2026-07-15', orderRef: 'REF-20260715-02', remarks: 'Bulk distributor groceries order' },
-  { id: 'REP-1003', memberId: 'mem-3', memberCode: 'AK10003', memberName: 'Karthik Raja', productName: 'Daily Kitchen & Household Kit', category: 'Groceries/Household', quantity: 1, unitPrice: 5997, totalAmount: 5997, businessVolume: 149.93, paymentMethod: 'Wallet', status: 'Completed', date: '2026-07-12', orderRef: 'REF-20260712-03', remarks: 'Groceries order completed' },
-];
 
 function* fetchRepurchases() {
   try {
     const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
     if (!token) {
-      yield put(actions.fetchRepurchasesSuccess(fallbackRepurchases));
+      yield put(actions.fetchRepurchasesSuccess([]));
       return;
     }
 
@@ -40,9 +34,9 @@ function* fetchRepurchases() {
       remarks: item.remarks || '',
     }));
 
-    yield put(actions.fetchRepurchasesSuccess(repurchasesList.length > 0 ? repurchasesList : fallbackRepurchases));
-  } catch (error) {
-    yield put(actions.fetchRepurchasesSuccess(fallbackRepurchases));
+    yield put(actions.fetchRepurchasesSuccess(repurchasesList));
+  } catch (err) {
+    yield put(actions.fetchRepurchasesFailure(err.message || 'Failed to fetch repurchase history'));
   }
 }
 
@@ -83,6 +77,15 @@ function* addRepurchase(action) {
 function* generateRepurchaseCommissionsSaga(action) {
   try {
     const { member, repurchaseTxId, repurchaseAmount, isPaymentConfirmed, simulateFault } = action.payload;
+
+    if (repurchaseTxId && typeof repurchaseTxId === 'string' && repurchaseTxId.includes('-')) {
+      try {
+        yield call(commissionApi.triggerRepurchaseCommission, repurchaseTxId);
+      } catch {
+        // Fallback to client processor if entry id is non-UUID simulation
+      }
+    }
+
     const membersState = yield select((state) => state.membership.members || []);
     const strategyRules = yield select((state) => state.commission.repurchaseStrategyRules);
     const enableDeductions = yield select((state) => state.commission.enableDeductions);

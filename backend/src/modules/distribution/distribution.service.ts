@@ -438,7 +438,8 @@ export class DistributionService {
             netAmount: new Prisma.Decimal(netAmount),
             paymentMode: PaymentMode.UPI,
             bankDetails: memberInfo?.bankDetails || Prisma.DbNull,
-            status: DistributionRecordStatus.PENDING,
+            status: DistributionRecordStatus.PAID,
+            disbursedAt: new Date(),
           },
         });
 

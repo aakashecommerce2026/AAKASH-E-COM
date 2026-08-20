@@ -3,13 +3,7 @@ import * as types from '../actionTypes';
 import * as actions from '../actions';
 import { membersApi } from '../../services/api';
 
-const fallbackMembers = [
-  { id: 'mem-1', name: 'Arun Kumar', email: 'arun@example.com', role: 'Distributor', referralCode: 'AK10001', mobile: '+919876543210', status: 'ACTIVE', joinedDate: '2026-01-15', sponsorId: null },
-  { id: 'mem-2', name: 'Priya Chandran', email: 'priya@example.com', role: 'Associate', referralCode: 'AK10002', mobile: '+919876543211', status: 'ACTIVE', joinedDate: '2026-02-10', sponsorId: 'mem-1' },
-  { id: 'mem-3', name: 'Karthik Raja', email: 'karthik@example.com', role: 'Distributor', referralCode: 'AK10003', mobile: '+919876543212', status: 'ACTIVE', joinedDate: '2026-02-15', sponsorId: 'mem-1' },
-  { id: 'mem-4', name: 'Anitha Selvam', email: 'anitha@example.com', role: 'Associate', referralCode: 'AK10004', mobile: '+919876543213', status: 'ACTIVE', joinedDate: '2026-02-20', sponsorId: 'mem-1' },
-  { id: 'mem-5', name: 'Vignesh Balaji', email: 'vignesh@example.com', role: 'Distributor', referralCode: 'AK10005', mobile: '+919876543214', status: 'ACTIVE', joinedDate: '2026-03-01', sponsorId: 'mem-2' },
-];
+
 
 function* fetchMembers() {
   try {
@@ -29,9 +23,9 @@ function* fetchMembers() {
       referrer: m.referrer || null,
     }));
 
-    yield put(actions.fetchMembersSuccess(membersList.length > 0 ? membersList : fallbackMembers));
-  } catch (error) {
-    yield put(actions.fetchMembersSuccess(fallbackMembers));
+    yield put(actions.fetchMembersSuccess(membersList));
+  } catch (err) {
+    yield put(actions.fetchMembersFailure(err.message || 'Failed to fetch members list'));
   }
 }
 
@@ -43,7 +37,7 @@ function* addMember(action) {
       name: payload.name,
       mobile: payload.mobile || `+919${Math.floor(100000000 + Math.random() * 900000000)}`,
       email: payload.email,
-      password: payload.password || 'AK@12345678',
+      ...(payload.password ? { password: payload.password } : {}),
       role: payload.role === 'Admin' ? 'ADMIN' : 'MEMBER',
       referrerId: payload.sponsorId || payload.referrerId || undefined,
     };
@@ -60,6 +54,7 @@ function* addMember(action) {
       status: created.status,
       joinedDate: created.joiningDate ? created.joiningDate.split('T')[0] : new Date().toISOString().split('T')[0],
       sponsorId: created.referrerId || null,
+      tempPassword: created.tempPassword || payload.password,
     };
 
     yield put(actions.addMemberSuccess(newMember));

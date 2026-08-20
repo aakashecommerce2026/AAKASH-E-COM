@@ -40,6 +40,7 @@ import { AdminPerformanceChart, MemberPerformanceChart } from '../components/Das
 import { ProfileModal } from '../components/ProfileModal';
 import { DashboardCard } from '../components/DashboardCard';
 import { SystemAuditLogConsole } from '../components/SystemAuditLogConsole';
+import { hierarchyApi } from '../services/api';
 
 const formatINR = (amount) => {
   return new Intl.NumberFormat('en-IN', {
@@ -107,6 +108,21 @@ const Dashboard = () => {
     );
   }, [commissions, isAdmin, user]);
 
+  const [memberSummary, setMemberSummary] = useState(null);
+
+  useEffect(() => {
+    if (!isAdmin && user?.id) {
+      hierarchyApi
+        .getMemberSummary()
+        .then((res) => {
+          if (res && res.totalDownline !== undefined) {
+            setMemberSummary(res);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isAdmin, user]);
+
   // Downline members calculation
   const downlineMembers = useMemo(() => {
     if (isAdmin) return members || [];
@@ -131,7 +147,7 @@ const Dashboard = () => {
     return relevantCommissions.reduce((acc, curr) => acc + (curr.amount || curr.calculatedAmount || 0), 0);
   }, [relevantCommissions]);
 
-  const totalDownlineCount = downlineMembers.length;
+  const totalDownlineCount = memberSummary?.totalDownline !== undefined ? memberSummary.totalDownline : downlineMembers.length;
 
   const monthlyEarnings = useMemo(() => {
     return relevantCommissions

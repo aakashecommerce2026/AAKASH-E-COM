@@ -335,7 +335,8 @@ let DistributionService = DistributionService_1 = class DistributionService {
                         netAmount: new client_1.Prisma.Decimal(netAmount),
                         paymentMode: client_1.PaymentMode.UPI,
                         bankDetails: memberInfo?.bankDetails || client_1.Prisma.DbNull,
-                        status: client_1.DistributionRecordStatus.PENDING,
+                        status: client_1.DistributionRecordStatus.PAID,
+                        disbursedAt: new Date(),
                     },
                 });
                 if (group.membershipLedgers.length > 0) {

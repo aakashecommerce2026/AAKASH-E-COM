@@ -34,5 +34,44 @@ export declare class RepurchaseCommissionService implements OnModuleInit {
         percentage: number;
     }[]): void;
     updateConfig(dto: UpdateRepurchaseCommissionConfigDto, actorId?: string): Promise<any>;
+    findAll(query: any): Promise<{
+        data: {
+            repurchaseEntry: {
+                id: string;
+                amount: Prisma.Decimal;
+                transactionRef: string;
+                transactionDate: Date;
+            };
+            sourceMember: {
+                id: string;
+                memberCode: string;
+                name: string;
+                mobile: string;
+            };
+            beneficiaryMember: {
+                id: string;
+                memberCode: string;
+                name: string;
+                mobile: string;
+            };
+            id: string;
+            repurchaseEntryId: string;
+            sourceMemberId: string;
+            beneficiaryMemberId: string;
+            level: number;
+            percentage: number;
+            amount: number;
+            status: CommissionStatus;
+            createdAt: Date;
+            updatedAt: Date;
+        }[];
+        meta: {
+            total: number;
+            page: any;
+            limit: any;
+            totalPages: number;
+        };
+    }>;
+    findById(id: string): Promise<any>;
     private mapLedgerToDto;
 }

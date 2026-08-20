@@ -388,6 +388,104 @@ export class RepurchaseCommissionService implements OnModuleInit {
     });
   }
 
+  /**
+   * Retrieves paginated repurchase commission ledgers with search and filters.
+   */
+  async findAll(query: any) {
+    const {
+      page = 1,
+      limit = 10,
+      repurchaseEntryId,
+      sourceMemberId,
+      beneficiaryMemberId,
+      level,
+      status,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+    } = query;
+
+    const skip = (page - 1) * limit;
+    const where: Prisma.RepurchaseCommissionLedgerWhereInput = {};
+
+    if (repurchaseEntryId) where.repurchaseEntryId = repurchaseEntryId;
+    if (sourceMemberId) where.sourceMemberId = sourceMemberId;
+    if (beneficiaryMemberId) where.beneficiaryMemberId = beneficiaryMemberId;
+    if (level) where.level = Number(level);
+    if (status) where.status = status;
+
+    const validSortFields = ['createdAt', 'amount', 'level', 'status'];
+    const orderByField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+
+    const [total, ledgers] = await Promise.all([
+      this.prisma.repurchaseCommissionLedger.count({ where }),
+      this.prisma.repurchaseCommissionLedger.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { [orderByField]: sortOrder },
+        include: {
+          repurchaseEntry: {
+            select: { id: true, transactionRef: true, amount: true, transactionDate: true },
+          },
+          sourceMember: {
+            select: { id: true, memberCode: true, name: true, mobile: true },
+          },
+          beneficiaryMember: {
+            select: { id: true, memberCode: true, name: true, mobile: true },
+          },
+        },
+      }),
+    ]);
+
+    const data = ledgers.map((l) => ({
+      ...this.mapLedgerToDto(l),
+      repurchaseEntry: l.repurchaseEntry,
+      sourceMember: l.sourceMember,
+      beneficiaryMember: l.beneficiaryMember,
+    }));
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  /**
+   * Retrieves single repurchase commission ledger by ID.
+   */
+  async findById(id: string): Promise<any> {
+    const ledger = await this.prisma.repurchaseCommissionLedger.findUnique({
+      where: { id },
+      include: {
+        repurchaseEntry: {
+          select: { id: true, transactionRef: true, amount: true, transactionDate: true },
+        },
+        sourceMember: {
+          select: { id: true, memberCode: true, name: true, mobile: true },
+        },
+        beneficiaryMember: {
+          select: { id: true, memberCode: true, name: true, mobile: true },
+        },
+      },
+    });
+
+    if (!ledger) {
+      throw new NotFoundException(`Repurchase commission ledger with ID '${id}' not found`);
+    }
+
+    return {
+      ...this.mapLedgerToDto(ledger),
+      repurchaseEntry: ledger.repurchaseEntry,
+      sourceMember: ledger.sourceMember,
+      beneficiaryMember: ledger.beneficiaryMember,
+    };
+  }
+
   private mapLedgerToDto(ledger: any): RepurchaseCommissionLedgerResponseDto {
     return {
       id: ledger.id,
@@ -403,3 +501,4 @@ export class RepurchaseCommissionService implements OnModuleInit {
     };
   }
 }
+

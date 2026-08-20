@@ -23,9 +23,11 @@ import PaymentIcon from '@mui/icons-material/Payment';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import EditIcon from '@mui/icons-material/Edit';
 import LockIcon from '@mui/icons-material/Lock';
+import KeyIcon from '@mui/icons-material/Key';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { updateProfileRequest, clearProfileStatus } from '../store/actions';
+import { authApi } from '../services/api';
 
 const UPI_PROVIDERS = [
   'Google Pay',
@@ -46,6 +48,13 @@ export const ProfileModal = ({ open, onClose }) => {
   // Personal Info State
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+
+  // Password Change State
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordStatus, setPasswordStatus] = useState({ type: '', message: '' });
+  const [changingPassword, setChangingPassword] = useState(false);
 
   // UPI Identifiers Grid State
   const [upiId, setUpiId] = useState('');
@@ -117,6 +126,42 @@ export const ProfileModal = ({ open, onClose }) => {
     setIsEditing(false);
   };
 
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordStatus({ type: 'error', message: 'All password fields are required.' });
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPasswordStatus({ type: 'error', message: 'New password must be at least 6 characters.' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordStatus({ type: 'error', message: 'New passwords do not match.' });
+      return;
+    }
+
+    try {
+      setChangingPassword(true);
+      setPasswordStatus({ type: '', message: '' });
+      await authApi.changePassword({ currentPassword, newPassword });
+      setPasswordStatus({
+        type: 'success',
+        message: 'Password updated successfully! Please use your new password on your next login.',
+      });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      setPasswordStatus({
+        type: 'error',
+        message: err?.response?.data?.message || err.message || 'Failed to change password. Check current password.',
+      });
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   // Generate real-time UPI QR URL
   const encodedName = encodeURIComponent(name || 'Member');
   const cleanUpi = upiId.trim();
@@ -134,7 +179,7 @@ export const ProfileModal = ({ open, onClose }) => {
           </Avatar>
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 800, color: 'primary.main', lineHeight: 1.2 }}>
-              Member Profile & UPI Settings
+              Member Profile & Security Settings
             </Typography>
             <Typography variant="caption" color="text.secondary">
               {isEditing ? 'Editing Mode Unlocked' : 'Read-Only Mode — Click Edit button to modify details'}
@@ -320,6 +365,75 @@ export const ProfileModal = ({ open, onClose }) => {
                     </Box>
                   </Paper>
                 </Box>
+              </Paper>
+            </Grid>
+
+            {/* Grid 3: Security & Password Management */}
+            <Grid item xs={12}>
+              <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, bgcolor: '#FAF9F6' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                  <KeyIcon color="warning" />
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#92400E' }}>
+                    Security & Password Change
+                  </Typography>
+                </Box>
+                <Divider sx={{ mb: 2 }} />
+
+                {passwordStatus.message && (
+                  <Alert severity={passwordStatus.type} sx={{ mb: 2, borderRadius: 2 }}>
+                    {passwordStatus.message}
+                  </Alert>
+                )}
+
+                <Grid container spacing={2} alignItems="center">
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      label="Current Password"
+                      type="password"
+                      variant="outlined"
+                      fullWidth
+                      size="small"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      label="New Password"
+                      type="password"
+                      variant="outlined"
+                      fullWidth
+                      size="small"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      label="Confirm New Password"
+                      type="password"
+                      variant="outlined"
+                      fullWidth
+                      size="small"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', pt: 1 }}>
+                    <Button
+                      type="button"
+                      variant="contained"
+                      color="warning"
+                      size="small"
+                      startIcon={<KeyIcon />}
+                      onClick={handleChangePassword}
+                      disabled={changingPassword || !currentPassword || !newPassword || !confirmPassword}
+                      sx={{ fontWeight: 700, px: 3, bgcolor: '#D97706', '&:hover': { bgcolor: '#B45309' } }}
+                    >
+                      {changingPassword ? 'Updating Password...' : 'Update Password'}
+                    </Button>
+                  </Grid>
+                </Grid>
               </Paper>
             </Grid>
           </Grid>

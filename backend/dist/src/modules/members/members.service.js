@@ -97,7 +97,7 @@ let MembersService = class MembersService {
         const created = await this.createMemberInternal(fullCreateDto, actorId, actorRole);
         return {
             ...created,
-            ...(generatedTemp ? { tempPassword } : {}),
+            tempPassword,
         };
     }
     async createMemberInternal(createMemberDto, actorId, actorRole) {

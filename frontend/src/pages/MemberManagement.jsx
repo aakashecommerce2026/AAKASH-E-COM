@@ -18,7 +18,8 @@ import {
   FormControlLabel,
   Switch,
   IconButton,
-  InputAdornment
+  InputAdornment,
+  Divider
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -29,10 +30,12 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import LockIcon from '@mui/icons-material/Lock';
+import KeyIcon from '@mui/icons-material/Key';
 import { DataGrid } from '@mui/x-data-grid';
 import { useLocation } from 'react-router-dom';
 import { fetchMembersRequest, addMemberRequest, updateMemberRequest } from '../store/actions';
 import { UnilevelTree } from '../components/UnilevelTree';
+import { hierarchyApi } from '../services/api';
 
 // Helper function to generate unique referral code
 const generateUniqueReferralCode = (memberName, existingMembers = []) => {
@@ -139,40 +142,104 @@ const MemberManagement = () => {
     return editingMember ? existing.id === editingMember.id : false;
   }, [members, referralCode, editingMember]);
 
-  // Compute members to display: Admin sees all, Member sees ONLY their branch and downline members
+  const [serverDownlines, setServerDownlines] = useState([]);
+
+  useEffect(() => {
+    if (!isAdmin && currentMember) {
+      hierarchyApi
+        .getMemberDownline()
+        .then((res) => {
+          const list = Array.isArray(res) ? res : res?.data || [];
+          if (list.length > 0) {
+            const mapped = list.map((m) => ({
+              id: m.id,
+              name: m.name,
+              email: m.email || '',
+              mobile: m.mobile || '',
+              role: m.role === 'ADMIN' ? 'Admin' : 'Associate',
+              referralCode: m.memberCode,
+              status: m.status,
+              joinedDate: m.joiningDate ? m.joiningDate.split('T')[0] : new Date().toISOString().split('T')[0],
+              sponsorId: m.referrerId || null,
+            }));
+            setServerDownlines(mapped);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isAdmin, currentMember]);
+
+  // Compute members to display: Admin sees all, Member sees ONLY their branch and downline members, sorted by Hierarchy Level depth (Root -> L1 -> L2...)
   const displayMembers = useMemo(() => {
-    if (isAdmin) return members;
-    if (!currentMember) return [];
+    let sourceList = isAdmin ? members : (serverDownlines.length > 0 ? serverDownlines : members);
+    if (!isAdmin && serverDownlines.length === 0 && currentMember) {
+      const downlineSet = new Set([currentMember.id]);
+      let addedNew = true;
+      while (addedNew) {
+        addedNew = false;
+        sourceList.forEach((m) => {
+          if (
+            m.sponsorId !== null &&
+            m.sponsorId !== undefined &&
+            downlineSet.has(m.sponsorId) &&
+            !downlineSet.has(m.id)
+          ) {
+            downlineSet.add(m.id);
+            addedNew = true;
+          }
+        });
+      }
+      sourceList = sourceList.filter((m) => downlineSet.has(m.id));
+    }
 
-    const downlineSet = new Set([currentMember.id]);
-    let addedNew = true;
+    if (!sourceList || sourceList.length === 0) return [];
 
-    while (addedNew) {
-      addedNew = false;
-      members.forEach((m) => {
-        if (
-          m.sponsorId !== null &&
-          m.sponsorId !== undefined &&
-          downlineSet.has(m.sponsorId) &&
-          !downlineSet.has(m.id)
-        ) {
-          downlineSet.add(m.id);
-          addedNew = true;
+    // Calculate level depth from root sponsors
+    const levelMap = new Map();
+    let changed = true;
+    let passes = 0;
+    while (changed && passes < 50) {
+      changed = false;
+      passes++;
+      sourceList.forEach((m) => {
+        if (!levelMap.has(m.id)) {
+          if (!m.sponsorId || m.sponsorId === m.id) {
+            levelMap.set(m.id, 0); // Root level 0
+            changed = true;
+          } else if (levelMap.has(m.sponsorId)) {
+            levelMap.set(m.id, levelMap.get(m.sponsorId) + 1);
+            changed = true;
+          }
         }
       });
     }
 
-    return members.filter((m) => downlineSet.has(m.id));
-  }, [members, currentMember, isAdmin]);
+    // Assign level depth to member objects
+    const listWithLevels = sourceList.map((m) => ({
+      ...m,
+      level: levelMap.has(m.id) ? levelMap.get(m.id) : (m.level !== undefined ? m.level : 0),
+    }));
+
+    // Primary sort by hierarchy level ASC, secondary by sponsorId ASC, tertiary by ID
+    return listWithLevels.sort((a, b) => {
+      if (a.level !== b.level) return a.level - b.level;
+      if (a.sponsorId !== b.sponsorId) return (a.sponsorId || 0) - (b.sponsorId || 0);
+      return String(a.id).localeCompare(String(b.id));
+    });
+  }, [members, currentMember, isAdmin, serverDownlines]);
 
   const handleOpenAddModal = () => {
     setEditingMember(null);
     setName('');
     setEmail('');
 
-    const defaultSponsorCode = !isAdmin && currentMember ? (currentMember.referralCode || String(currentMember.id)) : 'AK100';
+    const adminMember = members.find((m) => m.role === 'Admin' || m.role === 'ADMIN' || m.id === user?.id) || members[0];
+    const defaultSponsorCode = !isAdmin && currentMember
+      ? (currentMember.referralCode || String(currentMember.id))
+      : (adminMember?.referralCode || user?.referralCode || 'ADM-0001');
+
     setSponsorReferralCode(defaultSponsorCode);
-    setSponsorId(isAdmin ? '1' : String(currentMember?.id || user?.id || '1'));
+    setSponsorId(isAdmin ? String(adminMember?.id || '1') : String(currentMember?.id || user?.id || '1'));
 
     const autoCode = generateUniqueReferralCode('', members);
     setReferralCode(autoCode);
@@ -210,15 +277,19 @@ const MemberManagement = () => {
     setSponsorId('');
   };
 
+  const [createdCredentialsModal, setCreatedCredentialsModal] = useState({ open: false, data: null });
+
   const handleSaveMember = (e) => {
     e.preventDefault();
     if (!name || !email || !referralCode || !isReferralCodeUnique) return;
 
     const finalSponsorId = matchedSponsor ? matchedSponsor.id : (sponsorId ? parseInt(sponsorId, 10) : null);
+    const autoPassword = `AK@${Math.floor(100000 + Math.random() * 900000)}`;
 
     const payload = {
       name,
       email,
+      password: autoPassword,
       referralCode: referralCode.trim().toUpperCase(),
       sponsorId: finalSponsorId,
       membershipAmount: parseFloat(membershipAmount) || 10000,
@@ -241,7 +312,18 @@ const MemberManagement = () => {
       setRegistrationNotice(
         `Registered ${name} under sponsor "${sponsorNameStr}" (Code: ${referralCode})! Assigned unique referral code and placed directly in tree line.`
       );
-      
+
+      setCreatedCredentialsModal({
+        open: true,
+        data: {
+          name,
+          email,
+          memberCode: referralCode.trim().toUpperCase(),
+          password: autoPassword,
+          sponsorName: sponsorNameStr,
+        },
+      });
+
       // Auto-switch to Unilevel Tree View so user immediately sees new member in tree line
       setActiveTab(1);
       setTimeout(() => setRegistrationNotice(''), 8000);
@@ -252,6 +334,24 @@ const MemberManagement = () => {
   // MUI DataGrid Column Configuration
   const columns = [
     { field: 'id', headerName: 'ID', width: 90, sortable: true },
+    { 
+      field: 'level', 
+      headerName: 'Hierarchy Level', 
+      width: 170, 
+      sortable: true,
+      renderCell: (params) => {
+        const lvl = params.value ?? 0;
+        return (
+          <Chip 
+            label={lvl === 0 ? '👑 Level 0 (Root)' : `Level ${lvl} Downline`} 
+            size="small" 
+            color={lvl === 0 ? 'primary' : lvl === 1 ? 'secondary' : 'default'} 
+            variant={lvl === 0 ? 'filled' : 'outlined'}
+            sx={{ fontWeight: 700 }} 
+          />
+        );
+      }
+    },
     { 
       field: 'name', 
       headerName: 'Name', 
@@ -409,6 +509,9 @@ const MemberManagement = () => {
             pageSizeOptions={[5, 10, 25]}
             initialState={{
               pagination: { paginationModel: { pageSize: 10 } },
+              sorting: {
+                sortModel: [{ field: 'level', sort: 'asc' }],
+              },
             }}
             disableRowSelectionOnClick
             autoHeight
@@ -611,6 +714,95 @@ const MemberManagement = () => {
             </Button>
           </DialogActions>
         </form>
+      </Dialog>
+
+      {/* New Member Enrolled Credentials Modal */}
+      <Dialog
+        open={createdCredentialsModal.open}
+        onClose={() => setCreatedCredentialsModal({ open: false, data: null })}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle sx={{ fontWeight: 800, bgcolor: 'primary.main', color: 'white', textAlign: 'center', py: 2.5 }}>
+          🎉 New Member Enrolled Successfully!
+        </DialogTitle>
+        <DialogContent sx={{ p: 3, pt: 3 }}>
+          {createdCredentialsModal.data && (
+            <>
+              <Alert severity="success" sx={{ mb: 2.5, borderRadius: 2 }}>
+                Member <strong>{createdCredentialsModal.data.name}</strong> has been enrolled and placed under sponsor <strong>{createdCredentialsModal.data.sponsorName}</strong>.
+              </Alert>
+
+              <Paper variant="outlined" sx={{ p: 2.5, bgcolor: '#ECFDF5', borderColor: '#A7F3D0', borderRadius: 2.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <KeyIcon sx={{ color: '#047857' }} />
+                  <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#065F46' }}>
+                    Auto-Generated Login Credentials
+                  </Typography>
+                </Box>
+                <Divider sx={{ borderColor: '#A7F3D0' }} />
+
+                <Box>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    Member Referral Code
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 800, color: '#065F46' }}>
+                    {createdCredentialsModal.data.memberCode}
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    Login Email Address
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 800, color: '#065F46' }}>
+                    {createdCredentialsModal.data.email}
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    Auto-Generated Temporary Password
+                  </Typography>
+                  <Paper variant="outlined" sx={{ p: 1, mt: 0.5, bgcolor: 'white', borderColor: '#6EE7B7', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#047857', letterSpacing: '0.05em' }}>
+                      {createdCredentialsModal.data.password}
+                    </Typography>
+                    <Button
+                      size="small"
+                      variant="contained"
+                      color="success"
+                      onClick={() => {
+                        if (createdCredentialsModal.data?.password) {
+                          navigator.clipboard.writeText(
+                            `Member Code: ${createdCredentialsModal.data.memberCode}\nEmail: ${createdCredentialsModal.data.email}\nPassword: ${createdCredentialsModal.data.password}`
+                          );
+                        }
+                      }}
+                      sx={{ fontSize: '0.7rem', py: 0.3, px: 1, bgcolor: '#059669' }}
+                    >
+                      Copy Credentials
+                    </Button>
+                  </Paper>
+                </Box>
+              </Paper>
+
+              <Alert severity="info" sx={{ mt: 2.5, borderRadius: 2, fontSize: '0.78rem' }}>
+                ℹ️ The member can log in using their email/member code and password, and change their password anytime via <strong>Profile Settings</strong>.
+              </Alert>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2, borderTop: '1px solid #E2E8F0', justifyContent: 'center' }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => setCreatedCredentialsModal({ open: false, data: null })}
+            sx={{ fontWeight: 700, px: 4 }}
+          >
+            Done & Return to Directory
+          </Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );

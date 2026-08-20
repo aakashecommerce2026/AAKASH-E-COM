@@ -13,15 +13,12 @@ import {
   CircularProgress,
   IconButton,
   InputAdornment,
-  Chip,
-  Divider,
   FormControlLabel,
   Checkbox
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
-import KeyIcon from '@mui/icons-material/Key';
 import { loginRequest } from '../store/actions';
 
 const AdminLogin = () => {
@@ -41,12 +38,7 @@ const AdminLogin = () => {
   // Validate inputs
   const validateEmail = (value) => {
     if (!value) {
-      setEmailError('Email is required');
-      return false;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(value)) {
-      setEmailError('Please enter a valid email address');
+      setEmailError('Admin Email or Member Code is required');
       return false;
     }
     setEmailError('');
@@ -74,13 +66,6 @@ const AdminLogin = () => {
     if (isEmailValid && isPasswordValid) {
       dispatch(loginRequest(email, password, 'Admin'));
     }
-  };
-
-  const handleFillDemo = () => {
-    setEmail('admin@aakashmlm.com');
-    setPassword('password');
-    setEmailError('');
-    setPasswordError('');
   };
 
   if (token) {
@@ -134,7 +119,8 @@ const AdminLogin = () => {
             <form onSubmit={handleSubmit} noValidate>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <TextField
-                  label="Admin Email"
+                  label="Admin Email or Member Code"
+                  type="text"
                   variant="outlined"
                   fullWidth
                   required
@@ -147,7 +133,7 @@ const AdminLogin = () => {
                   error={Boolean(emailError)}
                   helperText={emailError}
                   disabled={loading}
-                  placeholder="admin@aakashmlm.com"
+                  placeholder="admin@aakashecom.com or ADM-0001"
                 />
 
                 <TextField
@@ -195,13 +181,6 @@ const AdminLogin = () => {
                     }
                     label={<Typography variant="caption" color="text.secondary">Remember me</Typography>}
                   />
-                  <Typography
-                    variant="caption"
-                    sx={{ color: 'primary.main', fontWeight: 600, cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
-                    onClick={handleFillDemo}
-                  >
-                    Quick Demo Credentials
-                  </Typography>
                 </Box>
 
                 <Button
@@ -217,43 +196,6 @@ const AdminLogin = () => {
                 </Button>
               </Box>
             </form>
-
-            <Divider sx={{ my: 3 }}>
-              <Chip label="Admin Demo Helper" size="small" sx={{ fontSize: '0.75rem' }} />
-            </Divider>
-
-            <Box
-              sx={{
-                bgcolor: '#ECFDF5',
-                border: '1px solid #A7F3D0',
-                borderRadius: 2,
-                p: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between'
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <KeyIcon sx={{ color: '#047857', fontSize: 20 }} />
-                <Box>
-                  <Typography variant="caption" display="block" sx={{ fontWeight: 700, color: '#065F46' }}>
-                    Demo Admin Credentials
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: '#047857' }}>
-                    admin@aakashmlm.com / password
-                  </Typography>
-                </Box>
-              </Box>
-              <Button
-                size="small"
-                variant="outlined"
-                color="success"
-                onClick={handleFillDemo}
-                sx={{ fontSize: '0.75rem', px: 1.5, py: 0.5, borderColor: '#059669', color: '#065F46' }}
-              >
-                Fill
-              </Button>
-            </Box>
           </CardContent>
         </Card>
       </Container>

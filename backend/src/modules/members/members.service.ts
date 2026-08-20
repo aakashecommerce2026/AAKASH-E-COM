@@ -90,7 +90,7 @@ export class MembersService {
 
     return {
       ...created,
-      ...(generatedTemp ? { tempPassword } : {}),
+      tempPassword,
     };
   }
 
