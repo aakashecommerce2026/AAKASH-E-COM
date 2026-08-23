@@ -18,6 +18,8 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { EmailModule } from './modules/email/email.module';
+import { OtpModule } from './modules/otp/otp.module';
 
 const envFile = process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env';
 
@@ -50,6 +52,8 @@ const envFile = process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env';
     DashboardModule,
     AuditModule,
     NotificationsModule,
+    EmailModule,
+    OtpModule,
   ],
   controllers: [AppController],
   providers: [AppService],

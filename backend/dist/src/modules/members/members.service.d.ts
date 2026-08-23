@@ -8,12 +8,16 @@ import { ReassignReferrerDto } from './dto/reassign-referrer.dto';
 import { MemberResponseDto } from './dto/member-response.dto';
 import { MemberRole, Prisma } from '@prisma/client';
 import { MembershipCommissionService } from '../membership-commission/membership-commission.service';
+import { EmailService } from '../email/email.service';
+import { OtpService } from '../otp/otp.service';
 export declare class MembersService {
     private readonly prisma;
     private readonly auditService;
     private readonly membershipCommissionService;
+    private readonly emailService?;
+    private readonly otpService?;
     private readonly BCRYPT_SALT_ROUNDS;
-    constructor(prisma: PrismaService, auditService: AuditService, membershipCommissionService: MembershipCommissionService);
+    constructor(prisma: PrismaService, auditService: AuditService, membershipCommissionService: MembershipCommissionService, emailService?: EmailService | undefined, otpService?: OtpService | undefined);
     generateMemberCode(): Promise<string>;
     generateTempPassword(): string;
     create(createMemberDto: CreateMemberDto, actorId?: string, actorRole?: MemberRole): Promise<MemberResponseDto>;

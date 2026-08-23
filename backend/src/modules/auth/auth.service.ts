@@ -15,6 +15,12 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { JwtPayload } from './strategies/jwt.strategy';
 
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { OtpService } from '../otp/otp.service';
+import { EmailService } from '../email/email.service';
+import { OtpPurpose } from '../otp/enums/otp-purpose.enum';
+
 @Injectable()
 export class AuthService {
   private readonly BCRYPT_SALT_ROUNDS = 12;
@@ -24,6 +30,8 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     @Optional() private readonly auditService?: AuditService,
+    @Optional() private readonly otpService?: OtpService,
+    @Optional() private readonly emailService?: EmailService,
   ) {}
 
   /**
@@ -41,9 +49,71 @@ export class AuthService {
   }
 
   /**
-   * Validates member credentials by memberCode, email, or mobile.
+   * Validates admin credentials specifically (ADMIN or SUB_ADMIN role).
    */
-  async validateUser(identifier: string, password: string) {
+  async validateAdminUser(identifier: string, password: string) {
+    const member = await this.prisma.member.findFirst({
+      where: {
+        OR: [
+          { memberCode: identifier },
+          { email: identifier },
+          { mobile: identifier },
+        ],
+        role: { in: ['ADMIN', 'SUB_ADMIN'] },
+      },
+    });
+
+    if (!member || !member.passwordHash) {
+      throw new UnauthorizedException('Invalid admin credentials');
+    }
+
+    const isPasswordValid = await this.comparePassword(password, member.passwordHash);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid admin credentials');
+    }
+
+    if (member.status === 'BLOCKED' || member.status === 'SUSPENDED') {
+      throw new UnauthorizedException('Admin account is blocked or suspended');
+    }
+
+    return member;
+  }
+
+  /**
+   * Validates member credentials specifically (MEMBER role).
+   */
+  async validateMemberUser(identifier: string, password: string) {
+    const member = await this.prisma.member.findFirst({
+      where: {
+        OR: [
+          { memberCode: identifier },
+          { email: identifier },
+          { mobile: identifier },
+        ],
+        role: 'MEMBER',
+      },
+    });
+
+    if (!member || !member.passwordHash) {
+      throw new UnauthorizedException('Invalid member credentials');
+    }
+
+    const isPasswordValid = await this.comparePassword(password, member.passwordHash);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid member credentials');
+    }
+
+    if (member.status === 'BLOCKED' || member.status === 'SUSPENDED') {
+      throw new UnauthorizedException('Member account is blocked or suspended');
+    }
+
+    return member;
+  }
+
+  /**
+   * Validates credentials by memberCode, email, or mobile with optional portal role enforcement.
+   */
+  async validateUser(identifier: string, password: string, portalType?: string) {
     const member = await this.prisma.member.findFirst({
       where: {
         OR: [
@@ -67,6 +137,16 @@ export class AuthService {
       throw new UnauthorizedException('Account is blocked or suspended');
     }
 
+    const isAdminRole = member.role === 'ADMIN' || member.role === 'SUB_ADMIN';
+
+    if (portalType === 'Admin' && !isAdminRole) {
+      throw new UnauthorizedException('Access denied. Only admin credentials can log in to the Admin Portal.');
+    }
+
+    if (portalType === 'Member' && isAdminRole) {
+      throw new UnauthorizedException('Access denied. Admin credentials must be used on the Admin Login portal.');
+    }
+
     return member;
   }
 
@@ -74,7 +154,11 @@ export class AuthService {
    * Handles user login and returns 15-minute access token & 7-day refresh token.
    */
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
-    const member = await this.validateUser(loginDto.identifier, loginDto.password);
+    const member = await this.validateUser(
+      loginDto.identifier,
+      loginDto.password,
+      loginDto.portalType,
+    );
 
     if (this.auditService) {
       const actionType =
@@ -143,8 +227,13 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
+    const currentPwd = changePasswordDto.currentPassword || changePasswordDto.oldPassword;
+    if (!currentPwd) {
+      throw new BadRequestException('Current password is required');
+    }
+
     const isCurrentPasswordValid = await this.comparePassword(
-      changePasswordDto.currentPassword,
+      currentPwd,
       member.passwordHash,
     );
 
@@ -224,5 +313,93 @@ export class AuthService {
         status: member.status,
       },
     };
+  }
+
+  /**
+   * Dispatches a Password Reset Link Email containing token / OTP.
+   */
+  async forgotPassword(dto: ForgotPasswordDto): Promise<{ message: string }> {
+    const member = await this.prisma.member.findFirst({
+      where: { email: dto.email.trim().toLowerCase() },
+    });
+
+    if (!member || !member.email) {
+      return { message: 'If an account with that email exists, a password reset link has been sent.' };
+    }
+
+    if (member.status === 'BLOCKED' || member.status === 'SUSPENDED') {
+      throw new UnauthorizedException('Account is blocked or suspended');
+    }
+
+    if (this.otpService && this.emailService) {
+      await this.otpService.sendOtp({
+        email: member.email,
+        purpose: OtpPurpose.PASSWORD_RESET,
+      });
+
+      const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+      const resetLink = `${frontendUrl}/reset-password?email=${encodeURIComponent(member.email)}`;
+
+      await this.emailService.sendPasswordResetLinkEmail(
+        member.email,
+        member.name,
+        resetLink,
+        'Code sent to email',
+      );
+    }
+
+    return { message: 'If an account with that email exists, a password reset link has been sent.' };
+  }
+
+  /**
+   * Resets member password using token / OTP code.
+   */
+  async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
+    const { email, token, newPassword } = dto;
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const member = await this.prisma.member.findFirst({
+      where: { email: normalizedEmail },
+    });
+
+    if (!member) {
+      throw new BadRequestException('Invalid request or member not found');
+    }
+
+    if (this.otpService) {
+      await this.otpService.verifyOtp({
+        email: normalizedEmail,
+        otp: token,
+        purpose: OtpPurpose.PASSWORD_RESET,
+      });
+    }
+
+    const newPasswordHash = await this.hashPassword(newPassword);
+
+    await this.prisma.member.update({
+      where: { id: member.id },
+      data: { passwordHash: newPasswordHash },
+    });
+
+    if (this.auditService) {
+      await this.auditService.logAction({
+        actorId: member.id,
+        actorRole: member.role,
+        actionType: 'RESET_PASSWORD_WITH_OTP',
+        entityType: 'Member',
+        entityId: member.id,
+        metadata: { memberCode: member.memberCode, email: member.email },
+      });
+    }
+
+    if (this.emailService && member.email) {
+      await this.emailService.sendSecurityAlertEmail(
+        member.email,
+        member.name,
+        'Password Reset Completed',
+      );
+    }
+
+    return { message: 'Password has been reset successfully. You can now log in with your new password.' };
   }
 }

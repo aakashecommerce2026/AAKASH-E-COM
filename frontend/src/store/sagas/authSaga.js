@@ -5,11 +5,12 @@ import { authApi } from '../../services/api';
 
 function* loginWorker(action) {
   try {
-    const { email, password } = action.payload;
+    const { email, password, role } = action.payload;
     const identifier = email;
+    const portalType = role; // 'Admin' or 'Member'
 
-    // Call live NestJS backend auth endpoint
-    const response = yield call(authApi.login, { identifier, password });
+    // Call live NestJS backend auth endpoint with portalType enforcement
+    const response = yield call(authApi.login, { identifier, password, portalType });
 
     const token = response.accessToken;
     const backendUser = response.user;

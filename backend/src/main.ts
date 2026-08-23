@@ -43,12 +43,12 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api/docs', app, document);
 
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   console.log(
-    `🚀 MLM Backend Server running on: http://localhost:${port}/${apiPrefix}`,
+    `🚀 MLM Backend Server running on: http://127.0.0.1:${port}/${apiPrefix}`,
   );
   console.log(
-    `📚 Swagger Documentation available at: http://localhost:${port}/api/docs`,
+    `📚 Swagger Documentation available at: http://127.0.0.1:${port}/api/docs`,
   );
 }
 

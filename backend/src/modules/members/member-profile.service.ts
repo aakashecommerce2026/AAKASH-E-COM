@@ -175,7 +175,12 @@ export class MemberProfileService {
       throw new NotFoundException(`Member with ID '${memberId}' not found`);
     }
 
-    const isCurrentPasswordValid = await bcrypt.compare(dto.oldPassword, member.passwordHash);
+    const currentPwd = dto.currentPassword || dto.oldPassword;
+    if (!currentPwd) {
+      throw new BadRequestException('Current password is required');
+    }
+
+    const isCurrentPasswordValid = await bcrypt.compare(currentPwd, member.passwordHash);
     if (!isCurrentPasswordValid) {
       throw new BadRequestException('Current password does not match');
     }

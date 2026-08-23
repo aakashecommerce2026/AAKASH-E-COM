@@ -1,5 +1,6 @@
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { EmailService } from '../email/email.service';
 export interface NotifyDistributionParams {
     memberId: string;
     memberCode: string;
@@ -11,12 +12,14 @@ export interface NotifyDistributionParams {
     tdsAmount: number;
     adminFee: number;
     netAmount: number;
+    paymentRef?: string;
     channels?: ('EMAIL' | 'SMS' | 'IN_APP')[];
 }
 export declare class NotificationsService {
     private readonly prisma;
     private readonly auditService;
+    private readonly emailService?;
     private readonly logger;
-    constructor(prisma: PrismaService, auditService: AuditService);
+    constructor(prisma: PrismaService, auditService: AuditService, emailService?: EmailService | undefined);
     notifyMemberCommissionDistributed(params: NotifyDistributionParams): Promise<void>;
 }

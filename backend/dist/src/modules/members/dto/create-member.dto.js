@@ -27,6 +27,7 @@ class CreateMemberDto {
     status;
     password;
     role;
+    otp;
 }
 exports.CreateMemberDto = CreateMemberDto;
 __decorate([
@@ -115,4 +116,10 @@ __decorate([
     (0, class_validator_1.IsEnum)(client_1.MemberRole, { message: 'Invalid member role' }),
     __metadata("design:type", String)
 ], CreateMemberDto.prototype, "role", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: '123456', description: '6-digit email OTP verification code' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateMemberDto.prototype, "otp", void 0);
 //# sourceMappingURL=create-member.dto.js.map

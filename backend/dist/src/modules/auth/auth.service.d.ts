@@ -6,16 +6,56 @@ import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { OtpService } from '../otp/otp.service';
+import { EmailService } from '../email/email.service';
 export declare class AuthService {
     private readonly prisma;
     private readonly jwtService;
     private readonly configService;
     private readonly auditService?;
+    private readonly otpService?;
+    private readonly emailService?;
     private readonly BCRYPT_SALT_ROUNDS;
-    constructor(prisma: PrismaService, jwtService: JwtService, configService: ConfigService, auditService?: AuditService | undefined);
+    constructor(prisma: PrismaService, jwtService: JwtService, configService: ConfigService, auditService?: AuditService | undefined, otpService?: OtpService | undefined, emailService?: EmailService | undefined);
     hashPassword(password: string): Promise<string>;
     comparePassword(raw: string, hash: string): Promise<boolean>;
-    validateUser(identifier: string, password: string): Promise<{
+    validateAdminUser(identifier: string, password: string): Promise<{
+        id: string;
+        memberCode: string;
+        name: string;
+        mobile: string;
+        email: string | null;
+        address: string | null;
+        referrerId: string | null;
+        joiningDate: Date;
+        upiId: string | null;
+        bankDetails: import("@prisma/client/runtime/library").JsonValue | null;
+        status: import("@prisma/client").$Enums.MemberStatus;
+        passwordHash: string;
+        role: import("@prisma/client").$Enums.MemberRole;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    validateMemberUser(identifier: string, password: string): Promise<{
+        id: string;
+        memberCode: string;
+        name: string;
+        mobile: string;
+        email: string | null;
+        address: string | null;
+        referrerId: string | null;
+        joiningDate: Date;
+        upiId: string | null;
+        bankDetails: import("@prisma/client/runtime/library").JsonValue | null;
+        status: import("@prisma/client").$Enums.MemberStatus;
+        passwordHash: string;
+        role: import("@prisma/client").$Enums.MemberRole;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    validateUser(identifier: string, password: string, portalType?: string): Promise<{
         id: string;
         memberCode: string;
         name: string;
@@ -38,4 +78,10 @@ export declare class AuthService {
         message: string;
     }>;
     private generateAuthTokens;
+    forgotPassword(dto: ForgotPasswordDto): Promise<{
+        message: string;
+    }>;
+    resetPassword(dto: ResetPasswordDto): Promise<{
+        message: string;
+    }>;
 }

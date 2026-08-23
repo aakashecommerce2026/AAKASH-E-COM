@@ -52,17 +52,24 @@ const config_1 = require("@nestjs/config");
 const bcrypt = __importStar(require("bcrypt"));
 const prisma_service_1 = require("../../prisma/prisma.service");
 const audit_service_1 = require("../audit/audit.service");
+const otp_service_1 = require("../otp/otp.service");
+const email_service_1 = require("../email/email.service");
+const otp_purpose_enum_1 = require("../otp/enums/otp-purpose.enum");
 let AuthService = class AuthService {
     prisma;
     jwtService;
     configService;
     auditService;
+    otpService;
+    emailService;
     BCRYPT_SALT_ROUNDS = 12;
-    constructor(prisma, jwtService, configService, auditService) {
+    constructor(prisma, jwtService, configService, auditService, otpService, emailService) {
         this.prisma = prisma;
         this.jwtService = jwtService;
         this.configService = configService;
         this.auditService = auditService;
+        this.otpService = otpService;
+        this.emailService = emailService;
     }
     async hashPassword(password) {
         return bcrypt.hash(password, this.BCRYPT_SALT_ROUNDS);
@@ -70,7 +77,53 @@ let AuthService = class AuthService {
     async comparePassword(raw, hash) {
         return bcrypt.compare(raw, hash);
     }
-    async validateUser(identifier, password) {
+    async validateAdminUser(identifier, password) {
+        const member = await this.prisma.member.findFirst({
+            where: {
+                OR: [
+                    { memberCode: identifier },
+                    { email: identifier },
+                    { mobile: identifier },
+                ],
+                role: { in: ['ADMIN', 'SUB_ADMIN'] },
+            },
+        });
+        if (!member || !member.passwordHash) {
+            throw new common_1.UnauthorizedException('Invalid admin credentials');
+        }
+        const isPasswordValid = await this.comparePassword(password, member.passwordHash);
+        if (!isPasswordValid) {
+            throw new common_1.UnauthorizedException('Invalid admin credentials');
+        }
+        if (member.status === 'BLOCKED' || member.status === 'SUSPENDED') {
+            throw new common_1.UnauthorizedException('Admin account is blocked or suspended');
+        }
+        return member;
+    }
+    async validateMemberUser(identifier, password) {
+        const member = await this.prisma.member.findFirst({
+            where: {
+                OR: [
+                    { memberCode: identifier },
+                    { email: identifier },
+                    { mobile: identifier },
+                ],
+                role: 'MEMBER',
+            },
+        });
+        if (!member || !member.passwordHash) {
+            throw new common_1.UnauthorizedException('Invalid member credentials');
+        }
+        const isPasswordValid = await this.comparePassword(password, member.passwordHash);
+        if (!isPasswordValid) {
+            throw new common_1.UnauthorizedException('Invalid member credentials');
+        }
+        if (member.status === 'BLOCKED' || member.status === 'SUSPENDED') {
+            throw new common_1.UnauthorizedException('Member account is blocked or suspended');
+        }
+        return member;
+    }
+    async validateUser(identifier, password, portalType) {
         const member = await this.prisma.member.findFirst({
             where: {
                 OR: [
@@ -90,10 +143,17 @@ let AuthService = class AuthService {
         if (member.status === 'BLOCKED' || member.status === 'SUSPENDED') {
             throw new common_1.UnauthorizedException('Account is blocked or suspended');
         }
+        const isAdminRole = member.role === 'ADMIN' || member.role === 'SUB_ADMIN';
+        if (portalType === 'Admin' && !isAdminRole) {
+            throw new common_1.UnauthorizedException('Access denied. Only admin credentials can log in to the Admin Portal.');
+        }
+        if (portalType === 'Member' && isAdminRole) {
+            throw new common_1.UnauthorizedException('Access denied. Admin credentials must be used on the Admin Login portal.');
+        }
         return member;
     }
     async login(loginDto) {
-        const member = await this.validateUser(loginDto.identifier, loginDto.password);
+        const member = await this.validateUser(loginDto.identifier, loginDto.password, loginDto.portalType);
         if (this.auditService) {
             const actionType = member.role === 'ADMIN' || member.role === 'SUB_ADMIN'
                 ? 'ADMIN_LOGIN'
@@ -140,7 +200,11 @@ let AuthService = class AuthService {
         if (!member) {
             throw new common_1.UnauthorizedException('User not found');
         }
-        const isCurrentPasswordValid = await this.comparePassword(changePasswordDto.currentPassword, member.passwordHash);
+        const currentPwd = changePasswordDto.currentPassword || changePasswordDto.oldPassword;
+        if (!currentPwd) {
+            throw new common_1.BadRequestException('Current password is required');
+        }
+        const isCurrentPasswordValid = await this.comparePassword(currentPwd, member.passwordHash);
         if (!isCurrentPasswordValid) {
             throw new common_1.BadRequestException('Current password does not match');
         }
@@ -197,14 +261,75 @@ let AuthService = class AuthService {
             },
         };
     }
+    async forgotPassword(dto) {
+        const member = await this.prisma.member.findFirst({
+            where: { email: dto.email.trim().toLowerCase() },
+        });
+        if (!member || !member.email) {
+            return { message: 'If an account with that email exists, a password reset link has been sent.' };
+        }
+        if (member.status === 'BLOCKED' || member.status === 'SUSPENDED') {
+            throw new common_1.UnauthorizedException('Account is blocked or suspended');
+        }
+        if (this.otpService && this.emailService) {
+            await this.otpService.sendOtp({
+                email: member.email,
+                purpose: otp_purpose_enum_1.OtpPurpose.PASSWORD_RESET,
+            });
+            const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:5173';
+            const resetLink = `${frontendUrl}/reset-password?email=${encodeURIComponent(member.email)}`;
+            await this.emailService.sendPasswordResetLinkEmail(member.email, member.name, resetLink, 'Code sent to email');
+        }
+        return { message: 'If an account with that email exists, a password reset link has been sent.' };
+    }
+    async resetPassword(dto) {
+        const { email, token, newPassword } = dto;
+        const normalizedEmail = email.trim().toLowerCase();
+        const member = await this.prisma.member.findFirst({
+            where: { email: normalizedEmail },
+        });
+        if (!member) {
+            throw new common_1.BadRequestException('Invalid request or member not found');
+        }
+        if (this.otpService) {
+            await this.otpService.verifyOtp({
+                email: normalizedEmail,
+                otp: token,
+                purpose: otp_purpose_enum_1.OtpPurpose.PASSWORD_RESET,
+            });
+        }
+        const newPasswordHash = await this.hashPassword(newPassword);
+        await this.prisma.member.update({
+            where: { id: member.id },
+            data: { passwordHash: newPasswordHash },
+        });
+        if (this.auditService) {
+            await this.auditService.logAction({
+                actorId: member.id,
+                actorRole: member.role,
+                actionType: 'RESET_PASSWORD_WITH_OTP',
+                entityType: 'Member',
+                entityId: member.id,
+                metadata: { memberCode: member.memberCode, email: member.email },
+            });
+        }
+        if (this.emailService && member.email) {
+            await this.emailService.sendSecurityAlertEmail(member.email, member.name, 'Password Reset Completed');
+        }
+        return { message: 'Password has been reset successfully. You can now log in with your new password.' };
+    }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
     __param(3, (0, common_1.Optional)()),
+    __param(4, (0, common_1.Optional)()),
+    __param(5, (0, common_1.Optional)()),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         jwt_1.JwtService,
         config_1.ConfigService,
-        audit_service_1.AuditService])
+        audit_service_1.AuditService,
+        otp_service_1.OtpService,
+        email_service_1.EmailService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

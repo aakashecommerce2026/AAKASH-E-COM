@@ -119,6 +119,84 @@ describe('AuthService', () => {
         }),
       ).rejects.toThrow(UnauthorizedException);
     });
+
+    it('should throw UnauthorizedException when a standard MEMBER attempts login to Admin portal', async () => {
+      prismaService.member.findFirst.mockResolvedValue(mockMember); // mockMember is MEMBER role
+      jest.spyOn(service, 'comparePassword').mockResolvedValue(true);
+
+      await expect(
+        service.login({
+          identifier: 'AK10001',
+          password: 'Password123!',
+          portalType: 'Admin',
+        }),
+      ).rejects.toThrow('Access denied. Only admin credentials can log in to the Admin Portal.');
+    });
+
+    it('should throw UnauthorizedException when an ADMIN attempts login to Member portal', async () => {
+      const mockAdmin = { ...mockMember, role: MemberRole.ADMIN };
+      prismaService.member.findFirst.mockResolvedValue(mockAdmin);
+      jest.spyOn(service, 'comparePassword').mockResolvedValue(true);
+
+      await expect(
+        service.login({
+          identifier: 'AK100000',
+          password: 'Password123!',
+          portalType: 'Member',
+        }),
+      ).rejects.toThrow('Access denied. Admin credentials must be used on the Admin Login portal.');
+    });
+
+    it('should allow ADMIN login to Admin portal', async () => {
+      const mockAdmin = { ...mockMember, role: MemberRole.ADMIN };
+      prismaService.member.findFirst.mockResolvedValue(mockAdmin);
+      jest.spyOn(service, 'comparePassword').mockResolvedValue(true);
+
+      const result = await service.login({
+        identifier: 'AK100000',
+        password: 'Password123!',
+        portalType: 'Admin',
+      });
+
+      expect(result.user.role).toEqual(MemberRole.ADMIN);
+    });
+
+    it('should validate admin user with validateAdminUser', async () => {
+      const mockAdmin = { ...mockMember, role: MemberRole.ADMIN };
+      prismaService.member.findFirst.mockResolvedValue(mockAdmin);
+      jest.spyOn(service, 'comparePassword').mockResolvedValue(true);
+
+      const admin = await service.validateAdminUser('AK100000', 'Password123!');
+      expect(admin.role).toEqual(MemberRole.ADMIN);
+      expect(prismaService.member.findFirst).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            { memberCode: 'AK100000' },
+            { email: 'AK100000' },
+            { mobile: 'AK100000' },
+          ],
+          role: { in: ['ADMIN', 'SUB_ADMIN'] },
+        },
+      });
+    });
+
+    it('should validate member user with validateMemberUser', async () => {
+      prismaService.member.findFirst.mockResolvedValue(mockMember);
+      jest.spyOn(service, 'comparePassword').mockResolvedValue(true);
+
+      const member = await service.validateMemberUser('AK10001', 'Password123!');
+      expect(member.role).toEqual(MemberRole.MEMBER);
+      expect(prismaService.member.findFirst).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            { memberCode: 'AK10001' },
+            { email: 'AK10001' },
+            { mobile: 'AK10001' },
+          ],
+          role: 'MEMBER',
+        },
+      });
+    });
   });
 
   describe('refreshToken', () => {

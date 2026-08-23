@@ -18,6 +18,8 @@ const roles_guard_1 = require("./guards/roles.guard");
 const ownership_guard_1 = require("./guards/ownership.guard");
 const prisma_module_1 = require("../../prisma/prisma.module");
 const audit_module_1 = require("../audit/audit.module");
+const otp_module_1 = require("../otp/otp.module");
+const email_module_1 = require("../email/email.module");
 let AuthModule = class AuthModule {
 };
 exports.AuthModule = AuthModule;
@@ -26,6 +28,8 @@ exports.AuthModule = AuthModule = __decorate([
         imports: [
             prisma_module_1.PrismaModule,
             audit_module_1.AuditModule,
+            otp_module_1.OtpModule,
+            email_module_1.EmailModule,
             passport_1.PassportModule.register({ defaultStrategy: 'jwt' }),
             jwt_1.JwtModule.registerAsync({
                 imports: [config_1.ConfigModule],

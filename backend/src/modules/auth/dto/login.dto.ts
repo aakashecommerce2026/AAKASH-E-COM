@@ -17,4 +17,12 @@ export class LoginDto {
   @IsString()
   @IsNotEmpty()
   password!: string;
+
+  @ApiProperty({
+    example: 'Admin',
+    description: 'Target portal type: Admin or Member',
+    required: false,
+  })
+  @IsString()
+  portalType?: string;
 }

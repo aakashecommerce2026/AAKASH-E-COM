@@ -34,8 +34,16 @@ apiClient.interceptors.response.use(
 // Auth API Endpoints
 export const authApi = {
   login: (credentials) => apiClient.post('/auth/login', credentials),
+  adminLogin: (credentials) => apiClient.post('/auth/admin-login', credentials),
+  memberLogin: (credentials) => apiClient.post('/auth/member-login', credentials),
   refreshToken: (refreshToken) => apiClient.post('/auth/refresh', { refreshToken }),
   changePassword: (data) => apiClient.put('/member/change-password', data),
+};
+
+// OTP API Endpoints
+export const otpApi = {
+  sendOtp: (data) => apiClient.post('/otp/send', data),
+  verifyOtp: (data) => apiClient.post('/otp/verify', data),
 };
 
 // Members API Endpoints

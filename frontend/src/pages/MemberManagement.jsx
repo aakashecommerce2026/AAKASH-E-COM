@@ -56,6 +56,8 @@ const generateUniqueReferralCode = (memberName, existingMembers = []) => {
   return code;
 };
 
+import OtpVerificationModal from '../components/OtpVerificationModal';
+
 const MemberManagement = () => {
   const dispatch = useDispatch();
   const location = useLocation();
@@ -278,6 +280,32 @@ const MemberManagement = () => {
   };
 
   const [createdCredentialsModal, setCreatedCredentialsModal] = useState({ open: false, data: null });
+  const [otpModalOpen, setOtpModalOpen] = useState(false);
+  const [pendingPayload, setPendingPayload] = useState(null);
+
+  const executeAddMember = (payload) => {
+    dispatch(addMemberRequest(payload));
+    
+    const sponsorNameStr = matchedSponsor ? matchedSponsor.name : 'Network Root';
+    setRegistrationNotice(
+      `Registered ${payload.name} under sponsor "${sponsorNameStr}" (Code: ${payload.referralCode})! Email verified and member placed in tree line.`
+    );
+
+    setCreatedCredentialsModal({
+      open: true,
+      data: {
+        name: payload.name,
+        email: payload.email,
+        memberCode: payload.referralCode,
+        password: payload.password,
+        sponsorName: sponsorNameStr,
+      },
+    });
+
+    handleCloseModal();
+    setActiveTab(1);
+    setTimeout(() => setRegistrationNotice(''), 8000);
+  };
 
   const handleSaveMember = (e) => {
     e.preventDefault();
@@ -304,31 +332,12 @@ const MemberManagement = () => {
         id: editingMember.id,
         joinedDate: editingMember.joinedDate
       }));
+      handleCloseModal();
     } else {
-      // Add Mode
-      dispatch(addMemberRequest(payload));
-      
-      const sponsorNameStr = matchedSponsor ? matchedSponsor.name : 'Network Root';
-      setRegistrationNotice(
-        `Registered ${name} under sponsor "${sponsorNameStr}" (Code: ${referralCode})! Assigned unique referral code and placed directly in tree line.`
-      );
-
-      setCreatedCredentialsModal({
-        open: true,
-        data: {
-          name,
-          email,
-          memberCode: referralCode.trim().toUpperCase(),
-          password: autoPassword,
-          sponsorName: sponsorNameStr,
-        },
-      });
-
-      // Auto-switch to Unilevel Tree View so user immediately sees new member in tree line
-      setActiveTab(1);
-      setTimeout(() => setRegistrationNotice(''), 8000);
+      // Add Mode: Open Email OTP verification modal first
+      setPendingPayload(payload);
+      setOtpModalOpen(true);
     }
-    handleCloseModal();
   };
 
   // MUI DataGrid Column Configuration
@@ -804,6 +813,19 @@ const MemberManagement = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <OtpVerificationModal
+        open={otpModalOpen}
+        onClose={() => setOtpModalOpen(false)}
+        email={pendingPayload?.email}
+        purpose="EMAIL_VERIFICATION"
+        onVerifySuccess={() => {
+          if (pendingPayload) {
+            executeAddMember(pendingPayload);
+            setPendingPayload(null);
+          }
+        }}
+      />
     </Box>
   );
 };

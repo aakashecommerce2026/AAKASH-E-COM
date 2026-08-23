@@ -165,7 +165,11 @@ let MemberProfileService = class MemberProfileService {
         if (!member) {
             throw new common_1.NotFoundException(`Member with ID '${memberId}' not found`);
         }
-        const isCurrentPasswordValid = await bcrypt.compare(dto.oldPassword, member.passwordHash);
+        const currentPwd = dto.currentPassword || dto.oldPassword;
+        if (!currentPwd) {
+            throw new common_1.BadRequestException('Current password is required');
+        }
+        const isCurrentPasswordValid = await bcrypt.compare(currentPwd, member.passwordHash);
         if (!isCurrentPasswordValid) {
             throw new common_1.BadRequestException('Current password does not match');
         }

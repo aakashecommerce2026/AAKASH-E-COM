@@ -89,4 +89,9 @@ export class CreateMemberDto {
   @IsOptional()
   @IsEnum(MemberRole, { message: 'Invalid member role' })
   role?: MemberRole;
+
+  @ApiPropertyOptional({ example: '123456', description: '6-digit email OTP verification code' })
+  @IsOptional()
+  @IsString()
+  otp?: string;
 }

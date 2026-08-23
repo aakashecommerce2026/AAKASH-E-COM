@@ -20,6 +20,8 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { loginRequest } from '../store/actions';
 
+import ForgotPasswordModal from '../components/ForgotPasswordModal';
+
 const Login = () => {
   const dispatch = useDispatch();
 
@@ -29,6 +31,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+  const [forgotModalOpen, setForgotModalOpen] = useState(false);
 
   // Field validation states
   const [emailError, setEmailError] = useState('');
@@ -196,6 +199,13 @@ const Login = () => {
                     }
                     label={<Typography variant="caption" color="text.secondary">Remember me</Typography>}
                   />
+                  <Button
+                    size="small"
+                    onClick={() => setForgotModalOpen(true)}
+                    sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.8rem' }}
+                  >
+                    Forgot Password?
+                  </Button>
                 </Box>
 
                 <Button
@@ -214,6 +224,7 @@ const Login = () => {
           </CardContent>
         </Card>
       </Container>
+      <ForgotPasswordModal open={forgotModalOpen} onClose={() => setForgotModalOpen(false)} />
     </Box>
   );
 };

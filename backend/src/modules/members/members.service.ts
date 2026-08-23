@@ -16,6 +16,11 @@ import { MemberResponseDto } from './dto/member-response.dto';
 import { MemberRole, MemberStatus, Prisma } from '@prisma/client';
 import { MembershipCommissionService } from '../membership-commission/membership-commission.service';
 
+import { Optional } from '@nestjs/common';
+import { EmailService } from '../email/email.service';
+import { OtpService } from '../otp/otp.service';
+import { OtpPurpose } from '../otp/enums/otp-purpose.enum';
+
 @Injectable()
 export class MembersService {
   private readonly BCRYPT_SALT_ROUNDS = 12;
@@ -24,6 +29,8 @@ export class MembersService {
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
     private readonly membershipCommissionService: MembershipCommissionService,
+    @Optional() private readonly emailService?: EmailService,
+    @Optional() private readonly otpService?: OtpService,
   ) {}
 
   /**
@@ -99,7 +106,16 @@ export class MembersService {
     actorId?: string,
     actorRole?: MemberRole,
   ): Promise<MemberResponseDto> {
-    const { password, bankDetails, referrerId, role, status, ...rest } = createMemberDto;
+    const { password, bankDetails, referrerId, role, status, otp, ...rest } = createMemberDto;
+
+    // Verify Email OTP if provided
+    if (this.otpService && otp && rest.email) {
+      await this.otpService.verifyOtp({
+        email: rest.email,
+        otp,
+        purpose: OtpPurpose.EMAIL_VERIFICATION,
+      });
+    }
 
     // Check uniqueness of memberCode, mobile, email
     const existing = await this.prisma.member.findFirst({
@@ -206,7 +222,18 @@ export class MembersService {
         );
       }
 
-      return this.mapToResponseDto(createdMember);
+      const result = this.mapToResponseDto(createdMember);
+
+      // Send welcome email asynchronously if email address is present
+      if (this.emailService && createdMember.email) {
+        this.emailService.sendWelcomeEmail(
+          createdMember.email,
+          createdMember.name,
+          createdMember.memberCode,
+        ).catch(() => {});
+      }
+
+      return result;
     });
   }
 

@@ -28,6 +28,8 @@ const reports_module_1 = require("./modules/reports/reports.module");
 const dashboard_module_1 = require("./modules/dashboard/dashboard.module");
 const audit_module_1 = require("./modules/audit/audit.module");
 const notifications_module_1 = require("./modules/notifications/notifications.module");
+const email_module_1 = require("./modules/email/email.module");
+const otp_module_1 = require("./modules/otp/otp.module");
 const envFile = process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env';
 let AppModule = class AppModule {
 };
@@ -62,6 +64,8 @@ exports.AppModule = AppModule = __decorate([
             dashboard_module_1.DashboardModule,
             audit_module_1.AuditModule,
             notifications_module_1.NotificationsModule,
+            email_module_1.EmailModule,
+            otp_module_1.OtpModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

@@ -41,6 +41,9 @@ var __importStar = (this && this.__importStar) || (function () {
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MembersService = void 0;
 const common_1 = require("@nestjs/common");
@@ -49,15 +52,23 @@ const prisma_service_1 = require("../../prisma/prisma.service");
 const audit_service_1 = require("../audit/audit.service");
 const client_1 = require("@prisma/client");
 const membership_commission_service_1 = require("../membership-commission/membership-commission.service");
+const common_2 = require("@nestjs/common");
+const email_service_1 = require("../email/email.service");
+const otp_service_1 = require("../otp/otp.service");
+const otp_purpose_enum_1 = require("../otp/enums/otp-purpose.enum");
 let MembersService = class MembersService {
     prisma;
     auditService;
     membershipCommissionService;
+    emailService;
+    otpService;
     BCRYPT_SALT_ROUNDS = 12;
-    constructor(prisma, auditService, membershipCommissionService) {
+    constructor(prisma, auditService, membershipCommissionService, emailService, otpService) {
         this.prisma = prisma;
         this.auditService = auditService;
         this.membershipCommissionService = membershipCommissionService;
+        this.emailService = emailService;
+        this.otpService = otpService;
     }
     async generateMemberCode() {
         const count = await this.prisma.member.count();
@@ -101,7 +112,14 @@ let MembersService = class MembersService {
         };
     }
     async createMemberInternal(createMemberDto, actorId, actorRole) {
-        const { password, bankDetails, referrerId, role, status, ...rest } = createMemberDto;
+        const { password, bankDetails, referrerId, role, status, otp, ...rest } = createMemberDto;
+        if (this.otpService && otp && rest.email) {
+            await this.otpService.verifyOtp({
+                email: rest.email,
+                otp,
+                purpose: otp_purpose_enum_1.OtpPurpose.EMAIL_VERIFICATION,
+            });
+        }
         const existing = await this.prisma.member.findFirst({
             where: {
                 OR: [
@@ -176,7 +194,11 @@ let MembersService = class MembersService {
                     },
                 }, tx);
             }
-            return this.mapToResponseDto(createdMember);
+            const result = this.mapToResponseDto(createdMember);
+            if (this.emailService && createdMember.email) {
+                this.emailService.sendWelcomeEmail(createdMember.email, createdMember.name, createdMember.memberCode).catch(() => { });
+            }
+            return result;
         });
     }
     async update(id, updateDto, actorId, actorRole) {
@@ -484,8 +506,12 @@ let MembersService = class MembersService {
 exports.MembersService = MembersService;
 exports.MembersService = MembersService = __decorate([
     (0, common_1.Injectable)(),
+    __param(3, (0, common_2.Optional)()),
+    __param(4, (0, common_2.Optional)()),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         audit_service_1.AuditService,
-        membership_commission_service_1.MembershipCommissionService])
+        membership_commission_service_1.MembershipCommissionService,
+        email_service_1.EmailService,
+        otp_service_1.OtpService])
 ], MembersService);
 //# sourceMappingURL=members.service.js.map

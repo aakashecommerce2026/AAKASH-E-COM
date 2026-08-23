@@ -9,11 +9,15 @@ import { RolesGuard } from './guards/roles.guard';
 import { OwnershipGuard } from './guards/ownership.guard';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { AuditModule } from '../audit/audit.module';
+import { OtpModule } from '../otp/otp.module';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
     PrismaModule,
     AuditModule,
+    OtpModule,
+    EmailModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],

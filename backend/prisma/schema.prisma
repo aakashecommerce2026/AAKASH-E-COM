@@ -346,4 +346,30 @@ model RepurchaseCommissionConfig {
   @@map("repurchase_commission_configs")
 }
 
+/// OTP Purpose Enum
+enum OtpPurpose {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+  PAYOUT_CONFIRMATION
+  SENSITIVE_ACTION
+}
+
+/// Email OTP Table: Tracks generated email OTPs, expiry, bcrypt hashes, and usage state
+model EmailOtp {
+  id         String     @id @default(uuid())
+  email      String
+  otpHash    String     @map("otp_hash")
+  purpose    OtpPurpose @default(EMAIL_VERIFICATION)
+  expiresAt  DateTime   @map("expires_at")
+  isUsed     Boolean    @default(false) @map("is_used")
+  attempts   Int        @default(0)
+  metadata   Json?
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+
+  @@index([email, purpose, isUsed])
+  @@index([expiresAt])
+  @@map("email_otps")
+}
+
 

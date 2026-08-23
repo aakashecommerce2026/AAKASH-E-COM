@@ -12,4 +12,5 @@ export declare class CreateMemberDto {
     status?: MemberStatus;
     password: string;
     role?: MemberRole;
+    otp?: string;
 }

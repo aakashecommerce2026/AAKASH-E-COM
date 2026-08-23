@@ -7,9 +7,10 @@ import { MemberProfileController } from './member-profile.controller';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { AuditModule } from '../audit/audit.module';
 import { MembershipCommissionModule } from '../membership-commission/membership-commission.module';
+import { EmailModule } from '../email/email.module';
 
 @Module({
-  imports: [PrismaModule, AuditModule, MembershipCommissionModule],
+  imports: [PrismaModule, AuditModule, MembershipCommissionModule, EmailModule],
   controllers: [MembersController, AdminMembersController, MemberProfileController],
   providers: [MembersService, MemberProfileService],
   exports: [MembersService, MemberProfileService],

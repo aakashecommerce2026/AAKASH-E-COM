@@ -14,6 +14,7 @@ const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class ChangePasswordDto {
     currentPassword;
+    oldPassword;
     newPassword;
 }
 exports.ChangePasswordDto = ChangePasswordDto;
@@ -21,11 +22,21 @@ __decorate([
     (0, swagger_1.ApiProperty)({
         example: 'CurrentP@ssw0rd!',
         description: 'Current password',
+        required: false,
     }),
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], ChangePasswordDto.prototype, "currentPassword", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Old password (alias for currentPassword)',
+        required: false,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], ChangePasswordDto.prototype, "oldPassword", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
         example: 'NewP@ssw0rd123!',

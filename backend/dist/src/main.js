@@ -30,9 +30,9 @@ async function bootstrap() {
         .build();
     const document = swagger_1.SwaggerModule.createDocument(app, swaggerConfig);
     swagger_1.SwaggerModule.setup('api/docs', app, document);
-    await app.listen(port);
-    console.log(`🚀 MLM Backend Server running on: http://localhost:${port}/${apiPrefix}`);
-    console.log(`📚 Swagger Documentation available at: http://localhost:${port}/api/docs`);
+    await app.listen(port, '0.0.0.0');
+    console.log(`🚀 MLM Backend Server running on: http://127.0.0.1:${port}/${apiPrefix}`);
+    console.log(`📚 Swagger Documentation available at: http://127.0.0.1:${port}/api/docs`);
 }
 void bootstrap().catch((err) => {
     console.error('Fatal error starting NestJS server:', err);
