@@ -13,6 +13,7 @@ export declare class OtpService {
     sendOtp(dto: SendOtpDto): Promise<{
         message: string;
         cooldownSeconds: number;
+        rawOtp?: string;
     }>;
     verifyOtp(dto: VerifyOtpDto): Promise<{
         verified: boolean;

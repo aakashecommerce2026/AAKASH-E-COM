@@ -13,6 +13,8 @@ import Login from './pages/Login.jsx';
 import AdminLogin from './pages/AdminLogin.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 
+import ResetPassword from './pages/ResetPassword.jsx';
+
 // Dispatch checkAuthSession to restore session token from local storage on boot
 store.dispatch(checkAuthSession());
 
@@ -25,6 +27,7 @@ createRoot(document.getElementById('root')).render(
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/admin" element={<AdminLogin />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route
               path="/*"
               element={

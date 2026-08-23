@@ -94,6 +94,7 @@ let OtpService = OtpService_1 = class OtpService {
         return {
             message: `OTP sent successfully to ${normalizedEmail}`,
             cooldownSeconds: this.COOLDOWN_SECONDS,
+            rawOtp,
         };
     }
     async verifyOtp(dto) {

@@ -24,34 +24,48 @@ let EmailService = EmailService_1 = class EmailService {
         const port = parseInt(this.configService.get('SMTP_PORT') || '587', 10);
         const user = this.configService.get('SMTP_USER');
         const pass = this.configService.get('SMTP_PASS');
+        const service = this.configService.get('SMTP_SERVICE');
         const secure = this.configService.get('SMTP_SECURE') === 'true';
         const fromName = this.configService.get('EMAIL_FROM_NAME') || 'AAKASH E-COM Notifications';
-        const fromEmail = this.configService.get('EMAIL_FROM_ADDRESS') || 'noreply@aakashecom.com';
+        const fromEmail = this.configService.get('EMAIL_FROM_ADDRESS') || user || 'noreply@aakashecom.com';
         this.fromAddress = `"${fromName}" <${fromEmail}>`;
-        if (host && user && pass) {
+        if ((host || service) && user && pass) {
             try {
                 const nodemailer = require('nodemailer');
-                this.transporter = nodemailer.createTransport({
-                    host,
-                    port,
-                    secure,
+                const transportConfig = {
                     auth: { user, pass },
-                });
-                this.logger.log(`Initialized SMTP transport via ${host}:${port}`);
+                };
+                if (service) {
+                    transportConfig.service = service;
+                }
+                else {
+                    transportConfig.host = host;
+                    transportConfig.port = port;
+                    transportConfig.secure = secure;
+                }
+                this.transporter = nodemailer.createTransport(transportConfig);
+                this.logger.log(`Initialized SMTP transport via ${service || host}`);
             }
             catch (err) {
-                this.logger.warn('Nodemailer package not installed. Running in DEV simulation mode.');
+                this.logger.warn(`Failed to initialize Nodemailer transport: ${err.message}. Running in DEV simulation mode.`);
             }
         }
         else {
-            this.logger.warn('SMTP credentials not fully configured (SMTP_HOST, SMTP_USER, SMTP_PASS). EmailService will run in DEV simulation mode.');
+            this.logger.warn('SMTP credentials not configured (Set SMTP_USER & SMTP_PASS in .env for live email sending). EmailService running in DEV mode.');
         }
     }
     async sendMail(options) {
         const { to, subject, html, text } = options;
         if (!this.transporter) {
-            this.logger.log(`[DEV EMAIL SIMULATION] To: ${to} | Subject: ${subject}`);
-            this.logger.debug(`[DEV EMAIL BODY]\n${text || html}`);
+            this.logger.log(`
+==================================================
+📧 [DEV EMAIL DISPATCH SIMULATION]
+To:      ${to}
+Subject: ${subject}
+--------------------------------------------------
+${text || html}
+==================================================
+`);
             return true;
         }
         try {
@@ -63,6 +77,11 @@ let EmailService = EmailService_1 = class EmailService {
                 text: text || html.replace(/<[^>]*>?/gm, ''),
             });
             this.logger.log(`Email dispatched successfully to ${to} (MessageId: ${info.messageId})`);
+            const nodemailer = require('nodemailer');
+            const previewUrl = nodemailer.getTestMessageUrl(info);
+            if (previewUrl) {
+                this.logger.log(`🔗 Ethereal Live Email Preview URL: ${previewUrl}`);
+            }
             return true;
         }
         catch (error) {

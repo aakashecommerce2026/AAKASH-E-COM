@@ -38,6 +38,8 @@ export const authApi = {
   memberLogin: (credentials) => apiClient.post('/auth/member-login', credentials),
   refreshToken: (refreshToken) => apiClient.post('/auth/refresh', { refreshToken }),
   changePassword: (data) => apiClient.put('/member/change-password', data),
+  forgotPassword: (data) => apiClient.post('/auth/forgot-password', data),
+  resetPassword: (data) => apiClient.post('/auth/reset-password', data),
 };
 
 // OTP API Endpoints

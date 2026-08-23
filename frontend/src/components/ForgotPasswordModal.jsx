@@ -52,7 +52,7 @@ const ForgotPasswordModal = ({ open, onClose }) => {
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth paperProps={{ sx: { borderRadius: 3, p: 1 } }}>
+    <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3, p: 1 } }}>
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <LockResetIcon color="primary" />

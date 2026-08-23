@@ -7,6 +7,7 @@ export declare class OtpController {
     sendOtp(dto: SendOtpDto): Promise<{
         message: string;
         cooldownSeconds: number;
+        rawOtp?: string;
     }>;
     verifyOtp(dto: VerifyOtpDto): Promise<{
         verified: boolean;

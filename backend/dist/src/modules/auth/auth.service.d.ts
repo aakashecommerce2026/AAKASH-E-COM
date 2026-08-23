@@ -17,6 +17,7 @@ export declare class AuthService {
     private readonly auditService?;
     private readonly otpService?;
     private readonly emailService?;
+    private readonly logger;
     private readonly BCRYPT_SALT_ROUNDS;
     constructor(prisma: PrismaService, jwtService: JwtService, configService: ConfigService, auditService?: AuditService | undefined, otpService?: OtpService | undefined, emailService?: EmailService | undefined);
     hashPassword(password: string): Promise<string>;

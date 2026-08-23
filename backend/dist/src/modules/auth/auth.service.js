@@ -44,6 +44,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var AuthService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
@@ -55,13 +56,14 @@ const audit_service_1 = require("../audit/audit.service");
 const otp_service_1 = require("../otp/otp.service");
 const email_service_1 = require("../email/email.service");
 const otp_purpose_enum_1 = require("../otp/enums/otp-purpose.enum");
-let AuthService = class AuthService {
+let AuthService = AuthService_1 = class AuthService {
     prisma;
     jwtService;
     configService;
     auditService;
     otpService;
     emailService;
+    logger = new common_1.Logger(AuthService_1.name);
     BCRYPT_SALT_ROUNDS = 12;
     constructor(prisma, jwtService, configService, auditService, otpService, emailService) {
         this.prisma = prisma;
@@ -272,13 +274,20 @@ let AuthService = class AuthService {
             throw new common_1.UnauthorizedException('Account is blocked or suspended');
         }
         if (this.otpService && this.emailService) {
-            await this.otpService.sendOtp({
+            const { rawOtp } = await this.otpService.sendOtp({
                 email: member.email,
                 purpose: otp_purpose_enum_1.OtpPurpose.PASSWORD_RESET,
             });
+            const otpCode = rawOtp || '';
             const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:5173';
-            const resetLink = `${frontendUrl}/reset-password?email=${encodeURIComponent(member.email)}`;
-            await this.emailService.sendPasswordResetLinkEmail(member.email, member.name, resetLink, 'Code sent to email');
+            const resetLink = `${frontendUrl}/reset-password?email=${encodeURIComponent(member.email)}&token=${encodeURIComponent(otpCode)}`;
+            this.logger.log(`
+==================================================
+🔑 PASSWORD RESET LINK FOR ${member.email}:
+${resetLink}
+==================================================
+`);
+            await this.emailService.sendPasswordResetLinkEmail(member.email, member.name, resetLink, otpCode);
         }
         return { message: 'If an account with that email exists, a password reset link has been sent.' };
     }
@@ -320,7 +329,7 @@ let AuthService = class AuthService {
     }
 };
 exports.AuthService = AuthService;
-exports.AuthService = AuthService = __decorate([
+exports.AuthService = AuthService = AuthService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(3, (0, common_1.Optional)()),
     __param(4, (0, common_1.Optional)()),

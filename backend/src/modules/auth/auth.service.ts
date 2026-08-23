@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   BadRequestException,
   Optional,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -23,6 +24,7 @@ import { OtpPurpose } from '../otp/enums/otp-purpose.enum';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private readonly BCRYPT_SALT_ROUNDS = 12;
 
   constructor(
@@ -332,19 +334,27 @@ export class AuthService {
     }
 
     if (this.otpService && this.emailService) {
-      await this.otpService.sendOtp({
+      const { rawOtp } = await this.otpService.sendOtp({
         email: member.email,
         purpose: OtpPurpose.PASSWORD_RESET,
       });
 
+      const otpCode = rawOtp || '';
       const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
-      const resetLink = `${frontendUrl}/reset-password?email=${encodeURIComponent(member.email)}`;
+      const resetLink = `${frontendUrl}/reset-password?email=${encodeURIComponent(member.email)}&token=${encodeURIComponent(otpCode)}`;
+
+      this.logger.log(`
+==================================================
+🔑 PASSWORD RESET LINK FOR ${member.email}:
+${resetLink}
+==================================================
+`);
 
       await this.emailService.sendPasswordResetLinkEmail(
         member.email,
         member.name,
         resetLink,
-        'Code sent to email',
+        otpCode,
       );
     }
 

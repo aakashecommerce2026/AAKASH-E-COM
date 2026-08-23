@@ -25,7 +25,7 @@ export class OtpService {
   /**
    * Generates a 6-digit OTP, stores bcrypt hash in DB, and dispatches email
    */
-  async sendOtp(dto: SendOtpDto): Promise<{ message: string; cooldownSeconds: number }> {
+  async sendOtp(dto: SendOtpDto): Promise<{ message: string; cooldownSeconds: number; rawOtp?: string }> {
     const { email, purpose } = dto;
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -75,6 +75,7 @@ export class OtpService {
     return {
       message: `OTP sent successfully to ${normalizedEmail}`,
       cooldownSeconds: this.COOLDOWN_SECONDS,
+      rawOtp,
     };
   }
 
