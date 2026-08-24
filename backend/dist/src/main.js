@@ -32,6 +32,9 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const core_1 = require("@nestjs/core");
 const common_1 = require("@nestjs/common");
@@ -41,27 +44,45 @@ const app_module_1 = require("./app.module");
 const express = __importStar(require("express"));
 const fs = __importStar(require("fs"));
 const path_1 = require("path");
+const helmet_1 = __importDefault(require("helmet"));
 const http_exception_filter_1 = require("./common/filters/http-exception.filter");
 async function bootstrap() {
+    const logger = new common_1.Logger('Bootstrap');
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const configService = app.get(config_1.ConfigService);
+    const nodeEnv = configService.get('nodeEnv') || 'development';
     const port = configService.get('port') || 3000;
     const apiPrefix = configService.get('apiPrefix') || 'api/v1';
+    const jwtSecret = configService.get('jwtSecret');
+    if (nodeEnv === 'production') {
+        if (!jwtSecret ||
+            jwtSecret.includes('change-me') ||
+            jwtSecret === 'dev-jwt-secret-key-12345') {
+            logger.error('CRITICAL SECURITY ERROR: Insecure or default JWT_SECRET detected in production environment!');
+            throw new Error('Insecure JWT_SECRET configured for production. Refusing to start server.');
+        }
+    }
+    app.use((0, helmet_1.default)());
     const uploadsDir = (0, path_1.join)(process.cwd(), 'uploads', 'profile-photos');
     if (!fs.existsSync(uploadsDir)) {
         fs.mkdirSync(uploadsDir, { recursive: true });
     }
     app.use('/uploads', express.static((0, path_1.join)(process.cwd(), 'uploads')));
     app.setGlobalPrefix(apiPrefix);
+    const corsOrigins = configService.get('corsOrigins');
     app.enableCors({
-        origin: configService.get('corsOrigins') || true,
+        origin: nodeEnv === 'production'
+            ? corsOrigins && corsOrigins.length > 0
+                ? corsOrigins
+                : false
+            : corsOrigins || true,
         credentials: true,
     });
     app.useGlobalFilters(new http_exception_filter_1.HttpExceptionFilter());
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
         transform: true,
-        forbidNonWhitelisted: false,
+        forbidNonWhitelisted: true,
     }));
     const swaggerConfig = new swagger_1.DocumentBuilder()
         .setTitle('AAKASH MLM Backend API')
@@ -72,8 +93,8 @@ async function bootstrap() {
     const document = swagger_1.SwaggerModule.createDocument(app, swaggerConfig);
     swagger_1.SwaggerModule.setup('api/docs', app, document);
     await app.listen(port, '0.0.0.0');
-    console.log(`🚀 MLM Backend Server running on: http://127.0.0.1:${port}/${apiPrefix}`);
-    console.log(`📚 Swagger Documentation available at: http://127.0.0.1:${port}/api/docs`);
+    logger.log(`🚀 MLM Backend Server running in [${nodeEnv.toUpperCase()}] mode on: http://127.0.0.1:${port}/${apiPrefix}`);
+    logger.log(`📚 Swagger Documentation available at: http://127.0.0.1:${port}/api/docs`);
 }
 void bootstrap().catch((err) => {
     console.error('Fatal error starting NestJS server:', err);

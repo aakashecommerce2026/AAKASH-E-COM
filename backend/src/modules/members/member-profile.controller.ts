@@ -53,21 +53,33 @@ export class MemberProfileController {
   @Get('profile')
   @ApiOperation({
     summary: 'GET /member/profile — View own member profile',
-    description: 'Returns profile details strictly for the authenticated member derived from the JWT token.',
+    description:
+      'Returns profile details strictly for the authenticated member derived from the JWT token.',
   })
-  @ApiResponse({ status: 200, type: MemberResponseDto, description: 'Profile details returned successfully' })
+  @ApiResponse({
+    status: 200,
+    type: MemberResponseDto,
+    description: 'Profile details returned successfully',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getProfile(@CurrentUser('id') memberId: string): Promise<MemberResponseDto> {
+  async getProfile(
+    @CurrentUser('id') memberId: string,
+  ): Promise<MemberResponseDto> {
     return this.memberProfileService.getProfile(memberId);
   }
 
   @Post('profile/photo')
   @ApiOperation({
     summary: 'POST /member/profile/photo — Upload member profile photo',
-    description: 'Accepts image files (jpg, jpeg, png, webp up to 5MB), saves to local disk, and updates profilePhoto column.',
+    description:
+      'Accepts image files (jpg, jpeg, png, webp up to 5MB), saves to local disk, and updates profilePhoto column.',
   })
   @ApiConsumes('multipart/form-data')
-  @ApiResponse({ status: 200, type: MemberResponseDto, description: 'Profile photo uploaded successfully' })
+  @ApiResponse({
+    status: 200,
+    type: MemberResponseDto,
+    description: 'Profile photo uploaded successfully',
+  })
   @ApiResponse({ status: 400, description: 'File validation error' })
   @UseInterceptors(
     FileInterceptor('file', {
@@ -75,7 +87,12 @@ export class MemberProfileController {
       limits: { fileSize: 5 * 1024 * 1024 },
       fileFilter: (req, file, cb) => {
         if (!file.mimetype || !file.mimetype.startsWith('image/')) {
-          return cb(new BadRequestException('Only image files (jpg, jpeg, png, webp, gif) are allowed!'), false);
+          return cb(
+            new BadRequestException(
+              'Only image files (jpg, jpeg, png, webp, gif) are allowed!',
+            ),
+            false,
+          );
         }
         cb(null, true);
       },
@@ -86,7 +103,9 @@ export class MemberProfileController {
     @UploadedFile() file: any,
   ): Promise<MemberResponseDto> {
     if (!file) {
-      throw new BadRequestException('Please select an image file (jpg, png, webp) to upload');
+      throw new BadRequestException(
+        'Please select an image file (jpg, png, webp) to upload',
+      );
     }
     const photoUrl = `/uploads/profile-photos/${file.filename}`;
     return this.memberProfileService.updateProfilePhoto(memberId, photoUrl);
@@ -98,16 +117,28 @@ export class MemberProfileController {
     description:
       'Updates name, email, mobile, address, and bankDetails with validation and unique field conflict checks. Audited to activity_logs.',
   })
-  @ApiResponse({ status: 200, type: MemberResponseDto, description: 'Profile updated successfully' })
+  @ApiResponse({
+    status: 200,
+    type: MemberResponseDto,
+    description: 'Profile updated successfully',
+  })
   @ApiResponse({ status: 400, description: 'Validation error' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 409, description: 'Mobile number or Email address is already taken' })
+  @ApiResponse({
+    status: 409,
+    description: 'Mobile number or Email address is already taken',
+  })
   async updateProfile(
     @CurrentUser('id') memberId: string,
     @CurrentUser('role') role: MemberRole,
     @Body() updateDto: UpdateMemberProfileDto,
   ): Promise<MemberResponseDto> {
-    return this.memberProfileService.updateProfile(memberId, updateDto, memberId, role);
+    return this.memberProfileService.updateProfile(
+      memberId,
+      updateDto,
+      memberId,
+      role,
+    );
   }
 
   @Put('profile/upi')
@@ -116,7 +147,11 @@ export class MemberProfileController {
     description:
       'Audited dedicated endpoint to update member UPI VPA handle and registered account name inside bankDetails.',
   })
-  @ApiResponse({ status: 200, type: MemberResponseDto, description: 'UPI details updated successfully' })
+  @ApiResponse({
+    status: 200,
+    type: MemberResponseDto,
+    description: 'UPI details updated successfully',
+  })
   @ApiResponse({ status: 400, description: 'Validation error' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateUpi(
@@ -124,13 +159,19 @@ export class MemberProfileController {
     @CurrentUser('role') role: MemberRole,
     @Body() updateUpiDto: UpdateUpiDto,
   ): Promise<MemberResponseDto> {
-    return this.memberProfileService.updateUpi(memberId, updateUpiDto, memberId, role);
+    return this.memberProfileService.updateUpi(
+      memberId,
+      updateUpiDto,
+      memberId,
+      role,
+    );
   }
 
   @Put('change-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'PUT /member/change-password — Change password for authenticated member',
+    summary:
+      'PUT /member/change-password — Change password for authenticated member',
     description:
       'Verifies current password, hashes new password with 12 salt rounds, and logs security change event to activity_logs.',
   })

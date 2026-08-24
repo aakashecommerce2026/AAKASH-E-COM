@@ -1,5 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { PromotionsService, calculateRankFromReferralCount, RANK_THRESHOLDS, MemberRank } from './promotions.service';
+import {
+  PromotionsService,
+  calculateRankFromReferralCount,
+  RANK_THRESHOLDS,
+  MemberRank,
+} from './promotions.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { MemberStatus } from '@prisma/client';
@@ -78,15 +83,18 @@ describe('PromotionsService Unit Tests', () => {
     it('should throw NotFoundException if member does not exist', async () => {
       prisma.member.findUnique.mockResolvedValue(null);
 
-      await expect(service.evaluateAndPromoteMember('non-existent-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.evaluateAndPromoteMember('non-existent-id'),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should promote member from NONE -> BRONZE when active direct referrals hit 20', async () => {
       prisma.member.findUnique.mockResolvedValue(mockMember);
       prisma.member.count.mockResolvedValue(20);
-      prisma.member.update.mockResolvedValue({ ...mockMember, rank: MemberRank.BRONZE });
+      prisma.member.update.mockResolvedValue({
+        ...mockMember,
+        rank: MemberRank.BRONZE,
+      });
       prisma.promotionHistory.create.mockResolvedValue({
         id: 'promo-1',
         memberId: mockMember.id,
@@ -118,7 +126,10 @@ describe('PromotionsService Unit Tests', () => {
       const bronzeMember = { ...mockMember, rank: MemberRank.BRONZE };
       prisma.member.findUnique.mockResolvedValue(bronzeMember);
       prisma.member.count.mockResolvedValue(50);
-      prisma.member.update.mockResolvedValue({ ...bronzeMember, rank: MemberRank.SILVER });
+      prisma.member.update.mockResolvedValue({
+        ...bronzeMember,
+        rank: MemberRank.SILVER,
+      });
 
       const res = await service.evaluateAndPromoteMember(bronzeMember.id);
 

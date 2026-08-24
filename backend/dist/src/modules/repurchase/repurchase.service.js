@@ -31,7 +31,7 @@ let RepurchaseService = class RepurchaseService {
         return count > 0;
     }
     async create(dto, actorId, actorRole) {
-        const { transactionRef, memberId, amount, transactionDate, remarks, createdBy } = dto;
+        const { transactionRef, memberId, amount, transactionDate, remarks, createdBy, } = dto;
         return this.prisma.$transaction(async (tx) => {
             const existingRef = await tx.repurchaseEntry.findFirst({
                 where: { transactionRef, deletedAt: null },
@@ -41,10 +41,7 @@ let RepurchaseService = class RepurchaseService {
             }
             const member = await tx.member.findFirst({
                 where: {
-                    OR: [
-                        { id: memberId },
-                        { memberCode: memberId },
-                    ],
+                    OR: [{ id: memberId }, { memberCode: memberId }],
                 },
             });
             if (!member) {
@@ -61,19 +58,28 @@ let RepurchaseService = class RepurchaseService {
                         transactionRef,
                         memberId: member.id,
                         amount: new client_1.Prisma.Decimal(amount),
-                        transactionDate: transactionDate ? new Date(transactionDate) : new Date(),
+                        transactionDate: transactionDate
+                            ? new Date(transactionDate)
+                            : new Date(),
                         remarks: remarks || null,
                         createdBy: creatorId,
                     },
                     include: {
                         member: {
-                            select: { id: true, memberCode: true, name: true, mobile: true, status: true },
+                            select: {
+                                id: true,
+                                memberCode: true,
+                                name: true,
+                                mobile: true,
+                                status: true,
+                            },
                         },
                     },
                 });
             }
             catch (error) {
-                if (error instanceof client_1.Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+                if (error instanceof client_1.Prisma.PrismaClientKnownRequestError &&
+                    error.code === 'P2002') {
                     throw new common_1.ConflictException(`Transaction reference '${transactionRef}' already exists`);
                 }
                 throw error;
@@ -95,16 +101,13 @@ let RepurchaseService = class RepurchaseService {
         });
     }
     async findAll(query) {
-        const { page = 1, limit = 10, memberId, search, startDate, endDate, sortBy = 'transactionDate', sortOrder = 'desc' } = query;
+        const { page = 1, limit = 10, memberId, search, startDate, endDate, sortBy = 'transactionDate', sortOrder = 'desc', } = query;
         const skip = (page - 1) * limit;
         const where = {
             deletedAt: null,
         };
         if (memberId) {
-            where.OR = [
-                { memberId },
-                { member: { memberCode: memberId } },
-            ];
+            where.OR = [{ memberId }, { member: { memberCode: memberId } }];
         }
         if (startDate || endDate) {
             where.transactionDate = {};
@@ -127,18 +130,22 @@ let RepurchaseService = class RepurchaseService {
                 ],
             };
             if (where.OR) {
-                where.AND = [
-                    { OR: where.OR },
-                    searchWhere,
-                ];
+                where.AND = [{ OR: where.OR }, searchWhere];
                 delete where.OR;
             }
             else {
                 where.OR = searchWhere.OR;
             }
         }
-        const validSortFields = ['transactionDate', 'createdAt', 'amount', 'transactionRef'];
-        const orderByField = validSortFields.includes(sortBy) ? sortBy : 'transactionDate';
+        const validSortFields = [
+            'transactionDate',
+            'createdAt',
+            'amount',
+            'transactionRef',
+        ];
+        const orderByField = validSortFields.includes(sortBy)
+            ? sortBy
+            : 'transactionDate';
         const [total, entries] = await Promise.all([
             this.prisma.repurchaseEntry.count({ where }),
             this.prisma.repurchaseEntry.findMany({
@@ -148,7 +155,13 @@ let RepurchaseService = class RepurchaseService {
                 orderBy: { [orderByField]: sortOrder },
                 include: {
                     member: {
-                        select: { id: true, memberCode: true, name: true, mobile: true, status: true },
+                        select: {
+                            id: true,
+                            memberCode: true,
+                            name: true,
+                            mobile: true,
+                            status: true,
+                        },
                     },
                 },
             }),
@@ -169,7 +182,13 @@ let RepurchaseService = class RepurchaseService {
             where: { id, deletedAt: null },
             include: {
                 member: {
-                    select: { id: true, memberCode: true, name: true, mobile: true, status: true },
+                    select: {
+                        id: true,
+                        memberCode: true,
+                        name: true,
+                        mobile: true,
+                        status: true,
+                    },
                 },
             },
         });
@@ -219,18 +238,27 @@ let RepurchaseService = class RepurchaseService {
                     ...(transactionRef ? { transactionRef } : {}),
                     memberId: updatedMemberId,
                     ...(amount ? { amount: new client_1.Prisma.Decimal(amount) } : {}),
-                    ...(transactionDate ? { transactionDate: new Date(transactionDate) } : {}),
+                    ...(transactionDate
+                        ? { transactionDate: new Date(transactionDate) }
+                        : {}),
                     ...(remarks !== undefined ? { remarks } : {}),
                 },
                 include: {
                     member: {
-                        select: { id: true, memberCode: true, name: true, mobile: true, status: true },
+                        select: {
+                            id: true,
+                            memberCode: true,
+                            name: true,
+                            mobile: true,
+                            status: true,
+                        },
                     },
                 },
             });
         }
         catch (error) {
-            if (error instanceof client_1.Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+            if (error instanceof client_1.Prisma.PrismaClientKnownRequestError &&
+                error.code === 'P2002') {
                 throw new common_1.ConflictException(`Transaction reference '${transactionRef}' is already taken`);
             }
             throw error;
@@ -276,7 +304,9 @@ let RepurchaseService = class RepurchaseService {
                 softDeleted: true,
             },
         });
-        return { message: `Repurchase entry '${existing.transactionRef}' soft-deleted successfully` };
+        return {
+            message: `Repurchase entry '${existing.transactionRef}' soft-deleted successfully`,
+        };
     }
     mapToResponseDto(entry) {
         return {

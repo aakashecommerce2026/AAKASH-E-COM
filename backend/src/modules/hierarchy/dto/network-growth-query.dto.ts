@@ -1,5 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  Max,
+  Min,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export enum NetworkGrowthGroupBy {
@@ -11,7 +18,8 @@ export class NetworkGrowthQueryDto {
   @ApiPropertyOptional({
     enum: NetworkGrowthGroupBy,
     default: NetworkGrowthGroupBy.MONTH,
-    description: 'Time bucket period for grouping growth statistics (week or month)',
+    description:
+      'Time bucket period for grouping growth statistics (week or month)',
   })
   @IsOptional()
   @IsEnum(NetworkGrowthGroupBy)

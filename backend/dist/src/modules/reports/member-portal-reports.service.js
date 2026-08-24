@@ -35,11 +35,13 @@ let MemberPortalReportsService = class MemberPortalReportsService {
         return dateFilter;
     }
     async getMembershipEarningsBreakdown(memberId, query) {
-        const member = await this.prisma.member.findUnique({ where: { id: memberId } });
+        const member = await this.prisma.member.findUnique({
+            where: { id: memberId },
+        });
         if (!member) {
             throw new common_1.NotFoundException(`Member with ID '${memberId}' not found`);
         }
-        const { range = query_member_earnings_breakdown_dto_1.EarningsTimeRange.DAILY, startDate, endDate, status, page = 1, limit = 10 } = query;
+        const { range = query_member_earnings_breakdown_dto_1.EarningsTimeRange.DAILY, startDate, endDate, status, page = 1, limit = 10, } = query;
         const skip = (page - 1) * limit;
         const where = {
             beneficiaryMemberId: memberId,
@@ -97,7 +99,11 @@ let MemberPortalReportsService = class MemberPortalReportsService {
             levelBreakdown[`level_${g.level}`] = Number(g._sum.amount ?? 0);
         });
         let timeSeries = [];
-        const truncUnit = range === query_member_earnings_breakdown_dto_1.EarningsTimeRange.MONTHLY ? 'month' : range === query_member_earnings_breakdown_dto_1.EarningsTimeRange.WEEKLY ? 'week' : 'day';
+        const truncUnit = range === query_member_earnings_breakdown_dto_1.EarningsTimeRange.MONTHLY
+            ? 'month'
+            : range === query_member_earnings_breakdown_dto_1.EarningsTimeRange.WEEKLY
+                ? 'week'
+                : 'day';
         try {
             if (typeof this.prisma.$queryRaw === 'function') {
                 const rawTrend = await this.prisma.$queryRaw `
@@ -112,7 +118,9 @@ let MemberPortalReportsService = class MemberPortalReportsService {
             LIMIT 30;
           `;
                 timeSeries = rawTrend.map((r) => ({
-                    date: r.date instanceof Date ? r.date.toISOString().split('T')[0] : String(r.date).split('T')[0],
+                    date: r.date instanceof Date
+                        ? r.date.toISOString().split('T')[0]
+                        : String(r.date).split('T')[0],
                     amount: Number(r.amount),
                     count: Number(r.count),
                 }));
@@ -150,11 +158,13 @@ let MemberPortalReportsService = class MemberPortalReportsService {
         };
     }
     async getRepurchaseEarningsBreakdown(memberId, query) {
-        const member = await this.prisma.member.findUnique({ where: { id: memberId } });
+        const member = await this.prisma.member.findUnique({
+            where: { id: memberId },
+        });
         if (!member) {
             throw new common_1.NotFoundException(`Member with ID '${memberId}' not found`);
         }
-        const { range = query_member_earnings_breakdown_dto_1.EarningsTimeRange.DAILY, startDate, endDate, status, page = 1, limit = 10 } = query;
+        const { range = query_member_earnings_breakdown_dto_1.EarningsTimeRange.DAILY, startDate, endDate, status, page = 1, limit = 10, } = query;
         const skip = (page - 1) * limit;
         const where = {
             beneficiaryMemberId: memberId,
@@ -178,7 +188,12 @@ let MemberPortalReportsService = class MemberPortalReportsService {
                         select: { id: true, memberCode: true, name: true, mobile: true },
                     },
                     repurchaseEntry: {
-                        select: { id: true, transactionRef: true, amount: true, transactionDate: true },
+                        select: {
+                            id: true,
+                            transactionRef: true,
+                            amount: true,
+                            transactionDate: true,
+                        },
                     },
                 },
             }),
@@ -215,7 +230,11 @@ let MemberPortalReportsService = class MemberPortalReportsService {
             levelBreakdown[`level_${g.level}`] = Number(g._sum.amount ?? 0);
         });
         let timeSeries = [];
-        const truncUnit = range === query_member_earnings_breakdown_dto_1.EarningsTimeRange.MONTHLY ? 'month' : range === query_member_earnings_breakdown_dto_1.EarningsTimeRange.WEEKLY ? 'week' : 'day';
+        const truncUnit = range === query_member_earnings_breakdown_dto_1.EarningsTimeRange.MONTHLY
+            ? 'month'
+            : range === query_member_earnings_breakdown_dto_1.EarningsTimeRange.WEEKLY
+                ? 'week'
+                : 'day';
         try {
             if (typeof this.prisma.$queryRaw === 'function') {
                 const rawTrend = await this.prisma.$queryRaw `
@@ -230,7 +249,9 @@ let MemberPortalReportsService = class MemberPortalReportsService {
             LIMIT 30;
           `;
                 timeSeries = rawTrend.map((r) => ({
-                    date: r.date instanceof Date ? r.date.toISOString().split('T')[0] : String(r.date).split('T')[0],
+                    date: r.date instanceof Date
+                        ? r.date.toISOString().split('T')[0]
+                        : String(r.date).split('T')[0],
                     amount: Number(r.amount),
                     count: Number(r.count),
                 }));
@@ -275,7 +296,9 @@ let MemberPortalReportsService = class MemberPortalReportsService {
         };
     }
     async getTotalEarningsSummary(memberId) {
-        const member = await this.prisma.member.findUnique({ where: { id: memberId } });
+        const member = await this.prisma.member.findUnique({
+            where: { id: memberId },
+        });
         if (!member) {
             throw new common_1.NotFoundException(`Member with ID '${memberId}' not found`);
         }
@@ -294,7 +317,12 @@ let MemberPortalReportsService = class MemberPortalReportsService {
             }),
             this.prisma.distributionRecord.aggregate({
                 where: { memberId, status: client_1.DistributionRecordStatus.PAID },
-                _sum: { netAmount: true, grossAmount: true, tdsAmount: true, adminFee: true },
+                _sum: {
+                    netAmount: true,
+                    grossAmount: true,
+                    tdsAmount: true,
+                    adminFee: true,
+                },
                 _count: { id: true },
             }),
             this.prisma.distributionRecord.aggregate({
@@ -357,11 +385,13 @@ let MemberPortalReportsService = class MemberPortalReportsService {
         };
     }
     async getActivityHistory(memberId, query) {
-        const member = await this.prisma.member.findUnique({ where: { id: memberId } });
+        const member = await this.prisma.member.findUnique({
+            where: { id: memberId },
+        });
         if (!member) {
             throw new common_1.NotFoundException(`Member with ID '${memberId}' not found`);
         }
-        const { category = query_member_activity_dto_1.MemberActivityCategory.ALL, page = 1, limit = 10, startDate, endDate } = query;
+        const { category = query_member_activity_dto_1.MemberActivityCategory.ALL, page = 1, limit = 10, startDate, endDate, } = query;
         const items = [];
         const dateFilter = this.buildDateWhere(startDate, endDate);
         const fetchAll = category === query_member_activity_dto_1.MemberActivityCategory.ALL;
@@ -380,7 +410,9 @@ let MemberPortalReportsService = class MemberPortalReportsService {
                     take: 50,
                     orderBy: { createdAt: 'desc' },
                     include: {
-                        sourceMember: { select: { id: true, memberCode: true, name: true } },
+                        sourceMember: {
+                            select: { id: true, memberCode: true, name: true },
+                        },
                     },
                 });
                 membershipLedgers.forEach((m) => {
@@ -407,7 +439,9 @@ let MemberPortalReportsService = class MemberPortalReportsService {
                     take: 50,
                     orderBy: { createdAt: 'desc' },
                     include: {
-                        sourceMember: { select: { id: true, memberCode: true, name: true } },
+                        sourceMember: {
+                            select: { id: true, memberCode: true, name: true },
+                        },
                     },
                 });
                 repurchaseLedgers.forEach((r) => {

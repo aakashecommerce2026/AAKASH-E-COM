@@ -1,20 +1,36 @@
-import { IsOptional, IsString, IsInt, IsEnum, IsDateString, Min, Max } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsInt,
+  IsEnum,
+  IsDateString,
+  Min,
+  Max,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { CommissionStatus } from '@prisma/client';
 
 export class QueryMemberEarningsDto {
-  @ApiPropertyOptional({ description: 'Filter by start date (ISO string e.g. 2026-01-01)' })
+  @ApiPropertyOptional({
+    description: 'Filter by start date (ISO string e.g. 2026-01-01)',
+  })
   @IsOptional()
   @IsDateString()
   startDate?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by end date (ISO string e.g. 2026-12-31)' })
+  @ApiPropertyOptional({
+    description: 'Filter by end date (ISO string e.g. 2026-12-31)',
+  })
   @IsOptional()
   @IsDateString()
   endDate?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by level (1 to 20)', minimum: 1, maximum: 20 })
+  @ApiPropertyOptional({
+    description: 'Filter by level (1 to 20)',
+    minimum: 1,
+    maximum: 20,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -22,7 +38,10 @@ export class QueryMemberEarningsDto {
   @Max(20)
   level?: number;
 
-  @ApiPropertyOptional({ enum: CommissionStatus, description: 'Filter by commission status' })
+  @ApiPropertyOptional({
+    enum: CommissionStatus,
+    description: 'Filter by commission status',
+  })
   @IsOptional()
   @IsEnum(CommissionStatus)
   status?: CommissionStatus;

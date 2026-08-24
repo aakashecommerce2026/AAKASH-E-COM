@@ -61,7 +61,10 @@ __decorate([
         summary: 'Get level-tagged recursive downline tree for a member',
         description: 'Traverses the referral network downwards from target memberId up to parameterized depth (default 10, max 20 levels). Uses high-performance PostgreSQL Recursive CTE.',
     }),
-    (0, swagger_1.ApiParam)({ name: 'memberId', description: 'UUID of the root member to traverse downline from' }),
+    (0, swagger_1.ApiParam)({
+        name: 'memberId',
+        description: 'UUID of the root member to traverse downline from',
+    }),
     (0, swagger_1.ApiResponse)({
         status: 200,
         description: 'Level-tagged recursive downline tree nodes array',
@@ -128,7 +131,10 @@ __decorate([
         summary: 'Get recursive upline chain from target member up to root sponsor',
         description: 'Walks upwards from target memberId through direct sponsors to the root sponsor. Used for internal debugging and lineage checks.',
     }),
-    (0, swagger_1.ApiParam)({ name: 'memberId', description: 'UUID of the target member to walk upline from' }),
+    (0, swagger_1.ApiParam)({
+        name: 'memberId',
+        description: 'UUID of the target member to walk upline from',
+    }),
     (0, swagger_1.ApiResponse)({
         status: 200,
         description: 'Level-tagged upline referral chain array',
@@ -162,7 +168,10 @@ __decorate([
         summary: "Search exclusively within a specific member's downline hierarchy",
         description: 'Filters downline nodes under target memberId by matching query parameter q against name, memberCode, mobile, or email.',
     }),
-    (0, swagger_1.ApiParam)({ name: 'memberId', description: 'UUID of the root member whose downline is searched' }),
+    (0, swagger_1.ApiParam)({
+        name: 'memberId',
+        description: 'UUID of the root member whose downline is searched',
+    }),
     (0, swagger_1.ApiResponse)({
         status: 200,
         description: 'Matching downline hierarchy nodes array',

@@ -1,5 +1,11 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { DashboardService } from './dashboard.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -23,13 +29,19 @@ export class MemberDashboardController {
     type: Boolean,
     description: 'Bypass cache and force real-time calculation',
   })
-  @ApiResponse({ status: 200, description: 'Member personal dashboard returned successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Member personal dashboard returned successfully',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getMemberDashboard(
     @CurrentUser('id') memberId: string,
     @Query('refresh') refresh?: boolean,
   ) {
     const isRefresh = String(refresh) === 'true' || refresh === true;
-    return this.dashboardService.getMemberPersonalDashboard(memberId, isRefresh);
+    return this.dashboardService.getMemberPersonalDashboard(
+      memberId,
+      isRefresh,
+    );
   }
 }

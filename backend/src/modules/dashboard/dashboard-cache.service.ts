@@ -40,22 +40,30 @@ export class DashboardCacheService implements OnModuleDestroy {
 
       this.redisClient.on('connect', () => {
         this.isRedisConnected = true;
-        this.logger.log(`DashboardCacheService connected to Redis at ${host}:${port}`);
+        this.logger.log(
+          `DashboardCacheService connected to Redis at ${host}:${port}`,
+        );
       });
 
       this.redisClient.on('error', (err) => {
         this.isRedisConnected = false;
-        this.logger.debug(`Redis cache unavailable (${err.message}). Using in-memory cache.`);
+        this.logger.debug(
+          `Redis cache unavailable (${err.message}). Using in-memory cache.`,
+        );
       });
 
       // Non-blocking connection attempt
       this.redisClient.connect().catch((err) => {
         this.isRedisConnected = false;
-        this.logger.debug(`Redis initial connect failed (${err.message}). Using in-memory cache fallback.`);
+        this.logger.debug(
+          `Redis initial connect failed (${err.message}). Using in-memory cache fallback.`,
+        );
       });
     } catch (err: any) {
       this.isRedisConnected = false;
-      this.logger.debug(`Redis client creation failed (${err?.message}). Using in-memory cache.`);
+      this.logger.debug(
+        `Redis client creation failed (${err?.message}). Using in-memory cache.`,
+      );
     }
   }
 
@@ -89,7 +97,12 @@ export class DashboardCacheService implements OnModuleDestroy {
 
     if (this.isRedisConnected && this.redisClient) {
       try {
-        await this.redisClient.set(key, JSON.stringify(value), 'EX', ttlSeconds);
+        await this.redisClient.set(
+          key,
+          JSON.stringify(value),
+          'EX',
+          ttlSeconds,
+        );
       } catch (err) {
         this.isRedisConnected = false;
       }
@@ -136,7 +149,9 @@ export class DashboardCacheService implements OnModuleDestroy {
    * Invalidate member, business, and activity dashboard caches on new member creation/update
    */
   async invalidateMemberCache(): Promise<void> {
-    this.logger.log('Invalidating member, business, and activity dashboard caches');
+    this.logger.log(
+      'Invalidating member, business, and activity dashboard caches',
+    );
     await this.clearByPatterns([
       'admin:dashboard:members:*',
       'admin:dashboard:business:*',
@@ -148,7 +163,9 @@ export class DashboardCacheService implements OnModuleDestroy {
    * Invalidate earnings, business, and activity dashboard caches on new repurchase entry
    */
   async invalidateRepurchaseCache(): Promise<void> {
-    this.logger.log('Invalidating earnings, business, and activity dashboard caches');
+    this.logger.log(
+      'Invalidating earnings, business, and activity dashboard caches',
+    );
     await this.clearByPatterns([
       'admin:dashboard:earnings:*',
       'admin:dashboard:business:*',
@@ -160,7 +177,9 @@ export class DashboardCacheService implements OnModuleDestroy {
    * Invalidate earnings, business, and activity dashboard caches on payout distribution batch
    */
   async invalidateDistributionCache(): Promise<void> {
-    this.logger.log('Invalidating earnings, business, and activity dashboard caches');
+    this.logger.log(
+      'Invalidating earnings, business, and activity dashboard caches',
+    );
     await this.clearByPatterns([
       'admin:dashboard:earnings:*',
       'admin:dashboard:business:*',

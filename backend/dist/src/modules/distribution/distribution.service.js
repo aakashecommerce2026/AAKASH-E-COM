@@ -75,7 +75,7 @@ let DistributionService = DistributionService_1 = class DistributionService {
         };
     }
     async getPendingCommissions(query) {
-        const { startDate, endDate, memberId, commissionType = 'ALL', page = 1, limit = 10 } = query;
+        const { startDate, endDate, memberId, commissionType = 'ALL', page = 1, limit = 10, } = query;
         const dateFilter = this.buildDateWhere(startDate, endDate);
         const memWhere = {
             status: client_1.CommissionStatus.PENDING,
@@ -97,7 +97,15 @@ let DistributionService = DistributionService_1 = class DistributionService {
                     where: memWhere,
                     include: {
                         beneficiaryMember: {
-                            select: { id: true, memberCode: true, name: true, mobile: true, email: true, bankDetails: true, status: true },
+                            select: {
+                                id: true,
+                                memberCode: true,
+                                name: true,
+                                mobile: true,
+                                email: true,
+                                bankDetails: true,
+                                status: true,
+                            },
                         },
                     },
                 })
@@ -107,7 +115,15 @@ let DistributionService = DistributionService_1 = class DistributionService {
                     where: repWhere,
                     include: {
                         beneficiaryMember: {
-                            select: { id: true, memberCode: true, name: true, mobile: true, email: true, bankDetails: true, status: true },
+                            select: {
+                                id: true,
+                                memberCode: true,
+                                name: true,
+                                mobile: true,
+                                email: true,
+                                bankDetails: true,
+                                status: true,
+                            },
                         },
                     },
                 })
@@ -126,7 +142,11 @@ let DistributionService = DistributionService_1 = class DistributionService {
                 });
             }
             const entry = memberMap.get(bId);
-            entry.membershipLedgers.push({ ...l, amount: Number(l.amount), percentage: Number(l.percentage) });
+            entry.membershipLedgers.push({
+                ...l,
+                amount: Number(l.amount),
+                percentage: Number(l.percentage),
+            });
             entry.membershipGrossAmount += Number(l.amount);
         }
         for (const l of repLedgers) {
@@ -141,7 +161,11 @@ let DistributionService = DistributionService_1 = class DistributionService {
                 });
             }
             const entry = memberMap.get(bId);
-            entry.repurchaseLedgers.push({ ...l, amount: Number(l.amount), percentage: Number(l.percentage) });
+            entry.repurchaseLedgers.push({
+                ...l,
+                amount: Number(l.amount),
+                percentage: Number(l.percentage),
+            });
             entry.repurchaseGrossAmount += Number(l.amount);
         }
         const allBeneficiaryEntries = Array.from(memberMap.values());
@@ -261,15 +285,23 @@ let DistributionService = DistributionService_1 = class DistributionService {
                 status: client_1.CommissionStatus.PENDING,
                 distributionRecordId: null,
                 ...(dateFilter ? { createdAt: dateFilter } : {}),
-                ...(membershipLedgerIds && membershipLedgerIds.length > 0 ? { id: { in: membershipLedgerIds } } : {}),
-                ...(memberIds && memberIds.length > 0 ? { beneficiaryMemberId: { in: memberIds } } : {}),
+                ...(membershipLedgerIds && membershipLedgerIds.length > 0
+                    ? { id: { in: membershipLedgerIds } }
+                    : {}),
+                ...(memberIds && memberIds.length > 0
+                    ? { beneficiaryMemberId: { in: memberIds } }
+                    : {}),
             };
             const repWhere = {
                 status: client_1.CommissionStatus.PENDING,
                 distributionRecordId: null,
                 ...(dateFilter ? { createdAt: dateFilter } : {}),
-                ...(repurchaseLedgerIds && repurchaseLedgerIds.length > 0 ? { id: { in: repurchaseLedgerIds } } : {}),
-                ...(memberIds && memberIds.length > 0 ? { beneficiaryMemberId: { in: memberIds } } : {}),
+                ...(repurchaseLedgerIds && repurchaseLedgerIds.length > 0
+                    ? { id: { in: repurchaseLedgerIds } }
+                    : {}),
+                ...(memberIds && memberIds.length > 0
+                    ? { beneficiaryMemberId: { in: memberIds } }
+                    : {}),
             };
             const [memLedgers, repLedgers] = await Promise.all([
                 tx.membershipCommissionLedger.findMany({ where: memWhere }),
@@ -278,7 +310,10 @@ let DistributionService = DistributionService_1 = class DistributionService {
             if (memLedgers.length === 0 && repLedgers.length === 0) {
                 await tx.distributionBatch.update({
                     where: { id: batchId },
-                    data: { status: client_1.DistributionBatchStatus.FAILED, remarks: 'No pending ledgers matched criteria' },
+                    data: {
+                        status: client_1.DistributionBatchStatus.FAILED,
+                        remarks: 'No pending ledgers matched criteria',
+                    },
                 });
                 throw new common_1.BadRequestException('No pending commission ledgers match the selected distribution criteria.');
             }
@@ -286,7 +321,11 @@ let DistributionService = DistributionService_1 = class DistributionService {
             for (const l of memLedgers) {
                 const bId = l.beneficiaryMemberId;
                 if (!memberGroupMap.has(bId)) {
-                    memberGroupMap.set(bId, { membershipLedgers: [], repurchaseLedgers: [], grossAmount: 0 });
+                    memberGroupMap.set(bId, {
+                        membershipLedgers: [],
+                        repurchaseLedgers: [],
+                        grossAmount: 0,
+                    });
                 }
                 const g = memberGroupMap.get(bId);
                 g.membershipLedgers.push(l);
@@ -295,7 +334,11 @@ let DistributionService = DistributionService_1 = class DistributionService {
             for (const l of repLedgers) {
                 const bId = l.beneficiaryMemberId;
                 if (!memberGroupMap.has(bId)) {
-                    memberGroupMap.set(bId, { membershipLedgers: [], repurchaseLedgers: [], grossAmount: 0 });
+                    memberGroupMap.set(bId, {
+                        membershipLedgers: [],
+                        repurchaseLedgers: [],
+                        grossAmount: 0,
+                    });
                 }
                 const g = memberGroupMap.get(bId);
                 g.repurchaseLedgers.push(l);
@@ -317,9 +360,17 @@ let DistributionService = DistributionService_1 = class DistributionService {
                 batchTotalNet += netAmount;
                 const memberInfo = await tx.member.findUnique({
                     where: { id: bId },
-                    select: { id: true, memberCode: true, name: true, mobile: true, email: true, bankDetails: true },
+                    select: {
+                        id: true,
+                        memberCode: true,
+                        name: true,
+                        mobile: true,
+                        email: true,
+                        bankDetails: true,
+                    },
                 });
-                const commissionType = group.membershipLedgers.length > 0 && group.repurchaseLedgers.length > 0
+                const commissionType = group.membershipLedgers.length > 0 &&
+                    group.repurchaseLedgers.length > 0
                     ? 'COMBINED'
                     : group.membershipLedgers.length > 0
                         ? 'MEMBERSHIP'
@@ -387,7 +438,14 @@ let DistributionService = DistributionService_1 = class DistributionService {
                 include: {
                     records: {
                         include: {
-                            member: { select: { id: true, memberCode: true, name: true, mobile: true } },
+                            member: {
+                                select: {
+                                    id: true,
+                                    memberCode: true,
+                                    name: true,
+                                    mobile: true,
+                                },
+                            },
                         },
                     },
                 },
@@ -498,15 +556,40 @@ let DistributionService = DistributionService_1 = class DistributionService {
                 OR: [{ id: batchId }, { batchNo: batchId }],
             },
             include: {
-                processor: { select: { id: true, memberCode: true, name: true, email: true } },
+                processor: {
+                    select: { id: true, memberCode: true, name: true, email: true },
+                },
                 records: {
                     include: {
-                        member: { select: { id: true, memberCode: true, name: true, mobile: true, email: true } },
+                        member: {
+                            select: {
+                                id: true,
+                                memberCode: true,
+                                name: true,
+                                mobile: true,
+                                email: true,
+                            },
+                        },
                         membershipCommissions: {
-                            select: { id: true, sourceMemberId: true, level: true, percentage: true, amount: true, createdAt: true },
+                            select: {
+                                id: true,
+                                sourceMemberId: true,
+                                level: true,
+                                percentage: true,
+                                amount: true,
+                                createdAt: true,
+                            },
                         },
                         repurchaseCommissions: {
-                            select: { id: true, repurchaseEntryId: true, sourceMemberId: true, level: true, percentage: true, amount: true, createdAt: true },
+                            select: {
+                                id: true,
+                                repurchaseEntryId: true,
+                                sourceMemberId: true,
+                                level: true,
+                                percentage: true,
+                                amount: true,
+                                createdAt: true,
+                            },
                         },
                     },
                 },
@@ -543,8 +626,16 @@ let DistributionService = DistributionService_1 = class DistributionService {
                 paymentRef: r.paymentRef,
                 bankDetails: r.bankDetails,
                 status: r.status,
-                membershipCommissions: r.membershipCommissions.map((m) => ({ ...m, amount: Number(m.amount), percentage: Number(m.percentage) })),
-                repurchaseCommissions: r.repurchaseCommissions.map((rc) => ({ ...rc, amount: Number(rc.amount), percentage: Number(rc.percentage) })),
+                membershipCommissions: r.membershipCommissions.map((m) => ({
+                    ...m,
+                    amount: Number(m.amount),
+                    percentage: Number(m.percentage),
+                })),
+                repurchaseCommissions: r.repurchaseCommissions.map((rc) => ({
+                    ...rc,
+                    amount: Number(rc.amount),
+                    percentage: Number(rc.percentage),
+                })),
             })),
         };
     }

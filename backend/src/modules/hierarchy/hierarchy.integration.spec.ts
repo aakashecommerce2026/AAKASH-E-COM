@@ -156,7 +156,9 @@ describe('Hierarchy Module Integration Suite', () => {
       ]);
       prisma.$queryRaw.mockResolvedValue(mockDownlineNodes.slice(1)); // sub-downline under Alice
 
-      const summary = await controller.getHierarchySummary(mockRootMember.id, { maxLevels: 20 });
+      const summary = await controller.getHierarchySummary(mockRootMember.id, {
+        maxLevels: 20,
+      });
 
       expect(summary.memberId).toEqual(mockRootMember.id);
       expect(summary.memberName).toEqual('Root Admin Sponsor');
@@ -174,10 +176,16 @@ describe('Hierarchy Module Integration Suite', () => {
         { id: 'root-uuid-100', referrerId: null },
       ]);
 
-      const isDownline = await service.isInDownlineOf('root-uuid-100', 'downline-uuid-102');
+      const isDownline = await service.isInDownlineOf(
+        'root-uuid-100',
+        'downline-uuid-102',
+      );
       expect(isDownline).toBe(true);
 
-      const isNotDownline = await service.isInDownlineOf('other-user-uuid', 'downline-uuid-102');
+      const isNotDownline = await service.isInDownlineOf(
+        'other-user-uuid',
+        'downline-uuid-102',
+      );
       expect(isNotDownline).toBe(false);
     });
   });

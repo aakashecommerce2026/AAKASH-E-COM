@@ -39,10 +39,7 @@ describe('Admin Audit Logs Integration Test Suite', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuditController],
-      providers: [
-        AuditService,
-        { provide: PrismaService, useValue: prisma },
-      ],
+      providers: [AuditService, { provide: PrismaService, useValue: prisma }],
     }).compile();
 
     controller = module.get<AuditController>(AuditController);

@@ -60,9 +60,19 @@ __decorate([
     (0, swagger_1.ApiOperation)({
         summary: 'Create member (Admin), auto-generate memberCode & temp password if missing, link active referrer, log audit',
     }),
-    (0, swagger_1.ApiResponse)({ status: 201, description: 'Member created successfully', type: member_response_dto_1.MemberResponseDto }),
-    (0, swagger_1.ApiResponse)({ status: 400, description: 'Validation error or invalid active referrer' }),
-    (0, swagger_1.ApiResponse)({ status: 409, description: 'Member code, mobile, or email collision' }),
+    (0, swagger_1.ApiResponse)({
+        status: 201,
+        description: 'Member created successfully',
+        type: member_response_dto_1.MemberResponseDto,
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: 400,
+        description: 'Validation error or invalid active referrer',
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: 409,
+        description: 'Member code, mobile, or email collision',
+    }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, current_user_decorator_1.CurrentUser)('id')),
     __param(2, (0, current_user_decorator_1.CurrentUser)('role')),
@@ -73,8 +83,15 @@ __decorate([
 __decorate([
     (0, common_1.Put)(':id'),
     (0, swagger_1.ApiOperation)({ summary: 'Edit member details and log activity audit' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Member updated successfully', type: member_response_dto_1.MemberResponseDto }),
-    (0, swagger_1.ApiResponse)({ status: 400, description: 'Invalid data, self-referrer error, or commission restriction' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Member updated successfully',
+        type: member_response_dto_1.MemberResponseDto,
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: 400,
+        description: 'Invalid data, self-referrer error, or commission restriction',
+    }),
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Member not found' }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
@@ -87,9 +104,18 @@ __decorate([
 __decorate([
     (0, common_1.Post)(':id/reassign-referrer'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
-    (0, swagger_1.ApiOperation)({ summary: 'Guarded flow to reassign a member referrer with cycle checks and audit logging' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Referrer reassigned successfully', type: member_response_dto_1.MemberResponseDto }),
-    (0, swagger_1.ApiResponse)({ status: 400, description: 'Circular dependency, inactive referrer, or self-referral error' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Guarded flow to reassign a member referrer with cycle checks and audit logging',
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Referrer reassigned successfully',
+        type: member_response_dto_1.MemberResponseDto,
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: 400,
+        description: 'Circular dependency, inactive referrer, or self-referral error',
+    }),
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Member or new referrer not found' }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
@@ -101,7 +127,9 @@ __decorate([
 ], AdminMembersController.prototype, "reassignReferrer", null);
 __decorate([
     (0, common_1.Get)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Get paginated member list with search and filters' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Get paginated member list with search and filters',
+    }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Paginated members response' }),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
@@ -110,8 +138,13 @@ __decorate([
 ], AdminMembersController.prototype, "getMembers", null);
 __decorate([
     (0, common_1.Get)(':id'),
-    (0, swagger_1.ApiOperation)({ summary: 'View single member details with populated referrer info' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Member profile with populated referrer' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'View single member details with populated referrer info',
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Member profile with populated referrer',
+    }),
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Member not found' }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -120,7 +153,9 @@ __decorate([
 ], AdminMembersController.prototype, "getMemberById", null);
 __decorate([
     (0, common_1.Get)(':id/referrer'),
-    (0, swagger_1.ApiOperation)({ summary: 'Get direct referrer member details for specified member ID' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Get direct referrer member details for specified member ID',
+    }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Referrer profile details' }),
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Member not found' }),
     __param(0, (0, common_1.Param)('id')),
@@ -130,8 +165,13 @@ __decorate([
 ], AdminMembersController.prototype, "getMemberReferrer", null);
 __decorate([
     (0, common_1.Get)(':id/downline-preview'),
-    (0, swagger_1.ApiOperation)({ summary: 'Get shallow (1-level) direct downline referrals preview for specified member ID' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Direct downline referrals list and summary counts' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Get shallow (1-level) direct downline referrals preview for specified member ID',
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Direct downline referrals list and summary counts',
+    }),
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Member not found' }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),

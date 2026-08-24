@@ -50,7 +50,10 @@ export class QueryRepurchaseCommissionDto {
   @IsOptional()
   level?: number;
 
-  @ApiPropertyOptional({ enum: CommissionStatus, description: 'Filter by commission status' })
+  @ApiPropertyOptional({
+    enum: CommissionStatus,
+    description: 'Filter by commission status',
+  })
   @IsOptional()
   @IsEnum(CommissionStatus)
   status?: CommissionStatus;

@@ -42,14 +42,19 @@ let MembersController = class MembersController {
 exports.MembersController = MembersController;
 __decorate([
     (0, common_1.Post)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Create a new member (hashes password with 12 bcrypt salt rounds)' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Create a new member (hashes password with 12 bcrypt salt rounds)',
+    }),
     (0, swagger_1.ApiResponse)({
         status: 201,
         description: 'Member created successfully',
         type: member_response_dto_1.MemberResponseDto,
     }),
     (0, swagger_1.ApiResponse)({ status: 400, description: 'Validation error' }),
-    (0, swagger_1.ApiResponse)({ status: 409, description: 'Member code, mobile, or email already exists' }),
+    (0, swagger_1.ApiResponse)({
+        status: 409,
+        description: 'Member code, mobile, or email already exists',
+    }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [create_member_dto_1.CreateMemberDto]),
@@ -57,7 +62,9 @@ __decorate([
 ], MembersController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Get paginated member list with search and filters' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Get paginated member list with search and filters',
+    }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Paginated members response' }),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
@@ -69,10 +76,15 @@ __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard, ownership_guard_1.OwnershipGuard),
     (0, roles_decorator_1.Roles)(client_1.MemberRole.ADMIN, client_1.MemberRole.SUB_ADMIN, client_1.MemberRole.MEMBER),
     (0, swagger_1.ApiBearerAuth)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Get member details by ID (Protected by Roles & Ownership Guard)' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Get member details by ID (Protected by Roles & Ownership Guard)',
+    }),
     (0, swagger_1.ApiResponse)({ status: 200, type: member_response_dto_1.MemberResponseDto }),
     (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized' }),
-    (0, swagger_1.ApiResponse)({ status: 403, description: 'Forbidden: Insufficient role permissions or ownership check failed' }),
+    (0, swagger_1.ApiResponse)({
+        status: 403,
+        description: 'Forbidden: Insufficient role permissions or ownership check failed',
+    }),
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Member not found' }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),

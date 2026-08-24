@@ -24,10 +24,18 @@ describe('MemberDashboardController Integration Test Suite', () => {
           status: MemberStatus.ACTIVE,
           role: 'MEMBER',
           joiningDate: new Date('2026-02-01T00:00:00Z'),
-          referrer: { id: 'ref-1', memberCode: 'AK10001', name: 'Direct Sponsor' },
+          referrer: {
+            id: 'ref-1',
+            memberCode: 'AK10001',
+            name: 'Direct Sponsor',
+          },
         }),
         count: jest.fn().mockImplementation(async ({ where }: any) => {
-          if (where?.referrerId === 'mem-jwt-100' && where?.status === MemberStatus.ACTIVE) return 3;
+          if (
+            where?.referrerId === 'mem-jwt-100' &&
+            where?.status === MemberStatus.ACTIVE
+          )
+            return 3;
           if (where?.referrerId === 'mem-jwt-100') return 4;
           return 0;
         }),
@@ -44,14 +52,20 @@ describe('MemberDashboardController Integration Test Suite', () => {
             level: 1,
             status: CommissionStatus.DISBURSED,
             createdAt: new Date('2026-08-14T09:00:00Z'),
-            sourceMember: { id: 'm-2', memberCode: 'AK10002', name: 'Downline Ref' },
+            sourceMember: {
+              id: 'm-2',
+              memberCode: 'AK10002',
+              name: 'Downline Ref',
+            },
           },
         ]),
       },
       repurchaseCommissionLedger: {
-        groupBy: jest.fn().mockResolvedValue([
-          { status: CommissionStatus.DISBURSED, _sum: { amount: 800 } },
-        ]),
+        groupBy: jest
+          .fn()
+          .mockResolvedValue([
+            { status: CommissionStatus.DISBURSED, _sum: { amount: 800 } },
+          ]),
         findMany: jest.fn().mockResolvedValue([]),
       },
       $queryRaw: jest.fn().mockResolvedValue([
@@ -80,7 +94,9 @@ describe('MemberDashboardController Integration Test Suite', () => {
       ],
     }).compile();
 
-    controller = module.get<MemberDashboardController>(MemberDashboardController);
+    controller = module.get<MemberDashboardController>(
+      MemberDashboardController,
+    );
     service = module.get<DashboardService>(DashboardService);
     cacheService = module.get<DashboardCacheService>(DashboardCacheService);
 

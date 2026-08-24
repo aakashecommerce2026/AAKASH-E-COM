@@ -14,7 +14,10 @@ export class ReportsService {
   /**
    * Helper to build date range filters from optional ISO date strings.
    */
-  private buildDateWhere(startDate?: string, endDate?: string): Prisma.DateTimeFilter | undefined {
+  private buildDateWhere(
+    startDate?: string,
+    endDate?: string,
+  ): Prisma.DateTimeFilter | undefined {
     if (!startDate && !endDate) return undefined;
 
     const dateFilter: Prisma.DateTimeFilter = {};
@@ -72,11 +75,16 @@ export class ReportsService {
     }
 
     if (memberId && !beneficiaryMemberId && !sourceMemberId) {
-      where.OR = [{ sourceMemberId: memberId }, { beneficiaryMemberId: memberId }];
+      where.OR = [
+        { sourceMemberId: memberId },
+        { beneficiaryMemberId: memberId },
+      ];
     }
 
     const validSortFields = ['createdAt', 'amount', 'level', 'status'];
-    const orderByField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const orderByField = validSortFields.includes(sortBy)
+      ? sortBy
+      : 'createdAt';
 
     const [total, ledgers, summaryGroups] = await Promise.all([
       this.prisma.membershipCommissionLedger.count({ where }),
@@ -204,8 +212,10 @@ export class ReportsService {
         totalCount: t.count,
         pendingAmount: statusMap.get(`${lvl}_${CommissionStatus.PENDING}`) || 0,
         holdAmount: statusMap.get(`${lvl}_${CommissionStatus.HOLD}`) || 0,
-        disbursedAmount: statusMap.get(`${lvl}_${CommissionStatus.DISBURSED}`) || 0,
-        cancelledAmount: statusMap.get(`${lvl}_${CommissionStatus.CANCELLED}`) || 0,
+        disbursedAmount:
+          statusMap.get(`${lvl}_${CommissionStatus.DISBURSED}`) || 0,
+        cancelledAmount:
+          statusMap.get(`${lvl}_${CommissionStatus.CANCELLED}`) || 0,
       };
     });
 
@@ -239,12 +249,13 @@ export class ReportsService {
       };
     }
 
-    const groupedBeneficiaries = await this.prisma.membershipCommissionLedger.groupBy({
-      by: ['beneficiaryMemberId'],
-      where,
-      _sum: { amount: true },
-      _count: { id: true },
-    });
+    const groupedBeneficiaries =
+      await this.prisma.membershipCommissionLedger.groupBy({
+        by: ['beneficiaryMemberId'],
+        where,
+        _sum: { amount: true },
+        _count: { id: true },
+      });
 
     const totalMembers = groupedBeneficiaries.length;
     const skip = (page - 1) * limit;
@@ -305,13 +316,19 @@ export class ReportsService {
       const memberInfo = memberMap.get(mId);
 
       return {
-        member: memberInfo || { id: mId, memberCode: 'UNKNOWN', name: 'Unknown' },
+        member: memberInfo || {
+          id: mId,
+          memberCode: 'UNKNOWN',
+          name: 'Unknown',
+        },
         totalEarned: Number(g._sum.amount ?? 0),
         totalLedgers: g._count.id,
         pendingAmount: statusMap.get(`${mId}_${CommissionStatus.PENDING}`) || 0,
         holdAmount: statusMap.get(`${mId}_${CommissionStatus.HOLD}`) || 0,
-        disbursedAmount: statusMap.get(`${mId}_${CommissionStatus.DISBURSED}`) || 0,
-        cancelledAmount: statusMap.get(`${mId}_${CommissionStatus.CANCELLED}`) || 0,
+        disbursedAmount:
+          statusMap.get(`${mId}_${CommissionStatus.DISBURSED}`) || 0,
+        cancelledAmount:
+          statusMap.get(`${mId}_${CommissionStatus.CANCELLED}`) || 0,
       };
     });
 
@@ -329,13 +346,18 @@ export class ReportsService {
   /**
    * 3. GET /member/earnings/membership — Member self-service earnings scoped to logged-in user JWT ID
    */
-  async getMemberEarnings(loggedInUserId: string, query: QueryMemberEarningsDto) {
+  async getMemberEarnings(
+    loggedInUserId: string,
+    query: QueryMemberEarningsDto,
+  ) {
     const member = await this.prisma.member.findUnique({
       where: { id: loggedInUserId },
     });
 
     if (!member) {
-      throw new NotFoundException(`Member account not found for ID '${loggedInUserId}'`);
+      throw new NotFoundException(
+        `Member account not found for ID '${loggedInUserId}'`,
+      );
     }
 
     const { startDate, endDate, level, status, page = 1, limit = 10 } = query;
@@ -471,11 +493,16 @@ export class ReportsService {
     }
 
     if (memberId && !beneficiaryMemberId && !sourceMemberId) {
-      where.OR = [{ sourceMemberId: memberId }, { beneficiaryMemberId: memberId }];
+      where.OR = [
+        { sourceMemberId: memberId },
+        { beneficiaryMemberId: memberId },
+      ];
     }
 
     const validSortFields = ['createdAt', 'amount', 'level', 'status'];
-    const orderByField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const orderByField = validSortFields.includes(sortBy)
+      ? sortBy
+      : 'createdAt';
 
     const [total, ledgers, summaryGroups] = await Promise.all([
       this.prisma.repurchaseCommissionLedger.count({ where }),
@@ -492,7 +519,12 @@ export class ReportsService {
             select: { id: true, memberCode: true, name: true, mobile: true },
           },
           repurchaseEntry: {
-            select: { id: true, transactionRef: true, amount: true, transactionDate: true },
+            select: {
+              id: true,
+              transactionRef: true,
+              amount: true,
+              transactionDate: true,
+            },
           },
         },
       }),
@@ -613,8 +645,10 @@ export class ReportsService {
         totalCount: t.count,
         pendingAmount: statusMap.get(`${lvl}_${CommissionStatus.PENDING}`) || 0,
         holdAmount: statusMap.get(`${lvl}_${CommissionStatus.HOLD}`) || 0,
-        disbursedAmount: statusMap.get(`${lvl}_${CommissionStatus.DISBURSED}`) || 0,
-        cancelledAmount: statusMap.get(`${lvl}_${CommissionStatus.CANCELLED}`) || 0,
+        disbursedAmount:
+          statusMap.get(`${lvl}_${CommissionStatus.DISBURSED}`) || 0,
+        cancelledAmount:
+          statusMap.get(`${lvl}_${CommissionStatus.CANCELLED}`) || 0,
       };
     });
 
@@ -648,12 +682,13 @@ export class ReportsService {
       };
     }
 
-    const groupedBeneficiaries = await this.prisma.repurchaseCommissionLedger.groupBy({
-      by: ['beneficiaryMemberId'],
-      where,
-      _sum: { amount: true },
-      _count: { id: true },
-    });
+    const groupedBeneficiaries =
+      await this.prisma.repurchaseCommissionLedger.groupBy({
+        by: ['beneficiaryMemberId'],
+        where,
+        _sum: { amount: true },
+        _count: { id: true },
+      });
 
     const totalMembers = groupedBeneficiaries.length;
     const skip = (page - 1) * limit;
@@ -714,13 +749,19 @@ export class ReportsService {
       const memberInfo = memberMap.get(mId);
 
       return {
-        member: memberInfo || { id: mId, memberCode: 'UNKNOWN', name: 'Unknown' },
+        member: memberInfo || {
+          id: mId,
+          memberCode: 'UNKNOWN',
+          name: 'Unknown',
+        },
         totalEarned: Number(g._sum.amount ?? 0),
         totalLedgers: g._count.id,
         pendingAmount: statusMap.get(`${mId}_${CommissionStatus.PENDING}`) || 0,
         holdAmount: statusMap.get(`${mId}_${CommissionStatus.HOLD}`) || 0,
-        disbursedAmount: statusMap.get(`${mId}_${CommissionStatus.DISBURSED}`) || 0,
-        cancelledAmount: statusMap.get(`${mId}_${CommissionStatus.CANCELLED}`) || 0,
+        disbursedAmount:
+          statusMap.get(`${mId}_${CommissionStatus.DISBURSED}`) || 0,
+        cancelledAmount:
+          statusMap.get(`${mId}_${CommissionStatus.CANCELLED}`) || 0,
       };
     });
 
@@ -738,13 +779,18 @@ export class ReportsService {
   /**
    * 7. GET /member/earnings/repurchase — Member self-service repurchase earnings scoped to logged-in user JWT ID
    */
-  async getMemberRepurchaseEarnings(loggedInUserId: string, query: QueryMemberEarningsDto) {
+  async getMemberRepurchaseEarnings(
+    loggedInUserId: string,
+    query: QueryMemberEarningsDto,
+  ) {
     const member = await this.prisma.member.findUnique({
       where: { id: loggedInUserId },
     });
 
     if (!member) {
-      throw new NotFoundException(`Member account not found for ID '${loggedInUserId}'`);
+      throw new NotFoundException(
+        `Member account not found for ID '${loggedInUserId}'`,
+      );
     }
 
     const { startDate, endDate, level, status, page = 1, limit = 10 } = query;
@@ -777,7 +823,12 @@ export class ReportsService {
             select: { id: true, memberCode: true, name: true, mobile: true },
           },
           repurchaseEntry: {
-            select: { id: true, transactionRef: true, amount: true, transactionDate: true },
+            select: {
+              id: true,
+              transactionRef: true,
+              amount: true,
+              transactionDate: true,
+            },
           },
         },
       }),

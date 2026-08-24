@@ -55,13 +55,18 @@ exports.AuthController = AuthController;
 __decorate([
     (0, common_1.Post)('login'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
-    (0, swagger_1.ApiOperation)({ summary: 'Authenticate member or admin and return access/refresh tokens' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Authenticate member or admin and return access/refresh tokens',
+    }),
     (0, swagger_1.ApiResponse)({
         status: 200,
         description: 'Successfully authenticated',
         type: auth_response_dto_1.AuthResponseDto,
     }),
-    (0, swagger_1.ApiResponse)({ status: 401, description: 'Invalid credentials or account inactive' }),
+    (0, swagger_1.ApiResponse)({
+        status: 401,
+        description: 'Invalid credentials or account inactive',
+    }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [login_dto_1.LoginDto]),
@@ -71,8 +76,15 @@ __decorate([
     (0, common_1.Post)('admin-login'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     (0, swagger_1.ApiOperation)({ summary: 'Authenticate specifically for Admin Portal' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Successfully authenticated as Admin', type: auth_response_dto_1.AuthResponseDto }),
-    (0, swagger_1.ApiResponse)({ status: 401, description: 'Access denied or invalid admin credentials' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Successfully authenticated as Admin',
+        type: auth_response_dto_1.AuthResponseDto,
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: 401,
+        description: 'Access denied or invalid admin credentials',
+    }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [login_dto_1.LoginDto]),
@@ -82,8 +94,15 @@ __decorate([
     (0, common_1.Post)('member-login'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     (0, swagger_1.ApiOperation)({ summary: 'Authenticate specifically for Member Portal' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Successfully authenticated as Member', type: auth_response_dto_1.AuthResponseDto }),
-    (0, swagger_1.ApiResponse)({ status: 401, description: 'Access denied or invalid member credentials' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Successfully authenticated as Member',
+        type: auth_response_dto_1.AuthResponseDto,
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: 401,
+        description: 'Access denied or invalid member credentials',
+    }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [login_dto_1.LoginDto]),
@@ -92,7 +111,9 @@ __decorate([
 __decorate([
     (0, common_1.Post)('refresh'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
-    (0, swagger_1.ApiOperation)({ summary: 'Rotate access and refresh tokens using valid refresh token' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Rotate access and refresh tokens using valid refresh token',
+    }),
     (0, swagger_1.ApiResponse)({
         status: 200,
         description: 'Tokens rotated successfully',
@@ -123,7 +144,10 @@ __decorate([
     (0, common_1.Post)('forgot-password'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     (0, swagger_1.ApiOperation)({ summary: 'Send Password Reset Email Link' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Password reset link sent to email if account exists' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Password reset link sent to email if account exists',
+    }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [forgot_password_dto_1.ForgotPasswordDto]),
@@ -132,9 +156,14 @@ __decorate([
 __decorate([
     (0, common_1.Post)('reset-password'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
-    (0, swagger_1.ApiOperation)({ summary: 'Reset Password using token / OTP code from reset email link' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Reset Password using token / OTP code from reset email link',
+    }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Password reset successfully' }),
-    (0, swagger_1.ApiResponse)({ status: 400, description: 'Invalid or expired reset token / OTP code' }),
+    (0, swagger_1.ApiResponse)({
+        status: 400,
+        description: 'Invalid or expired reset token / OTP code',
+    }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [reset_password_dto_1.ResetPasswordDto]),

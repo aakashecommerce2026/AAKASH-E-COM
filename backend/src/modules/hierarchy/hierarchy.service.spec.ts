@@ -8,7 +8,11 @@ describe('HierarchyService (Recursive CTE Traversal & Network Analytics)', () =>
   let service: HierarchyService;
   let prisma: any;
 
-  const mockRootMember = { id: 'root-member-uuid', memberCode: 'AK10000', name: 'Root Member' };
+  const mockRootMember = {
+    id: 'root-member-uuid',
+    memberCode: 'AK10000',
+    name: 'Root Member',
+  };
 
   const mockDownlineNodes = [
     {
@@ -146,7 +150,9 @@ describe('HierarchyService (Recursive CTE Traversal & Network Analytics)', () =>
       prisma.member.findUnique.mockResolvedValue(mockRootMember);
       prisma.$queryRaw.mockResolvedValue([mockDownlineNodes[0]]);
 
-      const result = await service.searchDownline(mockRootMember.id, { q: 'Level 1' });
+      const result = await service.searchDownline(mockRootMember.id, {
+        q: 'Level 1',
+      });
 
       expect(prisma.$queryRaw).toHaveBeenCalled();
       expect(result).toHaveLength(1);
@@ -244,18 +250,26 @@ describe('HierarchyService (Recursive CTE Traversal & Network Analytics)', () =>
       prisma.member.findUnique.mockResolvedValue({ id: 'level-2-grandchild' });
       prisma.$queryRaw.mockResolvedValue(mockUplineNodes); // upline contains root-member-uuid
 
-      const result = await service.isInDownlineOf('root-member-uuid', 'level-2-grandchild');
+      const result = await service.isInDownlineOf(
+        'root-member-uuid',
+        'level-2-grandchild',
+      );
       expect(result).toBe(true);
     });
 
     it('should return false for a different-branch member', async () => {
-      prisma.member.findUnique.mockResolvedValue({ id: 'different-branch-member' });
+      prisma.member.findUnique.mockResolvedValue({
+        id: 'different-branch-member',
+      });
       prisma.$queryRaw.mockResolvedValue([
         { id: 'other-sponsor-1', referrerId: 'other-root' },
         { id: 'other-root', referrerId: null },
       ]); // upline does NOT contain root-member-uuid
 
-      const result = await service.isInDownlineOf('root-member-uuid', 'different-branch-member');
+      const result = await service.isInDownlineOf(
+        'root-member-uuid',
+        'different-branch-member',
+      );
       expect(result).toBe(false);
     });
 
@@ -266,7 +280,10 @@ describe('HierarchyService (Recursive CTE Traversal & Network Analytics)', () =>
         { id: 'root-member-uuid', referrerId: null },
       ]); // upline of level-1-referrer does NOT contain level-2-grandchild
 
-      const result = await service.isInDownlineOf('level-2-grandchild', 'level-1-referrer');
+      const result = await service.isInDownlineOf(
+        'level-2-grandchild',
+        'level-1-referrer',
+      );
       expect(result).toBe(false);
     });
   });

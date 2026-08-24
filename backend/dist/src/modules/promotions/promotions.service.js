@@ -61,10 +61,16 @@ let PromotionsService = PromotionsService_1 = class PromotionsService {
     }
     async evaluateAndPromoteMember(memberId, txPrisma) {
         const client = (txPrisma || this.prisma);
-        const member = (await client.member.findUnique({
+        const member = await client.member.findUnique({
             where: { id: memberId },
-            select: { id: true, memberCode: true, name: true, rank: true, status: true },
-        }));
+            select: {
+                id: true,
+                memberCode: true,
+                name: true,
+                rank: true,
+                status: true,
+            },
+        });
         if (!member) {
             throw new common_1.NotFoundException(`Member with ID '${memberId}' not found`);
         }
@@ -123,7 +129,13 @@ let PromotionsService = PromotionsService_1 = class PromotionsService {
     async getPromotionProgress(memberId) {
         const member = (await this.prisma.member.findUnique({
             where: { id: memberId },
-            select: { id: true, memberCode: true, name: true, rank: true, joiningDate: true },
+            select: {
+                id: true,
+                memberCode: true,
+                name: true,
+                rank: true,
+                joiningDate: true,
+            },
         }));
         if (!member) {
             throw new common_1.NotFoundException(`Member with ID '${memberId}' not found`);

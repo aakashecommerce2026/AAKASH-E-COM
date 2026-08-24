@@ -35,15 +35,19 @@ let AuditService = AuditService_1 = class AuditService {
                     actionType: params.actionType,
                     entityType: params.entityType,
                     entityId: params.entityId || null,
-                    metadata: params.metadata ? JSON.parse(JSON.stringify(params.metadata)) : undefined,
+                    metadata: params.metadata
+                        ? JSON.parse(JSON.stringify(params.metadata))
+                        : undefined,
                 },
             });
             this.logger.log(`[AUDIT LOG] ${params.actionType} on ${params.entityType}:${params.entityId || 'N/A'} by ${params.actorId || 'SYSTEM'} (${params.actorRole || 'N/A'})`);
             if (this.dashboardCacheService) {
-                if (params.entityType === 'Member' || params.actionType.includes('MEMBER')) {
+                if (params.entityType === 'Member' ||
+                    params.actionType.includes('MEMBER')) {
                     await this.dashboardCacheService.invalidateMemberCache();
                 }
-                else if (params.entityType === 'RepurchaseEntry' || params.actionType.includes('REPURCHASE')) {
+                else if (params.entityType === 'RepurchaseEntry' ||
+                    params.actionType.includes('REPURCHASE')) {
                     await this.dashboardCacheService.invalidateRepurchaseCache();
                 }
                 else if (params.entityType === 'DistributionBatch' ||
@@ -52,7 +56,9 @@ let AuditService = AuditService_1 = class AuditService {
                     await this.dashboardCacheService.invalidateDistributionCache();
                 }
                 else {
-                    await this.dashboardCacheService.clearByPatterns(['admin:dashboard:activity:*']);
+                    await this.dashboardCacheService.clearByPatterns([
+                        'admin:dashboard:activity:*',
+                    ]);
                 }
             }
             return log;
@@ -95,7 +101,9 @@ let AuditService = AuditService_1 = class AuditService {
             ];
         }
         const validSortFields = ['createdAt', 'actionType', 'entityType'];
-        const orderByField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+        const orderByField = validSortFields.includes(sortBy)
+            ? sortBy
+            : 'createdAt';
         const [total, logs] = await Promise.all([
             this.prisma.activityLog.count({ where }),
             this.prisma.activityLog.findMany({

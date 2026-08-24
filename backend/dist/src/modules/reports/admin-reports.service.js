@@ -176,7 +176,7 @@ let AdminReportsService = class AdminReportsService {
             },
             deletedAt: null,
         };
-        const [totalOrders, aggregateResult, repurchaseList, rawRepurchases, commissionAgg] = await Promise.all([
+        const [totalOrders, aggregateResult, repurchaseList, rawRepurchases, commissionAgg,] = await Promise.all([
             this.prisma.repurchaseEntry.count({ where }),
             this.prisma.repurchaseEntry.aggregate({
                 where,
@@ -279,7 +279,12 @@ let AdminReportsService = class AdminReportsService {
             }),
             this.prisma.distributionRecord.aggregate({
                 where: distributionWhere,
-                _sum: { grossAmount: true, netAmount: true, tdsAmount: true, adminFee: true },
+                _sum: {
+                    grossAmount: true,
+                    netAmount: true,
+                    tdsAmount: true,
+                    adminFee: true,
+                },
             }),
             this.prisma.membershipCommissionLedger.findMany({
                 where: membershipWhere,

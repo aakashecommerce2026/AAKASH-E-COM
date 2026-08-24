@@ -13,7 +13,10 @@ export class QueryEarningsAggregationDto {
   @IsDateString()
   endDate?: string;
 
-  @ApiPropertyOptional({ enum: CommissionStatus, description: 'Filter by commission status' })
+  @ApiPropertyOptional({
+    enum: CommissionStatus,
+    description: 'Filter by commission status',
+  })
   @IsOptional()
   @IsEnum(CommissionStatus)
   status?: CommissionStatus;

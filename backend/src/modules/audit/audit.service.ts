@@ -24,7 +24,10 @@ export class AuditService {
   /**
    * Writes an audit entry into activity_logs table and triggers cache invalidation hooks.
    */
-  async logAction(params: LogActionParams, txClient?: Prisma.TransactionClient) {
+  async logAction(
+    params: LogActionParams,
+    txClient?: Prisma.TransactionClient,
+  ) {
     const db: any = txClient || this.prisma;
     try {
       const log = await db.activityLog.create({
@@ -34,7 +37,9 @@ export class AuditService {
           actionType: params.actionType,
           entityType: params.entityType,
           entityId: params.entityId || null,
-          metadata: params.metadata ? JSON.parse(JSON.stringify(params.metadata)) : undefined,
+          metadata: params.metadata
+            ? JSON.parse(JSON.stringify(params.metadata))
+            : undefined,
         },
       });
 
@@ -44,9 +49,15 @@ export class AuditService {
 
       // Trigger automatic dashboard cache invalidation based on entity/action type
       if (this.dashboardCacheService) {
-        if (params.entityType === 'Member' || params.actionType.includes('MEMBER')) {
+        if (
+          params.entityType === 'Member' ||
+          params.actionType.includes('MEMBER')
+        ) {
           await this.dashboardCacheService.invalidateMemberCache();
-        } else if (params.entityType === 'RepurchaseEntry' || params.actionType.includes('REPURCHASE')) {
+        } else if (
+          params.entityType === 'RepurchaseEntry' ||
+          params.actionType.includes('REPURCHASE')
+        ) {
           await this.dashboardCacheService.invalidateRepurchaseCache();
         } else if (
           params.entityType === 'DistributionBatch' ||
@@ -55,7 +66,9 @@ export class AuditService {
         ) {
           await this.dashboardCacheService.invalidateDistributionCache();
         } else {
-          await this.dashboardCacheService.clearByPatterns(['admin:dashboard:activity:*']);
+          await this.dashboardCacheService.clearByPatterns([
+            'admin:dashboard:activity:*',
+          ]);
         }
       }
 
@@ -114,7 +127,9 @@ export class AuditService {
     }
 
     const validSortFields = ['createdAt', 'actionType', 'entityType'];
-    const orderByField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const orderByField = validSortFields.includes(sortBy)
+      ? sortBy
+      : 'createdAt';
 
     const [total, logs] = await Promise.all([
       this.prisma.activityLog.count({ where }),
@@ -147,4 +162,3 @@ export class AuditService {
     };
   }
 }
-

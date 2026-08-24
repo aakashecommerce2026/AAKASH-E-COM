@@ -28,7 +28,10 @@ __decorate([
     __metadata("design:type", Number)
 ], RepurchaseCommissionLevelRateDto.prototype, "level", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 1.5, description: 'Percentage payout rate for this level' }),
+    (0, swagger_1.ApiProperty)({
+        example: 1.5,
+        description: 'Percentage payout rate for this level',
+    }),
     (0, class_transformer_1.Type)(() => Number),
     (0, class_validator_1.IsNumber)({ maxDecimalPlaces: 2 }),
     (0, class_validator_1.Min)(0),

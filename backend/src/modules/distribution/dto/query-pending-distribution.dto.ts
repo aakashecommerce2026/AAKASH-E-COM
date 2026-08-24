@@ -1,4 +1,11 @@
-import { IsOptional, IsString, IsInt, IsDateString, Min, Max } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsInt,
+  IsDateString,
+  Min,
+  Max,
+} from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -9,8 +16,17 @@ export class QueryPendingDistributionDto {
   @IsDateString()
   startDate?: string;
 
-  @ApiPropertyOptional({ description: 'Filter cutoff end date (ISO string e.g. 2026-08-31)' })
-  @Transform(({ obj, value }) => value || obj?.end_date || obj?.endDate || obj?.cutoff_date || obj?.cutoffDate)
+  @ApiPropertyOptional({
+    description: 'Filter cutoff end date (ISO string e.g. 2026-08-31)',
+  })
+  @Transform(
+    ({ obj, value }) =>
+      value ||
+      obj?.end_date ||
+      obj?.endDate ||
+      obj?.cutoff_date ||
+      obj?.cutoffDate,
+  )
   @IsOptional()
   @IsDateString()
   endDate?: string;
@@ -21,7 +37,11 @@ export class QueryPendingDistributionDto {
   @IsString()
   memberId?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by commission type', enum: ['MEMBERSHIP', 'REPURCHASE', 'ALL'], default: 'ALL' })
+  @ApiPropertyOptional({
+    description: 'Filter by commission type',
+    enum: ['MEMBERSHIP', 'REPURCHASE', 'ALL'],
+    default: 'ALL',
+  })
   @IsOptional()
   @IsString()
   commissionType?: 'MEMBERSHIP' | 'REPURCHASE' | 'ALL' = 'ALL';

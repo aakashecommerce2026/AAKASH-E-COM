@@ -1,4 +1,13 @@
-import { IsOptional, IsString, IsInt, IsEnum, IsDateString, IsBoolean, Min, Max } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsInt,
+  IsEnum,
+  IsDateString,
+  IsBoolean,
+  Min,
+  Max,
+} from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -18,7 +27,8 @@ export enum PeriodTypeEnum {
 export class QueryPeriodReportDto {
   @ApiProperty({
     enum: ReportType,
-    description: 'Type of report to generate (member-registrations, repurchase-activities, earnings-summary, business-summary)',
+    description:
+      'Type of report to generate (member-registrations, repurchase-activities, earnings-summary, business-summary)',
   })
   @IsEnum(ReportType)
   type!: ReportType;
@@ -32,23 +42,33 @@ export class QueryPeriodReportDto {
   @IsEnum(PeriodTypeEnum)
   period?: PeriodTypeEnum = PeriodTypeEnum.DAILY;
 
-  @ApiPropertyOptional({ description: 'Filter by start date (ISO string e.g. 2026-01-01)' })
+  @ApiPropertyOptional({
+    description: 'Filter by start date (ISO string e.g. 2026-01-01)',
+  })
   @IsOptional()
   @IsDateString()
   startDate?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by end date (ISO string e.g. 2026-12-31)' })
+  @ApiPropertyOptional({
+    description: 'Filter by end date (ISO string e.g. 2026-12-31)',
+  })
   @IsOptional()
   @IsDateString()
   endDate?: string;
 
-  @ApiPropertyOptional({ description: 'Run export asynchronously via Bull queue', default: false })
+  @ApiPropertyOptional({
+    description: 'Run export asynchronously via Bull queue',
+    default: false,
+  })
   @IsOptional()
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   async?: boolean = false;
 
-  @ApiPropertyOptional({ description: 'Page number for paginated list items', default: 1 })
+  @ApiPropertyOptional({
+    description: 'Page number for paginated list items',
+    default: 1,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()

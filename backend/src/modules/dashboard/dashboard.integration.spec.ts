@@ -4,7 +4,11 @@ import { DashboardController } from './dashboard.controller';
 import { DashboardService } from './dashboard.service';
 import { DashboardCacheService } from './dashboard-cache.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { MemberStatus, CommissionStatus, DistributionRecordStatus } from '@prisma/client';
+import {
+  MemberStatus,
+  CommissionStatus,
+  DistributionRecordStatus,
+} from '@prisma/client';
 import { ActivityCategory } from './dto/query-activity.dto';
 
 describe('Admin Dashboard Integration Test Suite', () => {
@@ -39,20 +43,37 @@ describe('Admin Dashboard Integration Test Suite', () => {
       },
       membershipCommissionLedger: {
         groupBy: jest.fn().mockResolvedValue([
-          { status: CommissionStatus.DISBURSED, _sum: { amount: 5000 }, _count: { id: 10 } },
-          { status: CommissionStatus.PENDING, _sum: { amount: 1000 }, _count: { id: 2 } },
+          {
+            status: CommissionStatus.DISBURSED,
+            _sum: { amount: 5000 },
+            _count: { id: 10 },
+          },
+          {
+            status: CommissionStatus.PENDING,
+            _sum: { amount: 1000 },
+            _count: { id: 2 },
+          },
         ]),
       },
       repurchaseCommissionLedger: {
         groupBy: jest.fn().mockResolvedValue([
-          { status: CommissionStatus.DISBURSED, _sum: { amount: 3000 }, _count: { id: 6 } },
+          {
+            status: CommissionStatus.DISBURSED,
+            _sum: { amount: 3000 },
+            _count: { id: 6 },
+          },
         ]),
       },
       distributionRecord: {
         aggregate: jest.fn().mockImplementation(async ({ where }: any) => {
           if (where?.status === DistributionRecordStatus.PAID) {
             return {
-              _sum: { netAmount: 7000, grossAmount: 8000, tdsAmount: 400, adminFee: 600 },
+              _sum: {
+                netAmount: 7000,
+                grossAmount: 8000,
+                tdsAmount: 400,
+                adminFee: 600,
+              },
               _count: { id: 12 },
             };
           }
@@ -72,7 +93,12 @@ describe('Admin Dashboard Integration Test Suite', () => {
             amount: 2000,
             transactionDate: new Date('2026-08-14T10:30:00Z'),
             remarks: 'Test purchase',
-            member: { id: 'm-10', memberCode: 'AK10010', name: 'Alice', role: 'MEMBER' },
+            member: {
+              id: 'm-10',
+              memberCode: 'AK10010',
+              name: 'Alice',
+              role: 'MEMBER',
+            },
           },
         ]),
       },
@@ -82,9 +108,9 @@ describe('Admin Dashboard Integration Test Suite', () => {
       activityLog: {
         findMany: jest.fn().mockResolvedValue([]),
       },
-      $queryRaw: jest.fn().mockResolvedValue([
-        { date: new Date('2026-08-14'), count: 5 },
-      ]),
+      $queryRaw: jest
+        .fn()
+        .mockResolvedValue([{ date: new Date('2026-08-14'), count: 5 }]),
     };
 
     const mockConfigService = {
@@ -169,7 +195,12 @@ describe('Admin Dashboard Integration Test Suite', () => {
 
   describe('4. GET /admin/dashboard/activity', () => {
     it('should return unified activity feed sorted most-recent-first', async () => {
-      const res = await controller.getActivityFeed({ type: ActivityCategory.ALL, page: 1, limit: 10, refresh: true });
+      const res = await controller.getActivityFeed({
+        type: ActivityCategory.ALL,
+        page: 1,
+        limit: 10,
+        refresh: true,
+      });
 
       expect(res).toBeDefined();
       expect(res.data.length).toBe(2);

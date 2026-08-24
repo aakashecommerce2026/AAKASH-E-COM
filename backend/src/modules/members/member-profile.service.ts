@@ -33,7 +33,13 @@ export class MemberProfileService {
       where: { id: memberId },
       include: {
         referrer: {
-          select: { id: true, memberCode: true, name: true, email: true, mobile: true },
+          select: {
+            id: true,
+            memberCode: true,
+            name: true,
+            email: true,
+            mobile: true,
+          },
         },
       },
     });
@@ -54,12 +60,23 @@ export class MemberProfileService {
     actorId?: string,
     actorRole?: MemberRole,
   ): Promise<MemberResponseDto> {
-    const member = await this.prisma.member.findUnique({ where: { id: memberId } });
+    const member = await this.prisma.member.findUnique({
+      where: { id: memberId },
+    });
     if (!member) {
       throw new NotFoundException(`Member with ID '${memberId}' not found`);
     }
 
-    const { email, mobile, name, username, address, profilePhoto, upiId, bankDetails } = updateDto as any;
+    const {
+      email,
+      mobile,
+      name,
+      username,
+      address,
+      profilePhoto,
+      upiId,
+      bankDetails,
+    } = updateDto as any;
 
     // Unique field collision checks for mobile, email, or username
     if (mobile || email || username) {
@@ -80,13 +97,19 @@ export class MemberProfileService {
 
       if (existing) {
         if (mobile && existing.mobile === mobile) {
-          throw new ConflictException(`Mobile number '${mobile}' is already taken`);
+          throw new ConflictException(
+            `Mobile number '${mobile}' is already taken`,
+          );
         }
         if (email && existing.email === email) {
-          throw new ConflictException(`Email address '${email}' is already taken`);
+          throw new ConflictException(
+            `Email address '${email}' is already taken`,
+          );
         }
         if (username && existing.username === username) {
-          throw new ConflictException(`Username '${username}' is already taken`);
+          throw new ConflictException(
+            `Username '${username}' is already taken`,
+          );
         }
       }
     }
@@ -102,7 +125,11 @@ export class MemberProfileService {
         ...(profilePhoto !== undefined ? { profilePhoto } : {}),
         ...(upiId !== undefined ? { upiId } : {}),
         ...(bankDetails !== undefined
-          ? { bankDetails: bankDetails ? JSON.parse(JSON.stringify(bankDetails)) : null }
+          ? {
+              bankDetails: bankDetails
+                ? JSON.parse(JSON.stringify(bankDetails))
+                : null,
+            }
           : {}),
       },
     });
@@ -130,7 +157,9 @@ export class MemberProfileService {
     memberId: string,
     photoUrl: string,
   ): Promise<MemberResponseDto> {
-    const member = await this.prisma.member.findUnique({ where: { id: memberId } });
+    const member = await this.prisma.member.findUnique({
+      where: { id: memberId },
+    });
     if (!member) {
       throw new NotFoundException(`Member with ID '${memberId}' not found`);
     }
@@ -166,12 +195,15 @@ export class MemberProfileService {
     actorId?: string,
     actorRole?: MemberRole,
   ): Promise<MemberResponseDto> {
-    const member = await this.prisma.member.findUnique({ where: { id: memberId } });
+    const member = await this.prisma.member.findUnique({
+      where: { id: memberId },
+    });
     if (!member) {
       throw new NotFoundException(`Member with ID '${memberId}' not found`);
     }
 
-    const existingBankDetails = (member.bankDetails as Record<string, any>) || {};
+    const existingBankDetails =
+      (member.bankDetails as Record<string, any>) || {};
     const updatedBankDetails = {
       ...existingBankDetails,
       upiId: dto.upiId,
@@ -211,7 +243,9 @@ export class MemberProfileService {
     actorId?: string,
     actorRole?: MemberRole,
   ): Promise<{ message: string }> {
-    const member = await this.prisma.member.findUnique({ where: { id: memberId } });
+    const member = await this.prisma.member.findUnique({
+      where: { id: memberId },
+    });
     if (!member) {
       throw new NotFoundException(`Member with ID '${memberId}' not found`);
     }
@@ -221,12 +255,18 @@ export class MemberProfileService {
       throw new BadRequestException('Current password is required');
     }
 
-    const isCurrentPasswordValid = await bcrypt.compare(currentPwd, member.passwordHash);
+    const isCurrentPasswordValid = await bcrypt.compare(
+      currentPwd,
+      member.passwordHash,
+    );
     if (!isCurrentPasswordValid) {
       throw new BadRequestException('Current password does not match');
     }
 
-    const newPasswordHash = await bcrypt.hash(dto.newPassword, this.BCRYPT_SALT_ROUNDS);
+    const newPasswordHash = await bcrypt.hash(
+      dto.newPassword,
+      this.BCRYPT_SALT_ROUNDS,
+    );
 
     await this.prisma.member.update({
       where: { id: memberId },

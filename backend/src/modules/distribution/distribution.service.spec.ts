@@ -4,7 +4,11 @@ import { DistributionService } from './distribution.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { CommissionStatus, DistributionBatchStatus, MemberRole } from '@prisma/client';
+import {
+  CommissionStatus,
+  DistributionBatchStatus,
+  MemberRole,
+} from '@prisma/client';
 
 describe('DistributionService Core Unit Tests', () => {
   let service: DistributionService;
@@ -158,7 +162,9 @@ describe('DistributionService Core Unit Tests', () => {
 
       expect(res.id).toBe(mockBatch.id);
       expect(res.status).toBe(DistributionBatchStatus.COMPLETED);
-      expect(notificationsService.notifyMemberCommissionDistributed).toHaveBeenCalled();
+      expect(
+        notificationsService.notifyMemberCommissionDistributed,
+      ).toHaveBeenCalled();
       expect(auditService.logAction).toHaveBeenCalledWith(
         expect.objectContaining({ actionType: 'PROCESS_DISTRIBUTION_BATCH' }),
       );
@@ -195,7 +201,9 @@ describe('DistributionService Core Unit Tests', () => {
     it('should throw NotFoundException if batchId does not exist', async () => {
       prisma.distributionBatch.findFirst.mockResolvedValue(null);
 
-      await expect(service.getBatchById('non-existent-batch')).rejects.toThrow(NotFoundException);
+      await expect(service.getBatchById('non-existent-batch')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

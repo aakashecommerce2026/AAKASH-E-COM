@@ -20,7 +20,10 @@ export class RepurchaseCommissionLevelRateDto {
   @Max(20)
   level!: number;
 
-  @ApiProperty({ example: 1.5, description: 'Percentage payout rate for this level' })
+  @ApiProperty({
+    example: 1.5,
+    description: 'Percentage payout rate for this level',
+  })
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)

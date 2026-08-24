@@ -32,7 +32,8 @@ export class CreateAdminMemberDto {
   @IsString()
   @IsNotEmpty({ message: 'Mobile number is required' })
   @Matches(/^\+?[0-9]{10,15}$/, {
-    message: 'Mobile number must be 10 to 15 digits, optionally prefixed with +',
+    message:
+      'Mobile number must be 10 to 15 digits, optionally prefixed with +',
   })
   mobile!: string;
 
@@ -81,7 +82,8 @@ export class CreateAdminMemberDto {
 
   @ApiPropertyOptional({
     example: 'SecureP@ssw0rd!',
-    description: 'Plain password (auto-generated temporary password if omitted)',
+    description:
+      'Plain password (auto-generated temporary password if omitted)',
   })
   @IsOptional()
   @IsString()

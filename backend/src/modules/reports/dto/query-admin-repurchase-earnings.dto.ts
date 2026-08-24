@@ -1,35 +1,58 @@
-import { IsOptional, IsString, IsInt, IsDateString, Min, Max, IsEnum } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsInt,
+  IsDateString,
+  Min,
+  Max,
+  IsEnum,
+} from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { CommissionStatus } from '@prisma/client';
 
 export class QueryAdminRepurchaseEarningsDto {
-  @ApiPropertyOptional({ description: 'Filter by start date (ISO string e.g. 2026-01-01)' })
+  @ApiPropertyOptional({
+    description: 'Filter by start date (ISO string e.g. 2026-01-01)',
+  })
   @Transform(({ obj, value }) => value || obj?.start_date || obj?.startDate)
   @IsOptional()
   @IsDateString()
   startDate?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by end date (ISO string e.g. 2026-12-31)' })
+  @ApiPropertyOptional({
+    description: 'Filter by end date (ISO string e.g. 2026-12-31)',
+  })
   @Transform(({ obj, value }) => value || obj?.end_date || obj?.endDate)
   @IsOptional()
   @IsDateString()
   endDate?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by general member ID (matches source or beneficiary)' })
+  @ApiPropertyOptional({
+    description: 'Filter by general member ID (matches source or beneficiary)',
+  })
   @Transform(({ obj, value }) => value || obj?.member_id || obj?.memberId)
   @IsOptional()
   @IsString()
   memberId?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by beneficiary member ID (earner)' })
-  @Transform(({ obj, value }) => value || obj?.beneficiary_member_id || obj?.beneficiaryMemberId)
+  @ApiPropertyOptional({
+    description: 'Filter by beneficiary member ID (earner)',
+  })
+  @Transform(
+    ({ obj, value }) =>
+      value || obj?.beneficiary_member_id || obj?.beneficiaryMemberId,
+  )
   @IsOptional()
   @IsString()
   beneficiaryMemberId?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by source member ID (purchaser)' })
-  @Transform(({ obj, value }) => value || obj?.source_member_id || obj?.sourceMemberId)
+  @ApiPropertyOptional({
+    description: 'Filter by source member ID (purchaser)',
+  })
+  @Transform(
+    ({ obj, value }) => value || obj?.source_member_id || obj?.sourceMemberId,
+  )
   @IsOptional()
   @IsString()
   sourceMemberId?: string;
@@ -42,7 +65,10 @@ export class QueryAdminRepurchaseEarningsDto {
   @Max(20)
   level?: number;
 
-  @ApiPropertyOptional({ enum: CommissionStatus, description: 'Filter by commission status' })
+  @ApiPropertyOptional({
+    enum: CommissionStatus,
+    description: 'Filter by commission status',
+  })
   @IsOptional()
   @IsEnum(CommissionStatus)
   status?: CommissionStatus;
@@ -67,7 +93,11 @@ export class QueryAdminRepurchaseEarningsDto {
   @IsString()
   sortBy?: string = 'createdAt';
 
-  @ApiPropertyOptional({ description: 'Sort direction', enum: ['asc', 'desc'], default: 'desc' })
+  @ApiPropertyOptional({
+    description: 'Sort direction',
+    enum: ['asc', 'desc'],
+    default: 'desc',
+  })
   @IsOptional()
   @IsString()
   sortOrder?: 'asc' | 'desc' = 'desc';

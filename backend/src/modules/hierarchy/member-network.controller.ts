@@ -1,9 +1,4 @@
-import {
-  Controller,
-  Get,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -25,11 +20,15 @@ export class MemberNetworkController {
 
   @Get('direct-referrals')
   @ApiOperation({
-    summary: 'GET /member/network/direct-referrals — View level-1 direct referrals only',
+    summary:
+      'GET /member/network/direct-referrals — View level-1 direct referrals only',
     description:
       'Fetches direct referrals (Level 1 only) sponsored by the logged-in member. Root is strictly enforced server-side from JWT.',
   })
-  @ApiResponse({ status: 200, description: 'Level 1 direct referrals list returned successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Level 1 direct referrals list returned successfully',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getDirectReferrals(@CurrentUser('id') memberId: string) {
     return this.hierarchyService.getDownline(memberId, 1);
@@ -37,11 +36,15 @@ export class MemberNetworkController {
 
   @Get('downline')
   @ApiOperation({
-    summary: 'GET /member/network/downline — View full downline up to 20 levels',
+    summary:
+      'GET /member/network/downline — View full downline up to 20 levels',
     description:
       'Fetches level-tagged downline network up to 20 levels for the logged-in member as root. Root is strictly enforced server-side from JWT.',
   })
-  @ApiResponse({ status: 200, description: 'Level-tagged downline tree nodes array' })
+  @ApiResponse({
+    status: 200,
+    description: 'Level-tagged downline tree nodes array',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getDownline(
     @CurrentUser('id') memberId: string,
@@ -53,7 +56,8 @@ export class MemberNetworkController {
 
   @Get('summary')
   @ApiOperation({
-    summary: 'GET /member/network/summary — View personal network summary dashboard',
+    summary:
+      'GET /member/network/summary — View personal network summary dashboard',
     description:
       'Returns total downline metrics, active vs inactive counts, branch counts, and level breakdown for the logged-in member as root.',
   })
@@ -73,7 +77,10 @@ export class MemberNetworkController {
     description:
       'Filters downline nodes strictly under the logged-in member by matching query against name, code, mobile, or email.',
   })
-  @ApiResponse({ status: 200, description: 'Matching downline hierarchy nodes array' })
+  @ApiResponse({
+    status: 200,
+    description: 'Matching downline hierarchy nodes array',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async searchDownline(
     @CurrentUser('id') memberId: string,

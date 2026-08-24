@@ -1,0 +1,14 @@
+{
+  "name": "aakash-e-com-mlm-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AAKASH E-COM Multi-Level Marketing (MLM) Enterprise Solution",
+  "scripts": {
+    "verify:deployment": "node scripts/verify-deployment.js",
+    "build:backend": "npm run build --prefix backend",
+    "build:frontend": "npm run build --prefix frontend",
+    "test:backend": "npm test --prefix backend",
+    "lint:frontend": "npm run lint --prefix frontend",
+    "lint:backend": "npm run lint --prefix backend"
+  }
+}

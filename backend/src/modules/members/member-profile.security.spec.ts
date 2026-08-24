@@ -1,5 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ExecutionContext, ForbiddenException, UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  ExecutionContext,
+  ForbiddenException,
+  UnauthorizedException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { OwnershipGuard } from '../auth/guards/ownership.guard';
 import { MemberProfileController } from './member-profile.controller';
 import { MemberProfileService } from './member-profile.service';
@@ -77,7 +83,11 @@ describe('Member Profile Security & Ownership Guard Test Suite', () => {
   });
 
   describe('1. OwnershipGuard ID Substitution Security Checks', () => {
-    const createMockContext = (user: any, params: any = {}, body: any = {}): ExecutionContext => {
+    const createMockContext = (
+      user: any,
+      params: any = {},
+      body: any = {},
+    ): ExecutionContext => {
       return {
         switchToHttp: () => ({
           getRequest: () => ({ user, params, body }),
@@ -86,35 +96,59 @@ describe('Member Profile Security & Ownership Guard Test Suite', () => {
     };
 
     it('should REJECT request when Member A attempts ID substitution attack on Member B (params.id)', () => {
-      const userA = { id: 'member-uuid-A', memberCode: 'AK10001', role: MemberRole.MEMBER };
+      const userA = {
+        id: 'member-uuid-A',
+        memberCode: 'AK10001',
+        role: MemberRole.MEMBER,
+      };
       const ctx = createMockContext(userA, { id: 'member-uuid-B' });
 
       expect(() => guard.canActivate(ctx)).toThrow(ForbiddenException);
     });
 
     it('should REJECT request when Member A attempts ID substitution attack on Member B (params.memberId)', () => {
-      const userA = { id: 'member-uuid-A', memberCode: 'AK10001', role: MemberRole.MEMBER };
+      const userA = {
+        id: 'member-uuid-A',
+        memberCode: 'AK10001',
+        role: MemberRole.MEMBER,
+      };
       const ctx = createMockContext(userA, { memberId: 'member-uuid-B' });
 
       expect(() => guard.canActivate(ctx)).toThrow(ForbiddenException);
     });
 
     it('should REJECT request when Member A attempts ID substitution attack via request body (body.memberId)', () => {
-      const userA = { id: 'member-uuid-A', memberCode: 'AK10001', role: MemberRole.MEMBER };
-      const ctx = createMockContext(userA, {}, { memberId: 'member-uuid-B', name: 'Hacked Name' });
+      const userA = {
+        id: 'member-uuid-A',
+        memberCode: 'AK10001',
+        role: MemberRole.MEMBER,
+      };
+      const ctx = createMockContext(
+        userA,
+        {},
+        { memberId: 'member-uuid-B', name: 'Hacked Name' },
+      );
 
       expect(() => guard.canActivate(ctx)).toThrow(ForbiddenException);
     });
 
     it('should ALLOW request when Member A accesses or modifies their own resource ID', () => {
-      const userA = { id: 'member-uuid-A', memberCode: 'AK10001', role: MemberRole.MEMBER };
+      const userA = {
+        id: 'member-uuid-A',
+        memberCode: 'AK10001',
+        role: MemberRole.MEMBER,
+      };
       const ctx = createMockContext(userA, { id: 'member-uuid-A' });
 
       expect(guard.canActivate(ctx)).toBe(true);
     });
 
     it('should ALLOW request when Admin accesses any Member ID (Global Access)', () => {
-      const admin = { id: 'admin-uuid', memberCode: 'AK10000', role: MemberRole.ADMIN };
+      const admin = {
+        id: 'admin-uuid',
+        memberCode: 'AK10000',
+        role: MemberRole.ADMIN,
+      };
       const ctx = createMockContext(admin, { id: 'member-uuid-B' });
 
       expect(guard.canActivate(ctx)).toBe(true);
@@ -148,7 +182,11 @@ describe('Member Profile Security & Ownership Guard Test Suite', () => {
       });
 
       const updateDto = { name: 'Alice Updated', mobile: '+919876543210' };
-      const res = await controller.updateProfile('member-uuid-A', MemberRole.MEMBER, updateDto);
+      const res = await controller.updateProfile(
+        'member-uuid-A',
+        MemberRole.MEMBER,
+        updateDto,
+      );
 
       expect(res.name).toBe('Alice Updated');
       expect(mockAuditService.logAction).toHaveBeenCalledWith(
@@ -165,16 +203,23 @@ describe('Member Profile Security & Ownership Guard Test Suite', () => {
       mockPrismaService.member.findFirst.mockResolvedValueOnce(mockMemberB); // collision found
 
       await expect(
-        controller.updateProfile('member-uuid-A', MemberRole.MEMBER, { email: 'bob@example.com' }),
+        controller.updateProfile('member-uuid-A', MemberRole.MEMBER, {
+          email: 'bob@example.com',
+        }),
       ).rejects.toThrow(ConflictException);
     });
 
     it('PUT /member/profile — throw ConflictException on username collision', async () => {
       mockPrismaService.member.findUnique.mockResolvedValueOnce(mockMemberA);
-      mockPrismaService.member.findFirst.mockResolvedValueOnce({ ...mockMemberB, username: 'taken_user' });
+      mockPrismaService.member.findFirst.mockResolvedValueOnce({
+        ...mockMemberB,
+        username: 'taken_user',
+      });
 
       await expect(
-        controller.updateProfile('member-uuid-A', MemberRole.MEMBER, { username: 'taken_user' }),
+        controller.updateProfile('member-uuid-A', MemberRole.MEMBER, {
+          username: 'taken_user',
+        }),
       ).rejects.toThrow(ConflictException);
     });
 
@@ -186,7 +231,11 @@ describe('Member Profile Security & Ownership Guard Test Suite', () => {
       });
 
       const upiDto = { upiId: 'new.alice@okicici', upiName: 'Alice New' };
-      const res = await controller.updateUpi('member-uuid-A', MemberRole.MEMBER, upiDto);
+      const res = await controller.updateUpi(
+        'member-uuid-A',
+        MemberRole.MEMBER,
+        upiDto,
+      );
 
       expect(res).toBeDefined();
       expect(mockAuditService.logAction).toHaveBeenCalledWith(
@@ -208,7 +257,11 @@ describe('Member Profile Security & Ownership Guard Test Suite', () => {
         newPassword: 'NewSecureP@ss2026',
       };
 
-      const res = await controller.changePassword('member-uuid-A', MemberRole.MEMBER, changePwdDto);
+      const res = await controller.changePassword(
+        'member-uuid-A',
+        MemberRole.MEMBER,
+        changePwdDto,
+      );
 
       expect(res.message).toBe('Password changed successfully');
       expect(mockAuditService.logAction).toHaveBeenCalledWith(
@@ -229,7 +282,11 @@ describe('Member Profile Security & Ownership Guard Test Suite', () => {
       };
 
       await expect(
-        controller.changePassword('member-uuid-A', MemberRole.MEMBER, changePwdDto),
+        controller.changePassword(
+          'member-uuid-A',
+          MemberRole.MEMBER,
+          changePwdDto,
+        ),
       ).rejects.toThrow(BadRequestException);
     });
   });

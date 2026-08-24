@@ -53,10 +53,15 @@ let ReportsService = class ReportsService {
             where.sourceMemberId = sourceMemberId;
         }
         if (memberId && !beneficiaryMemberId && !sourceMemberId) {
-            where.OR = [{ sourceMemberId: memberId }, { beneficiaryMemberId: memberId }];
+            where.OR = [
+                { sourceMemberId: memberId },
+                { beneficiaryMemberId: memberId },
+            ];
         }
         const validSortFields = ['createdAt', 'amount', 'level', 'status'];
-        const orderByField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+        const orderByField = validSortFields.includes(sortBy)
+            ? sortBy
+            : 'createdAt';
         const [total, ledgers, summaryGroups] = await Promise.all([
             this.prisma.membershipCommissionLedger.count({ where }),
             this.prisma.membershipCommissionLedger.findMany({
@@ -253,7 +258,11 @@ let ReportsService = class ReportsService {
             const mId = g.beneficiaryMemberId;
             const memberInfo = memberMap.get(mId);
             return {
-                member: memberInfo || { id: mId, memberCode: 'UNKNOWN', name: 'Unknown' },
+                member: memberInfo || {
+                    id: mId,
+                    memberCode: 'UNKNOWN',
+                    name: 'Unknown',
+                },
                 totalEarned: Number(g._sum.amount ?? 0),
                 totalLedgers: g._count.id,
                 pendingAmount: statusMap.get(`${mId}_${client_1.CommissionStatus.PENDING}`) || 0,
@@ -381,10 +390,15 @@ let ReportsService = class ReportsService {
             where.sourceMemberId = sourceMemberId;
         }
         if (memberId && !beneficiaryMemberId && !sourceMemberId) {
-            where.OR = [{ sourceMemberId: memberId }, { beneficiaryMemberId: memberId }];
+            where.OR = [
+                { sourceMemberId: memberId },
+                { beneficiaryMemberId: memberId },
+            ];
         }
         const validSortFields = ['createdAt', 'amount', 'level', 'status'];
-        const orderByField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+        const orderByField = validSortFields.includes(sortBy)
+            ? sortBy
+            : 'createdAt';
         const [total, ledgers, summaryGroups] = await Promise.all([
             this.prisma.repurchaseCommissionLedger.count({ where }),
             this.prisma.repurchaseCommissionLedger.findMany({
@@ -400,7 +414,12 @@ let ReportsService = class ReportsService {
                         select: { id: true, memberCode: true, name: true, mobile: true },
                     },
                     repurchaseEntry: {
-                        select: { id: true, transactionRef: true, amount: true, transactionDate: true },
+                        select: {
+                            id: true,
+                            transactionRef: true,
+                            amount: true,
+                            transactionDate: true,
+                        },
                     },
                 },
             }),
@@ -591,7 +610,11 @@ let ReportsService = class ReportsService {
             const mId = g.beneficiaryMemberId;
             const memberInfo = memberMap.get(mId);
             return {
-                member: memberInfo || { id: mId, memberCode: 'UNKNOWN', name: 'Unknown' },
+                member: memberInfo || {
+                    id: mId,
+                    memberCode: 'UNKNOWN',
+                    name: 'Unknown',
+                },
                 totalEarned: Number(g._sum.amount ?? 0),
                 totalLedgers: g._count.id,
                 pendingAmount: statusMap.get(`${mId}_${client_1.CommissionStatus.PENDING}`) || 0,
@@ -644,7 +667,12 @@ let ReportsService = class ReportsService {
                         select: { id: true, memberCode: true, name: true, mobile: true },
                     },
                     repurchaseEntry: {
-                        select: { id: true, transactionRef: true, amount: true, transactionDate: true },
+                        select: {
+                            id: true,
+                            transactionRef: true,
+                            amount: true,
+                            transactionDate: true,
+                        },
                     },
                 },
             }),

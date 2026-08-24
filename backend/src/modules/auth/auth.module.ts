@@ -22,7 +22,8 @@ import { EmailModule } from '../email/email.module';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'dev-jwt-secret-key-12345',
+        secret:
+          configService.get<string>('JWT_SECRET') || 'dev-jwt-secret-key-12345',
         signOptions: {
           expiresIn: '15m',
         },
@@ -32,6 +33,13 @@ import { EmailModule } from '../email/email.module';
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, RolesGuard, OwnershipGuard],
-  exports: [AuthService, JwtModule, JwtStrategy, PassportModule, RolesGuard, OwnershipGuard],
+  exports: [
+    AuthService,
+    JwtModule,
+    JwtStrategy,
+    PassportModule,
+    RolesGuard,
+    OwnershipGuard,
+  ],
 })
 export class AuthModule {}

@@ -74,8 +74,8 @@ describe('DashboardService', () => {
     it('should aggregate member counts and status breakdown correctly', async () => {
       mockPrismaService.member.count
         .mockResolvedValueOnce(100) // total
-        .mockResolvedValueOnce(5)   // today
-        .mockResolvedValueOnce(20)  // week
+        .mockResolvedValueOnce(5) // today
+        .mockResolvedValueOnce(20) // week
         .mockResolvedValueOnce(50); // month
 
       mockPrismaService.member.groupBy.mockResolvedValueOnce([
@@ -129,19 +129,44 @@ describe('DashboardService', () => {
 
   describe('getEarningsStats', () => {
     it('should aggregate membership earnings, repurchase earnings, distributed & pending payouts', async () => {
-      mockPrismaService.membershipCommissionLedger.groupBy.mockResolvedValueOnce([
-        { status: CommissionStatus.DISBURSED, _sum: { amount: 5000 }, _count: { id: 10 } },
-        { status: CommissionStatus.PENDING, _sum: { amount: 1000 }, _count: { id: 2 } },
-      ]);
+      mockPrismaService.membershipCommissionLedger.groupBy.mockResolvedValueOnce(
+        [
+          {
+            status: CommissionStatus.DISBURSED,
+            _sum: { amount: 5000 },
+            _count: { id: 10 },
+          },
+          {
+            status: CommissionStatus.PENDING,
+            _sum: { amount: 1000 },
+            _count: { id: 2 },
+          },
+        ],
+      );
 
-      mockPrismaService.repurchaseCommissionLedger.groupBy.mockResolvedValueOnce([
-        { status: CommissionStatus.DISBURSED, _sum: { amount: 3000 }, _count: { id: 6 } },
-        { status: CommissionStatus.PENDING, _sum: { amount: 500 }, _count: { id: 1 } },
-      ]);
+      mockPrismaService.repurchaseCommissionLedger.groupBy.mockResolvedValueOnce(
+        [
+          {
+            status: CommissionStatus.DISBURSED,
+            _sum: { amount: 3000 },
+            _count: { id: 6 },
+          },
+          {
+            status: CommissionStatus.PENDING,
+            _sum: { amount: 500 },
+            _count: { id: 1 },
+          },
+        ],
+      );
 
       mockPrismaService.distributionRecord.aggregate
         .mockResolvedValueOnce({
-          _sum: { netAmount: 7000, grossAmount: 8000, tdsAmount: 400, adminFee: 600 },
+          _sum: {
+            netAmount: 7000,
+            grossAmount: 8000,
+            tdsAmount: 400,
+            adminFee: 600,
+          },
           _count: { id: 15 },
         })
         .mockResolvedValueOnce({
@@ -176,17 +201,34 @@ describe('DashboardService', () => {
 
       mockPrismaService.$queryRaw.mockResolvedValueOnce([]);
 
-      mockPrismaService.membershipCommissionLedger.groupBy.mockResolvedValueOnce([
-        { status: CommissionStatus.DISBURSED, _sum: { amount: 2000 }, _count: { id: 4 } },
-      ]);
+      mockPrismaService.membershipCommissionLedger.groupBy.mockResolvedValueOnce(
+        [
+          {
+            status: CommissionStatus.DISBURSED,
+            _sum: { amount: 2000 },
+            _count: { id: 4 },
+          },
+        ],
+      );
 
-      mockPrismaService.repurchaseCommissionLedger.groupBy.mockResolvedValueOnce([
-        { status: CommissionStatus.DISBURSED, _sum: { amount: 1000 }, _count: { id: 2 } },
-      ]);
+      mockPrismaService.repurchaseCommissionLedger.groupBy.mockResolvedValueOnce(
+        [
+          {
+            status: CommissionStatus.DISBURSED,
+            _sum: { amount: 1000 },
+            _count: { id: 2 },
+          },
+        ],
+      );
 
       mockPrismaService.distributionRecord.aggregate
         .mockResolvedValueOnce({
-          _sum: { netAmount: 2500, grossAmount: 3000, tdsAmount: 200, adminFee: 300 },
+          _sum: {
+            netAmount: 2500,
+            grossAmount: 3000,
+            tdsAmount: 200,
+            adminFee: 300,
+          },
           _count: { id: 5 },
         })
         .mockResolvedValueOnce({
@@ -245,7 +287,12 @@ describe('DashboardService', () => {
           amount: 1500,
           transactionDate: now,
           remarks: 'Monthly repurchase',
-          member: { id: 'm-100', memberCode: 'AK10100', name: 'Jane Doe', role: 'MEMBER' },
+          member: {
+            id: 'm-100',
+            memberCode: 'AK10100',
+            name: 'Jane Doe',
+            role: 'MEMBER',
+          },
         },
       ]);
 
@@ -259,7 +306,12 @@ describe('DashboardService', () => {
           status: 'COMPLETED',
           createdAt: twentyMinsAgo,
           completedAt: twentyMinsAgo,
-          processor: { id: 'admin-1', memberCode: 'ADM001', name: 'Admin', role: 'ADMIN' },
+          processor: {
+            id: 'admin-1',
+            memberCode: 'ADM001',
+            name: 'Admin',
+            role: 'ADMIN',
+          },
         },
       ]);
 
@@ -272,11 +324,21 @@ describe('DashboardService', () => {
           actorRole: 'ADMIN',
           metadata: { version: 2 },
           createdAt: thirtyMinsAgo,
-          actor: { id: 'admin-1', memberCode: 'ADM001', name: 'Admin', role: 'ADMIN' },
+          actor: {
+            id: 'admin-1',
+            memberCode: 'ADM001',
+            name: 'Admin',
+            role: 'ADMIN',
+          },
         },
       ]);
 
-      const res = await service.getActivityFeed({ type: ActivityCategory.ALL, page: 1, limit: 10, refresh: true });
+      const res = await service.getActivityFeed({
+        type: ActivityCategory.ALL,
+        page: 1,
+        limit: 10,
+        refresh: true,
+      });
 
       expect(res.data.length).toBe(4);
       expect(res.meta.total).toBe(4);
@@ -295,9 +357,9 @@ describe('DashboardService', () => {
     it('should throw NotFoundException if member does not exist', async () => {
       mockPrismaService.member.findUnique.mockResolvedValueOnce(null);
 
-      await expect(service.getMemberPersonalDashboard('non-existent-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.getMemberPersonalDashboard('non-existent-id'),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should return member-scoped dashboard metrics', async () => {
@@ -310,34 +372,44 @@ describe('DashboardService', () => {
         status: 'ACTIVE',
         role: 'MEMBER',
         joiningDate: new Date('2026-01-01'),
-        referrer: { id: 'sponsor-1', memberCode: 'AK10001', name: 'Sponsor User' },
+        referrer: {
+          id: 'sponsor-1',
+          memberCode: 'AK10001',
+          name: 'Sponsor User',
+        },
       });
 
       mockPrismaService.member.count
-        .mockResolvedValueOnce(5)  // direct referrals total
+        .mockResolvedValueOnce(5) // direct referrals total
         .mockResolvedValueOnce(4); // active direct referrals
 
-      mockPrismaService.membershipCommissionLedger.groupBy.mockResolvedValueOnce([
-        { status: CommissionStatus.DISBURSED, _sum: { amount: 1000 } },
-        { status: CommissionStatus.PENDING, _sum: { amount: 250 } },
-      ]);
+      mockPrismaService.membershipCommissionLedger.groupBy.mockResolvedValueOnce(
+        [
+          { status: CommissionStatus.DISBURSED, _sum: { amount: 1000 } },
+          { status: CommissionStatus.PENDING, _sum: { amount: 250 } },
+        ],
+      );
 
-      mockPrismaService.repurchaseCommissionLedger.groupBy.mockResolvedValueOnce([
-        { status: CommissionStatus.DISBURSED, _sum: { amount: 500 } },
-      ]);
+      mockPrismaService.repurchaseCommissionLedger.groupBy.mockResolvedValueOnce(
+        [{ status: CommissionStatus.DISBURSED, _sum: { amount: 500 } }],
+      );
 
-      mockPrismaService.membershipCommissionLedger.findMany.mockResolvedValueOnce([
-        {
-          id: 'mled-1',
-          amount: 100,
-          level: 1,
-          status: 'DISBURSED',
-          createdAt: new Date('2026-08-14T08:00:00Z'),
-          sourceMember: { id: 'm-2', memberCode: 'AK10002', name: 'Ref 1' },
-        },
-      ]);
+      mockPrismaService.membershipCommissionLedger.findMany.mockResolvedValueOnce(
+        [
+          {
+            id: 'mled-1',
+            amount: 100,
+            level: 1,
+            status: 'DISBURSED',
+            createdAt: new Date('2026-08-14T08:00:00Z'),
+            sourceMember: { id: 'm-2', memberCode: 'AK10002', name: 'Ref 1' },
+          },
+        ],
+      );
 
-      mockPrismaService.repurchaseCommissionLedger.findMany.mockResolvedValueOnce([]);
+      mockPrismaService.repurchaseCommissionLedger.findMany.mockResolvedValueOnce(
+        [],
+      );
 
       mockPrismaService.$queryRaw.mockResolvedValueOnce([
         { id: 'm-1', status: 'ACTIVE' },

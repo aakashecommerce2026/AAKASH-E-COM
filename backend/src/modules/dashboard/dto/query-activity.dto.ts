@@ -1,4 +1,13 @@
-import { IsOptional, IsString, IsInt, IsEnum, IsDateString, Min, Max, IsBoolean } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsInt,
+  IsEnum,
+  IsDateString,
+  Min,
+  Max,
+  IsBoolean,
+} from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -50,7 +59,10 @@ export class QueryActivityDto {
     default: false,
   })
   @IsOptional()
-  @Transform(({ value }) => value === 'true' || value === true || value === '1' || value === 1)
+  @Transform(
+    ({ value }) =>
+      value === 'true' || value === true || value === '1' || value === 1,
+  )
   @IsBoolean()
   refresh?: boolean = false;
 }

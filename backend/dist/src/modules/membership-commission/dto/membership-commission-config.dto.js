@@ -47,20 +47,29 @@ class CreateCommissionConfigDto {
 }
 exports.CreateCommissionConfigDto = CreateCommissionConfigDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 2, description: 'Version number for rate table configuration' }),
+    (0, swagger_1.ApiProperty)({
+        example: 2,
+        description: 'Version number for rate table configuration',
+    }),
     (0, class_validator_1.IsInt)(),
     (0, class_validator_1.Min)(1),
     __metadata("design:type", Number)
 ], CreateCommissionConfigDto.prototype, "version", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ type: [LevelRateDto], description: 'List of rates for 20 levels' }),
+    (0, swagger_1.ApiProperty)({
+        type: [LevelRateDto],
+        description: 'List of rates for 20 levels',
+    }),
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.ValidateNested)({ each: true }),
     (0, class_transformer_1.Type)(() => LevelRateDto),
     __metadata("design:type", Array)
 ], CreateCommissionConfigDto.prototype, "rates", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: true, description: 'Set as current active version' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        example: true,
+        description: 'Set as current active version',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)

@@ -1,6 +1,9 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { QueryPeriodReportDto, ReportType } from './dto/query-period-report.dto';
+import {
+  QueryPeriodReportDto,
+  ReportType,
+} from './dto/query-period-report.dto';
 import { CommissionStatus, MemberStatus, Prisma } from '@prisma/client';
 
 export type PeriodType = 'daily' | 'weekly' | 'monthly';
@@ -31,7 +34,11 @@ export class AdminReportsService {
   /**
    * Calculates default date range based on periodicity if not provided by user
    */
-  private getDefaultDateRange(period: PeriodType, startDateStr?: string, endDateStr?: string) {
+  private getDefaultDateRange(
+    period: PeriodType,
+    startDateStr?: string,
+    endDateStr?: string,
+  ) {
     const end = endDateStr ? new Date(endDateStr) : new Date();
     end.setHours(23, 59, 59, 999);
 
@@ -79,17 +86,25 @@ export class AdminReportsService {
     if (tempDate.getDay() !== 4) {
       tempDate.setMonth(0, 1 + ((4 - tempDate.getDay() + 7) % 7));
     }
-    const weekNum = 1 + Math.round((firstThursday - tempDate.valueOf()) / 604800000);
+    const weekNum =
+      1 + Math.round((firstThursday - tempDate.valueOf()) / 604800000);
     return `${yyyy}-W${String(weekNum).padStart(2, '0')}`;
   }
 
   /**
    * 1. Member Registrations Report (Daily, Weekly, Monthly)
    */
-  private async getMemberRegistrationsReport(period: PeriodType, query: QueryPeriodReportDto) {
+  private async getMemberRegistrationsReport(
+    period: PeriodType,
+    query: QueryPeriodReportDto,
+  ) {
     const { page = 1, limit = 10 } = query;
     const skip = (page - 1) * limit;
-    const { start, end } = this.getDefaultDateRange(period, query.startDate, query.endDate);
+    const { start, end } = this.getDefaultDateRange(
+      period,
+      query.startDate,
+      query.endDate,
+    );
 
     const where: Prisma.MemberWhereInput = {
       joiningDate: {
@@ -98,38 +113,39 @@ export class AdminReportsService {
       },
     };
 
-    const [totalRegistrations, statusGroups, members, rawMembersList] = await Promise.all([
-      this.prisma.member.count({ where }),
-      this.prisma.member.groupBy({
-        by: ['status'],
-        where,
-        _count: { id: true },
-      }),
-      this.prisma.member.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { joiningDate: 'desc' },
-        select: {
-          id: true,
-          memberCode: true,
-          name: true,
-          email: true,
-          mobile: true,
-          status: true,
-          role: true,
-          joiningDate: true,
-          referrer: {
-            select: { id: true, memberCode: true, name: true },
+    const [totalRegistrations, statusGroups, members, rawMembersList] =
+      await Promise.all([
+        this.prisma.member.count({ where }),
+        this.prisma.member.groupBy({
+          by: ['status'],
+          where,
+          _count: { id: true },
+        }),
+        this.prisma.member.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: { joiningDate: 'desc' },
+          select: {
+            id: true,
+            memberCode: true,
+            name: true,
+            email: true,
+            mobile: true,
+            status: true,
+            role: true,
+            joiningDate: true,
+            referrer: {
+              select: { id: true, memberCode: true, name: true },
+            },
           },
-        },
-      }),
-      this.prisma.member.findMany({
-        where,
-        select: { joiningDate: true, status: true },
-        orderBy: { joiningDate: 'asc' },
-      }),
-    ]);
+        }),
+        this.prisma.member.findMany({
+          where,
+          select: { joiningDate: true, status: true },
+          orderBy: { joiningDate: 'asc' },
+        }),
+      ]);
 
     const statusBreakdown: Record<string, number> = {
       ACTIVE: 0,
@@ -142,7 +158,10 @@ export class AdminReportsService {
       statusBreakdown[g.status] = g._count.id;
     });
 
-    const periodMap = new Map<string, { total: number; active: number; pending: number }>();
+    const periodMap = new Map<
+      string,
+      { total: number; active: number; pending: number }
+    >();
     rawMembersList.forEach((m) => {
       const key = this.formatPeriodKey(new Date(m.joiningDate), period);
       const curr = periodMap.get(key) || { total: 0, active: 0, pending: 0 };
@@ -181,10 +200,17 @@ export class AdminReportsService {
   /**
    * 2. Repurchase Activities Report (Daily, Weekly, Monthly)
    */
-  private async getRepurchaseActivitiesReport(period: PeriodType, query: QueryPeriodReportDto) {
+  private async getRepurchaseActivitiesReport(
+    period: PeriodType,
+    query: QueryPeriodReportDto,
+  ) {
     const { page = 1, limit = 10 } = query;
     const skip = (page - 1) * limit;
-    const { start, end } = this.getDefaultDateRange(period, query.startDate, query.endDate);
+    const { start, end } = this.getDefaultDateRange(
+      period,
+      query.startDate,
+      query.endDate,
+    );
 
     const where: Prisma.RepurchaseEntryWhereInput = {
       transactionDate: {
@@ -194,40 +220,45 @@ export class AdminReportsService {
       deletedAt: null,
     };
 
-    const [totalOrders, aggregateResult, repurchaseList, rawRepurchases, commissionAgg] =
-      await Promise.all([
-        this.prisma.repurchaseEntry.count({ where }),
-        this.prisma.repurchaseEntry.aggregate({
-          where,
-          _sum: { amount: true },
-          _avg: { amount: true },
-        }),
-        this.prisma.repurchaseEntry.findMany({
-          where,
-          skip,
-          take: limit,
-          orderBy: { transactionDate: 'desc' },
-          include: {
-            member: {
-              select: { id: true, memberCode: true, name: true, mobile: true },
-            },
+    const [
+      totalOrders,
+      aggregateResult,
+      repurchaseList,
+      rawRepurchases,
+      commissionAgg,
+    ] = await Promise.all([
+      this.prisma.repurchaseEntry.count({ where }),
+      this.prisma.repurchaseEntry.aggregate({
+        where,
+        _sum: { amount: true },
+        _avg: { amount: true },
+      }),
+      this.prisma.repurchaseEntry.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { transactionDate: 'desc' },
+        include: {
+          member: {
+            select: { id: true, memberCode: true, name: true, mobile: true },
           },
-        }),
-        this.prisma.repurchaseEntry.findMany({
-          where,
-          select: { transactionDate: true, amount: true },
-          orderBy: { transactionDate: 'asc' },
-        }),
-        this.prisma.repurchaseCommissionLedger.aggregate({
-          where: {
-            repurchaseEntry: {
-              transactionDate: { gte: start, lte: end },
-              deletedAt: null,
-            },
+        },
+      }),
+      this.prisma.repurchaseEntry.findMany({
+        where,
+        select: { transactionDate: true, amount: true },
+        orderBy: { transactionDate: 'asc' },
+      }),
+      this.prisma.repurchaseCommissionLedger.aggregate({
+        where: {
+          repurchaseEntry: {
+            transactionDate: { gte: start, lte: end },
+            deletedAt: null,
           },
-          _sum: { amount: true },
-        }),
-      ]);
+        },
+        _sum: { amount: true },
+      }),
+    ]);
 
     const totalVolume = Number(aggregateResult._sum.amount ?? 0);
     const averageOrderValue = Number(aggregateResult._avg.amount ?? 0);
@@ -283,8 +314,15 @@ export class AdminReportsService {
   /**
    * 3. Earnings Summary Report (Daily, Weekly, Monthly)
    */
-  private async getEarningsSummaryReport(period: PeriodType, query: QueryPeriodReportDto) {
-    const { start, end } = this.getDefaultDateRange(period, query.startDate, query.endDate);
+  private async getEarningsSummaryReport(
+    period: PeriodType,
+    query: QueryPeriodReportDto,
+  ) {
+    const { start, end } = this.getDefaultDateRange(
+      period,
+      query.startDate,
+      query.endDate,
+    );
 
     const membershipWhere: Prisma.MembershipCommissionLedgerWhereInput = {
       createdAt: { gte: start, lte: end },
@@ -315,7 +353,12 @@ export class AdminReportsService {
       }),
       this.prisma.distributionRecord.aggregate({
         where: distributionWhere,
-        _sum: { grossAmount: true, netAmount: true, tdsAmount: true, adminFee: true },
+        _sum: {
+          grossAmount: true,
+          netAmount: true,
+          tdsAmount: true,
+          adminFee: true,
+        },
       }),
       this.prisma.membershipCommissionLedger.findMany({
         where: membershipWhere,
@@ -335,7 +378,10 @@ export class AdminReportsService {
     const totalTdsDeducted = Number(distributionAgg._sum.tdsAmount ?? 0);
     const totalAdminFeeDeducted = Number(distributionAgg._sum.adminFee ?? 0);
 
-    const periodMap = new Map<string, { membership: number; repurchase: number }>();
+    const periodMap = new Map<
+      string,
+      { membership: number; repurchase: number }
+    >();
 
     rawMembership.forEach((m) => {
       const key = this.formatPeriodKey(new Date(m.createdAt), period);
@@ -378,7 +424,10 @@ export class AdminReportsService {
   /**
    * 4. Business Summary Report (Daily, Weekly, Monthly)
    */
-  private async getBusinessSummaryReport(period: PeriodType, query: QueryPeriodReportDto) {
+  private async getBusinessSummaryReport(
+    period: PeriodType,
+    query: QueryPeriodReportDto,
+  ) {
     const [regReport, repurchaseReport, earningsReport] = await Promise.all([
       this.getMemberRegistrationsReport(period, query),
       this.getRepurchaseActivitiesReport(period, query),

@@ -1,5 +1,21 @@
-import { Controller, Get, Query, Param, Res, UseGuards, Optional, Inject, NotFoundException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Query,
+  Param,
+  Res,
+  UseGuards,
+  Optional,
+  Inject,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+} from '@nestjs/swagger';
 import { MemberRole } from '@prisma/client';
 import { InjectQueue } from '@nestjs/bull';
 import type { Queue } from 'bull';
@@ -26,7 +42,9 @@ export class AdminReportsController {
     private readonly adminReportsService: AdminReportsService,
     private readonly pdfExportService: PdfExportService,
     private readonly excelExportService: ExcelExportService,
-    @Optional() @InjectQueue('report-export-queue') private readonly exportQueue?: Queue,
+    @Optional()
+    @InjectQueue('report-export-queue')
+    private readonly exportQueue?: Queue,
   ) {
     if (!fs.existsSync(this.exportsDir)) {
       fs.mkdirSync(this.exportsDir, { recursive: true });
@@ -35,30 +53,45 @@ export class AdminReportsController {
 
   @Get('daily')
   @ApiOperation({
-    summary: 'GET /admin/reports/daily — Daily reports for member registrations, repurchase, earnings, or business summary',
-    description: 'Generates daily-bucketed reports for member registrations, repurchase activities, earnings summary, or business summary.',
+    summary:
+      'GET /admin/reports/daily — Daily reports for member registrations, repurchase, earnings, or business summary',
+    description:
+      'Generates daily-bucketed reports for member registrations, repurchase activities, earnings summary, or business summary.',
   })
-  @ApiResponse({ status: 200, description: 'Structured JSON daily report output' })
+  @ApiResponse({
+    status: 200,
+    description: 'Structured JSON daily report output',
+  })
   async getDailyReport(@Query() query: QueryPeriodReportDto) {
     return this.adminReportsService.getPeriodReport('daily', query);
   }
 
   @Get('weekly')
   @ApiOperation({
-    summary: 'GET /admin/reports/weekly — Weekly reports for member registrations, repurchase, earnings, or business summary',
-    description: 'Generates weekly-bucketed reports for member registrations, repurchase activities, earnings summary, or business summary.',
+    summary:
+      'GET /admin/reports/weekly — Weekly reports for member registrations, repurchase, earnings, or business summary',
+    description:
+      'Generates weekly-bucketed reports for member registrations, repurchase activities, earnings summary, or business summary.',
   })
-  @ApiResponse({ status: 200, description: 'Structured JSON weekly report output' })
+  @ApiResponse({
+    status: 200,
+    description: 'Structured JSON weekly report output',
+  })
   async getWeeklyReport(@Query() query: QueryPeriodReportDto) {
     return this.adminReportsService.getPeriodReport('weekly', query);
   }
 
   @Get('monthly')
   @ApiOperation({
-    summary: 'GET /admin/reports/monthly — Monthly reports for member registrations, repurchase, earnings, or business summary',
-    description: 'Generates monthly-bucketed reports for member registrations, repurchase activities, earnings summary, or business summary.',
+    summary:
+      'GET /admin/reports/monthly — Monthly reports for member registrations, repurchase, earnings, or business summary',
+    description:
+      'Generates monthly-bucketed reports for member registrations, repurchase activities, earnings summary, or business summary.',
   })
-  @ApiResponse({ status: 200, description: 'Structured JSON monthly report output' })
+  @ApiResponse({
+    status: 200,
+    description: 'Structured JSON monthly report output',
+  })
   async getMonthlyReport(@Query() query: QueryPeriodReportDto) {
     return this.adminReportsService.getPeriodReport('monthly', query);
   }
@@ -66,9 +99,13 @@ export class AdminReportsController {
   @Get('export/pdf')
   @ApiOperation({
     summary: 'GET /admin/reports/export/pdf — Export reports to PDF format',
-    description: 'Builds a PDF report document using pdf-lib. If async=true, enqueues Bull queue job and returns download link.',
+    description:
+      'Builds a PDF report document using pdf-lib. If async=true, enqueues Bull queue job and returns download link.',
   })
-  @ApiResponse({ status: 200, description: 'PDF file binary stream or queued background job details' })
+  @ApiResponse({
+    status: 200,
+    description: 'PDF file binary stream or queued background job details',
+  })
   async exportPdf(@Query() query: QueryPeriodReportDto, @Res() res: Response) {
     const period: PeriodType = (query.period as PeriodType) || 'daily';
 
@@ -76,8 +113,15 @@ export class AdminReportsController {
       return this.handleAsyncExport('pdf', period, query, res);
     }
 
-    const reportData = await this.adminReportsService.getPeriodReport(period, query);
-    const pdfBuffer = await this.pdfExportService.generateReportPdf(query.type, period, reportData);
+    const reportData = await this.adminReportsService.getPeriodReport(
+      period,
+      query,
+    );
+    const pdfBuffer = await this.pdfExportService.generateReportPdf(
+      query.type,
+      period,
+      reportData,
+    );
 
     const filename = `report_${query.type}_${period}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
@@ -87,35 +131,63 @@ export class AdminReportsController {
 
   @Get('export/excel')
   @ApiOperation({
-    summary: 'GET /admin/reports/export/excel — Export reports to Excel format using ExcelJS',
-    description: 'Builds an Excel spreadsheet matching report type column headers. If async=true, enqueues Bull queue job.',
+    summary:
+      'GET /admin/reports/export/excel — Export reports to Excel format using ExcelJS',
+    description:
+      'Builds an Excel spreadsheet matching report type column headers. If async=true, enqueues Bull queue job.',
   })
-  @ApiResponse({ status: 200, description: 'Excel spreadsheet binary stream or queued background job details' })
-  async exportExcel(@Query() query: QueryPeriodReportDto, @Res() res: Response) {
+  @ApiResponse({
+    status: 200,
+    description:
+      'Excel spreadsheet binary stream or queued background job details',
+  })
+  async exportExcel(
+    @Query() query: QueryPeriodReportDto,
+    @Res() res: Response,
+  ) {
     const period: PeriodType = (query.period as PeriodType) || 'daily';
 
     if (query.async) {
       return this.handleAsyncExport('excel', period, query, res);
     }
 
-    const reportData = await this.adminReportsService.getPeriodReport(period, query);
-    const excelBuffer = await this.excelExportService.generateReportExcel(query.type, period, reportData);
+    const reportData = await this.adminReportsService.getPeriodReport(
+      period,
+      query,
+    );
+    const excelBuffer = await this.excelExportService.generateReportExcel(
+      query.type,
+      period,
+      reportData,
+    );
 
     const filename = `report_${query.type}_${period}.xlsx`;
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     return res.send(excelBuffer);
   }
 
   @Get('export/status/:jobId')
   @ApiOperation({
-    summary: 'GET /admin/reports/export/status/:jobId — Check background export job status',
-    description: 'Queries status of background report export job dispatched to Bull queue.',
+    summary:
+      'GET /admin/reports/export/status/:jobId — Check background export job status',
+    description:
+      'Queries status of background report export job dispatched to Bull queue.',
   })
-  @ApiParam({ name: 'jobId', description: 'Job ID returned when enqueuing export' })
+  @ApiParam({
+    name: 'jobId',
+    description: 'Job ID returned when enqueuing export',
+  })
   async getExportStatus(@Param('jobId') jobId: string) {
     if (!this.exportQueue) {
-      return { jobId, status: 'completed', message: 'Direct execution mode (Queue offline)' };
+      return {
+        jobId,
+        status: 'completed',
+        message: 'Direct execution mode (Queue offline)',
+      };
     }
 
     const job = await this.exportQueue.getJob(jobId);
@@ -137,23 +209,36 @@ export class AdminReportsController {
 
   @Get('export/download/:filename')
   @ApiOperation({
-    summary: 'GET /admin/reports/export/download/:filename — Download generated export file',
-    description: 'Downloads previously generated report export file stored on disk.',
+    summary:
+      'GET /admin/reports/export/download/:filename — Download generated export file',
+    description:
+      'Downloads previously generated report export file stored on disk.',
   })
   @ApiParam({ name: 'filename', description: 'Filename of exported report' })
-  async downloadExportFile(@Param('filename') filename: string, @Res() res: Response) {
+  async downloadExportFile(
+    @Param('filename') filename: string,
+    @Res() res: Response,
+  ) {
     const safeFilename = path.basename(filename);
     const filePath = path.join(this.exportsDir, safeFilename);
 
     if (!fs.existsSync(filePath)) {
-      throw new NotFoundException(`Exported file '${safeFilename}' not found or expired`);
+      throw new NotFoundException(
+        `Exported file '${safeFilename}' not found or expired`,
+      );
     }
 
     const ext = path.extname(safeFilename).toLowerCase();
-    const contentType = ext === '.pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    const contentType =
+      ext === '.pdf'
+        ? 'application/pdf'
+        : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
     res.setHeader('Content-Type', contentType);
-    res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${safeFilename}"`,
+    );
     return res.sendFile(filePath);
   }
 
@@ -181,7 +266,8 @@ export class AdminReportsController {
         return res.status(202).json({
           jobId,
           status: 'queued',
-          message: 'Report export job successfully enqueued for background processing.',
+          message:
+            'Report export job successfully enqueued for background processing.',
           statusUrl: `/admin/reports/export/status/${jobId}`,
           downloadUrl: `/admin/reports/export/download/${expectedFilename}`,
         });
@@ -191,11 +277,22 @@ export class AdminReportsController {
     }
 
     // Direct synchronous fallback
-    const reportData = await this.adminReportsService.getPeriodReport(period, query);
+    const reportData = await this.adminReportsService.getPeriodReport(
+      period,
+      query,
+    );
     const buffer =
       format === 'pdf'
-        ? await this.pdfExportService.generateReportPdf(query.type, period, reportData)
-        : await this.excelExportService.generateReportExcel(query.type, period, reportData);
+        ? await this.pdfExportService.generateReportPdf(
+            query.type,
+            period,
+            reportData,
+          )
+        : await this.excelExportService.generateReportExcel(
+            query.type,
+            period,
+            reportData,
+          );
 
     const ext = format === 'pdf' ? 'pdf' : 'xlsx';
     const filename = `report_${query.type}_${period}_${jobId}.${ext}`;

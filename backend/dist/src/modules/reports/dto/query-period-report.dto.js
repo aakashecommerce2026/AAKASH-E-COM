@@ -55,26 +55,36 @@ __decorate([
     __metadata("design:type", String)
 ], QueryPeriodReportDto.prototype, "period", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Filter by start date (ISO string e.g. 2026-01-01)' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Filter by start date (ISO string e.g. 2026-01-01)',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], QueryPeriodReportDto.prototype, "startDate", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Filter by end date (ISO string e.g. 2026-12-31)' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Filter by end date (ISO string e.g. 2026-12-31)',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], QueryPeriodReportDto.prototype, "endDate", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Run export asynchronously via Bull queue', default: false }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Run export asynchronously via Bull queue',
+        default: false,
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_transformer_1.Transform)(({ value }) => value === 'true' || value === true),
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], QueryPeriodReportDto.prototype, "async", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Page number for paginated list items', default: 1 }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Page number for paginated list items',
+        default: 1,
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_transformer_1.Type)(() => Number),
     (0, class_validator_1.IsInt)(),

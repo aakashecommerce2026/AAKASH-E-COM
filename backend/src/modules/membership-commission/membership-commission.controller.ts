@@ -39,7 +39,8 @@ export class MembershipCommissionController {
 
   @Get('config')
   @ApiOperation({
-    summary: 'Get active 20-level membership commission rate configuration table',
+    summary:
+      'Get active 20-level membership commission rate configuration table',
     description:
       'Fetches the active version (or specified version) 20-level percentage schedule from database configuration.',
   })
@@ -59,7 +60,8 @@ export class MembershipCommissionController {
   @Post('config')
   @Roles(MemberRole.ADMIN)
   @ApiOperation({
-    summary: 'Publish a versioned 20-level commission rate configuration (Admin only)',
+    summary:
+      'Publish a versioned 20-level commission rate configuration (Admin only)',
     description:
       'Stores a new versioned 20-level percentage schedule in DB. Deactivates older active versions if isActive is true, making future rate updates safe without code edits.',
   })
@@ -99,18 +101,24 @@ export class MembershipCommissionController {
     type: MembershipCommissionResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Ledger not found' })
-  async findById(@Param('id') id: string): Promise<MembershipCommissionResponseDto> {
+  async findById(
+    @Param('id') id: string,
+  ): Promise<MembershipCommissionResponseDto> {
     return this.membershipCommissionService.findById(id);
   }
 
   @Post('trigger/:memberId')
   @Roles(MemberRole.ADMIN, MemberRole.SUB_ADMIN)
   @ApiOperation({
-    summary: 'Manually trigger or re-process 20-level registration commission engine for a member (Admin)',
+    summary:
+      'Manually trigger or re-process 20-level registration commission engine for a member (Admin)',
     description:
       'Walks up the 20-level referral tree for target memberId and calculates membership commission ledgers if not already present.',
   })
-  @ApiParam({ name: 'memberId', description: 'UUID of the newly registered member' })
+  @ApiParam({
+    name: 'memberId',
+    description: 'UUID of the newly registered member',
+  })
   @ApiResponse({
     status: 201,
     description: 'Commission ledgers generated successfully',

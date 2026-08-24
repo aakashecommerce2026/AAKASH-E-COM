@@ -68,7 +68,11 @@ __decorate([
     __metadata("design:type", String)
 ], QueryMembersDto.prototype, "sortBy", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'desc', enum: ['asc', 'desc'], default: 'desc' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        example: 'desc',
+        enum: ['asc', 'desc'],
+        default: 'desc',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(['asc', 'desc']),
     __metadata("design:type", String)

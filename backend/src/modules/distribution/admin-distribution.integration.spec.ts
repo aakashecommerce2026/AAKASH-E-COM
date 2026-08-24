@@ -4,7 +4,11 @@ import { DistributionService } from './distribution.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { CommissionStatus, DistributionBatchStatus, MemberRole } from '@prisma/client';
+import {
+  CommissionStatus,
+  DistributionBatchStatus,
+  MemberRole,
+} from '@prisma/client';
 
 describe('Admin Distribution Integration Test Suite', () => {
   let controller: AdminDistributionController;
@@ -113,7 +117,9 @@ describe('Admin Distribution Integration Test Suite', () => {
       ],
     }).compile();
 
-    controller = module.get<AdminDistributionController>(AdminDistributionController);
+    controller = module.get<AdminDistributionController>(
+      AdminDistributionController,
+    );
     service = module.get<DistributionService>(DistributionService);
   });
 
@@ -124,7 +130,10 @@ describe('Admin Distribution Integration Test Suite', () => {
 
   describe('1. GET /admin/distribution/pending', () => {
     it('should return pending commission summary', async () => {
-      const res = await controller.getPendingCommissions({ page: 1, limit: 10 });
+      const res = await controller.getPendingCommissions({
+        page: 1,
+        limit: 10,
+      });
 
       expect(res.data.length).toBe(1);
       expect(res.summary.totalGrossAmount).toBe(1000.0);

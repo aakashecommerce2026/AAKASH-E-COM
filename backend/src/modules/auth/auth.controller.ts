@@ -29,13 +29,18 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Authenticate member or admin and return access/refresh tokens' })
+  @ApiOperation({
+    summary: 'Authenticate member or admin and return access/refresh tokens',
+  })
   @ApiResponse({
     status: 200,
     description: 'Successfully authenticated',
     type: AuthResponseDto,
   })
-  @ApiResponse({ status: 401, description: 'Invalid credentials or account inactive' })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid credentials or account inactive',
+  })
   async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
     return this.authService.login(loginDto);
   }
@@ -43,8 +48,15 @@ export class AuthController {
   @Post('admin-login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Authenticate specifically for Admin Portal' })
-  @ApiResponse({ status: 200, description: 'Successfully authenticated as Admin', type: AuthResponseDto })
-  @ApiResponse({ status: 401, description: 'Access denied or invalid admin credentials' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully authenticated as Admin',
+    type: AuthResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Access denied or invalid admin credentials',
+  })
   async adminLogin(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
     return this.authService.login({ ...loginDto, portalType: 'Admin' });
   }
@@ -52,22 +64,33 @@ export class AuthController {
   @Post('member-login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Authenticate specifically for Member Portal' })
-  @ApiResponse({ status: 200, description: 'Successfully authenticated as Member', type: AuthResponseDto })
-  @ApiResponse({ status: 401, description: 'Access denied or invalid member credentials' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully authenticated as Member',
+    type: AuthResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Access denied or invalid member credentials',
+  })
   async memberLogin(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
     return this.authService.login({ ...loginDto, portalType: 'Member' });
   }
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Rotate access and refresh tokens using valid refresh token' })
+  @ApiOperation({
+    summary: 'Rotate access and refresh tokens using valid refresh token',
+  })
   @ApiResponse({
     status: 200,
     description: 'Tokens rotated successfully',
     type: AuthResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Invalid or expired refresh token' })
-  async refresh(@Body() refreshTokenDto: RefreshTokenDto): Promise<AuthResponseDto> {
+  async refresh(
+    @Body() refreshTokenDto: RefreshTokenDto,
+  ): Promise<AuthResponseDto> {
     return this.authService.refreshToken(refreshTokenDto);
   }
   @Post('change-password')
@@ -88,17 +111,29 @@ export class AuthController {
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Send Password Reset Email Link' })
-  @ApiResponse({ status: 200, description: 'Password reset link sent to email if account exists' })
-  async forgotPassword(@Body() dto: ForgotPasswordDto): Promise<{ message: string }> {
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset link sent to email if account exists',
+  })
+  async forgotPassword(
+    @Body() dto: ForgotPasswordDto,
+  ): Promise<{ message: string }> {
     return this.authService.forgotPassword(dto);
   }
 
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Reset Password using token / OTP code from reset email link' })
+  @ApiOperation({
+    summary: 'Reset Password using token / OTP code from reset email link',
+  })
   @ApiResponse({ status: 200, description: 'Password reset successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid or expired reset token / OTP code' })
-  async resetPassword(@Body() dto: ResetPasswordDto): Promise<{ message: string }> {
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid or expired reset token / OTP code',
+  })
+  async resetPassword(
+    @Body() dto: ResetPasswordDto,
+  ): Promise<{ message: string }> {
     return this.authService.resetPassword(dto);
   }
 }

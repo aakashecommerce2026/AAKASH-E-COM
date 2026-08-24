@@ -42,13 +42,17 @@ __decorate([
     __metadata("design:type", Number)
 ], QueryMembershipCommissionDto.prototype, "limit", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Filter by Source Member ID (registered member)' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Filter by Source Member ID (registered member)',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsUUID)(),
     __metadata("design:type", String)
 ], QueryMembershipCommissionDto.prototype, "sourceMemberId", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Filter by Beneficiary Member ID (earning member)' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Filter by Beneficiary Member ID (earning member)',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsUUID)(),
     __metadata("design:type", String)
@@ -62,13 +66,19 @@ __decorate([
     __metadata("design:type", Number)
 ], QueryMembershipCommissionDto.prototype, "level", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ enum: client_1.CommissionStatus, description: 'Filter by Commission Status' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        enum: client_1.CommissionStatus,
+        description: 'Filter by Commission Status',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(client_1.CommissionStatus),
     __metadata("design:type", String)
 ], QueryMembershipCommissionDto.prototype, "status", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'createdAt', description: 'Sort field: createdAt, amount, level' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        example: 'createdAt',
+        description: 'Sort field: createdAt, amount, level',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)

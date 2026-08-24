@@ -33,7 +33,11 @@ describe('Admin Periodic Reports Integration Test Suite', () => {
             status: MemberStatus.ACTIVE,
             role: 'MEMBER',
             joiningDate: mockDate,
-            referrer: { id: 'ref-1', memberCode: 'AK1000', name: 'Sponsor User' },
+            referrer: {
+              id: 'ref-1',
+              memberCode: 'AK1000',
+              name: 'Sponsor User',
+            },
           },
         ]),
       },
@@ -51,7 +55,12 @@ describe('Admin Periodic Reports Integration Test Suite', () => {
             amount: 1000,
             transactionDate: mockDate,
             remarks: 'Product Order',
-            member: { id: 'mem-1', memberCode: 'AK1001', name: 'John Member', mobile: '+919876543210' },
+            member: {
+              id: 'mem-1',
+              memberCode: 'AK1001',
+              name: 'John Member',
+              mobile: '+919876543210',
+            },
           },
         ]),
       },
@@ -60,22 +69,27 @@ describe('Admin Periodic Reports Integration Test Suite', () => {
           _sum: { amount: 500 },
           _count: { id: 5 },
         }),
-        findMany: jest.fn().mockResolvedValue([
-          { createdAt: mockDate, amount: 100 },
-        ]),
+        findMany: jest
+          .fn()
+          .mockResolvedValue([{ createdAt: mockDate, amount: 100 }]),
       },
       membershipCommissionLedger: {
         aggregate: jest.fn().mockResolvedValue({
           _sum: { amount: 1500 },
           _count: { id: 10 },
         }),
-        findMany: jest.fn().mockResolvedValue([
-          { createdAt: mockDate, amount: 150 },
-        ]),
+        findMany: jest
+          .fn()
+          .mockResolvedValue([{ createdAt: mockDate, amount: 150 }]),
       },
       distributionRecord: {
         aggregate: jest.fn().mockResolvedValue({
-          _sum: { grossAmount: 1200, netAmount: 1080, tdsAmount: 60, adminFee: 60 },
+          _sum: {
+            grossAmount: 1200,
+            netAmount: 1080,
+            tdsAmount: 60,
+            adminFee: 60,
+          },
         }),
       },
     };

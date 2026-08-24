@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, Logger, Optional } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Logger,
+  Optional,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { MemberStatus, Prisma } from '@prisma/client';
@@ -13,8 +18,8 @@ export enum MemberRank {
 
 export const RANK_THRESHOLDS = {
   BRONZE: 20,
-  SILVER: 50,  // 20 + 30
-  GOLD: 90,    // 50 + 40
+  SILVER: 50, // 20 + 30
+  GOLD: 90, // 50 + 40
   PLATINUM: 130, // 90 + 40
 };
 
@@ -46,13 +51,22 @@ export class PromotionsService {
   /**
    * Evaluate a member's direct active downline count and auto-promote if milestone reached.
    */
-  async evaluateAndPromoteMember(memberId: string, txPrisma?: Prisma.TransactionClient) {
+  async evaluateAndPromoteMember(
+    memberId: string,
+    txPrisma?: Prisma.TransactionClient,
+  ) {
     const client = (txPrisma || this.prisma) as any;
 
-    const member = (await client.member.findUnique({
+    const member = await client.member.findUnique({
       where: { id: memberId },
-      select: { id: true, memberCode: true, name: true, rank: true, status: true } as any,
-    })) as any;
+      select: {
+        id: true,
+        memberCode: true,
+        name: true,
+        rank: true,
+        status: true,
+      } as any,
+    });
 
     if (!member) {
       throw new NotFoundException(`Member with ID '${memberId}' not found`);
@@ -65,7 +79,9 @@ export class PromotionsService {
       },
     });
 
-    const targetRank = calculateRankFromReferralCount(activeDirectReferralsCount);
+    const targetRank = calculateRankFromReferralCount(
+      activeDirectReferralsCount,
+    );
     const currentRankOrder = RANK_HIERARCHY[member.rank as MemberRank] || 0;
     const targetRankOrder = RANK_HIERARCHY[targetRank] || 0;
 
@@ -128,7 +144,13 @@ export class PromotionsService {
   async getPromotionProgress(memberId: string) {
     const member = (await this.prisma.member.findUnique({
       where: { id: memberId },
-      select: { id: true, memberCode: true, name: true, rank: true, joiningDate: true } as any,
+      select: {
+        id: true,
+        memberCode: true,
+        name: true,
+        rank: true,
+        joiningDate: true,
+      } as any,
     })) as any;
 
     if (!member) {
@@ -169,13 +191,17 @@ export class PromotionsService {
       baseThreshold = RANK_THRESHOLDS.PLATINUM;
     }
 
-    const remainingReferralsNeeded = nextRank === 'MAX' ? 0 : Math.max(0, targetThreshold - activeDirectCount);
+    const remainingReferralsNeeded =
+      nextRank === 'MAX' ? 0 : Math.max(0, targetThreshold - activeDirectCount);
 
     let progressPercentage = 100;
     if (nextRank !== 'MAX') {
       const stepTotal = targetThreshold - baseThreshold;
       const stepProgress = Math.max(0, activeDirectCount - baseThreshold);
-      progressPercentage = Math.min(100, Math.round((stepProgress / stepTotal) * 100));
+      progressPercentage = Math.min(
+        100,
+        Math.round((stepProgress / stepTotal) * 100),
+      );
     }
 
     const history = await (this.prisma as any).promotionHistory.findMany({

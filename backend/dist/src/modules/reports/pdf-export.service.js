@@ -104,7 +104,11 @@ let PdfExportService = PdfExportService_1 = class PdfExportService {
         }
         y -= 15;
         const hasTrend = Array.isArray(reportData.trend) && reportData.trend.length > 0;
-        const tableItems = hasTrend ? reportData.trend : Array.isArray(reportData.data) ? reportData.data : [];
+        const tableItems = hasTrend
+            ? reportData.trend
+            : Array.isArray(reportData.data)
+                ? reportData.data
+                : [];
         if (tableItems.length > 0 && y > 100) {
             page.drawText(hasTrend ? 'PERIODIC TREND DATA' : 'REPORT DATA RECORDS', {
                 x: 35,
@@ -125,7 +129,9 @@ let PdfExportService = PdfExportService_1 = class PdfExportService {
             const headers = Object.keys(firstItem).slice(0, 5);
             const colWidth = (width - 70) / headers.length;
             headers.forEach((h, i) => {
-                const hLabel = h.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
+                const hLabel = h
+                    .replace(/([A-Z])/g, ' $1')
+                    .replace(/^./, (str) => str.toUpperCase());
                 page.drawText(hLabel.substring(0, 14), {
                     x: 40 + i * colWidth,
                     y,

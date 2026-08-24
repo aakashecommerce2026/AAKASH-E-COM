@@ -13,7 +13,8 @@ export class QueryMemberEarningsBreakdownDto {
   @ApiPropertyOptional({
     enum: EarningsTimeRange,
     default: EarningsTimeRange.DAILY,
-    description: 'Time-series aggregation range grouping (daily, weekly, or monthly)',
+    description:
+      'Time-series aggregation range grouping (daily, weekly, or monthly)',
   })
   @IsOptional()
   @IsEnum(EarningsTimeRange)
@@ -29,7 +30,10 @@ export class QueryMemberEarningsBreakdownDto {
   @IsString()
   endDate?: string;
 
-  @ApiPropertyOptional({ enum: CommissionStatus, description: 'Filter by commission status' })
+  @ApiPropertyOptional({
+    enum: CommissionStatus,
+    description: 'Filter by commission status',
+  })
   @IsOptional()
   @IsEnum(CommissionStatus)
   status?: CommissionStatus;

@@ -13,7 +13,10 @@ export class OtpController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Send 6-digit email OTP verification code' })
   @ApiResponse({ status: 200, description: 'OTP dispatched successfully' })
-  @ApiResponse({ status: 400, description: 'Validation error or rate limit cooldown active' })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error or rate limit cooldown active',
+  })
   async sendOtp(@Body() dto: SendOtpDto) {
     return this.otpService.sendOtp(dto);
   }
@@ -22,7 +25,10 @@ export class OtpController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Verify 6-digit email OTP code' })
   @ApiResponse({ status: 200, description: 'OTP verified successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid, expired, or incorrect OTP code' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid, expired, or incorrect OTP code',
+  })
   async verifyOtp(@Body() dto: VerifyOtpDto) {
     return this.otpService.verifyOtp(dto);
   }

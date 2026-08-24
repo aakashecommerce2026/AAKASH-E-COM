@@ -15,6 +15,7 @@ let HttpExceptionFilter = HttpExceptionFilter_1 = class HttpExceptionFilter {
         const ctx = host.switchToHttp();
         const response = ctx.getResponse();
         const request = ctx.getRequest();
+        const isProduction = process.env.NODE_ENV === 'production';
         const status = exception instanceof common_1.HttpException
             ? exception.getStatus()
             : common_1.HttpStatus.INTERNAL_SERVER_ERROR;
@@ -33,8 +34,14 @@ let HttpExceptionFilter = HttpExceptionFilter_1 = class HttpExceptionFilter {
             }
         }
         else if (exception instanceof Error) {
-            message = exception.message;
             this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
+            message = isProduction
+                ? 'An unexpected internal error occurred'
+                : exception.message;
+        }
+        else {
+            this.logger.error('Unhandled unknown exception thrown', exception);
+            message = 'An unexpected internal error occurred';
         }
         if (status === common_1.HttpStatus.UNAUTHORIZED || status === common_1.HttpStatus.FORBIDDEN) {
             this.logger.warn(`[${status}] ${request.method} ${request.url} - ${Array.isArray(message) ? message.join(', ') : message}`);

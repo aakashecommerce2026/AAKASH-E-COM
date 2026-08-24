@@ -16,17 +16,23 @@ describe('Admin Reports Export Test Suite', () => {
 
   const mockReportData = {
     periodType: 'daily',
-    dateRange: { startDate: '2026-08-01T00:00:00.000Z', endDate: '2026-08-19T23:59:59.999Z' },
+    dateRange: {
+      startDate: '2026-08-01T00:00:00.000Z',
+      endDate: '2026-08-19T23:59:59.999Z',
+    },
     summary: {
       totalRegistrations: 10,
       activeCount: 8,
       totalVolume: 5000,
     },
-    trend: [
-      { period: '2026-08-19', totalRegistrations: 10, activeCount: 8 },
-    ],
+    trend: [{ period: '2026-08-19', totalRegistrations: 10, activeCount: 8 }],
     data: [
-      { id: 'mem-1', memberCode: 'AK1001', name: 'Test Member', status: 'ACTIVE' },
+      {
+        id: 'mem-1',
+        memberCode: 'AK1001',
+        name: 'Test Member',
+        status: 'ACTIVE',
+      },
     ],
   };
 
@@ -60,7 +66,9 @@ describe('Admin Reports Export Test Suite', () => {
               id: 'job-123',
               getState: jest.fn().mockResolvedValue('completed'),
               progress: jest.fn().mockReturnValue(100),
-              returnvalue: { downloadUrl: '/admin/reports/export/download/report.pdf' },
+              returnvalue: {
+                downloadUrl: '/admin/reports/export/download/report.pdf',
+              },
             }),
           },
         },
@@ -111,11 +119,18 @@ describe('Admin Reports Export Test Suite', () => {
     it('should stream PDF file directly when async is false', async () => {
       const res = createMockResponse();
       await controller.exportPdf(
-        { type: ReportType.BUSINESS_SUMMARY, period: PeriodTypeEnum.DAILY, async: false },
+        {
+          type: ReportType.BUSINESS_SUMMARY,
+          period: PeriodTypeEnum.DAILY,
+          async: false,
+        },
         res,
       );
 
-      expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'application/pdf');
+      expect(res.setHeader).toHaveBeenCalledWith(
+        'Content-Type',
+        'application/pdf',
+      );
       expect(res.setHeader).toHaveBeenCalledWith(
         'Content-Disposition',
         expect.stringContaining('attachment; filename='),
@@ -128,7 +143,11 @@ describe('Admin Reports Export Test Suite', () => {
     it('should stream Excel file directly when async is false', async () => {
       const res = createMockResponse();
       await controller.exportExcel(
-        { type: ReportType.EARNINGS_SUMMARY, period: PeriodTypeEnum.WEEKLY, async: false },
+        {
+          type: ReportType.EARNINGS_SUMMARY,
+          period: PeriodTypeEnum.WEEKLY,
+          async: false,
+        },
         res,
       );
 
@@ -144,7 +163,11 @@ describe('Admin Reports Export Test Suite', () => {
     it('should return 202 queued response when async is true', async () => {
       const res = createMockResponse();
       await controller.exportPdf(
-        { type: ReportType.REPURCHASE_ACTIVITIES, period: PeriodTypeEnum.DAILY, async: true },
+        {
+          type: ReportType.REPURCHASE_ACTIVITIES,
+          period: PeriodTypeEnum.DAILY,
+          async: true,
+        },
         res,
       );
 
@@ -153,7 +176,9 @@ describe('Admin Reports Export Test Suite', () => {
         expect.objectContaining({
           status: 'queued',
           jobId: expect.any(String),
-          downloadUrl: expect.stringContaining('/admin/reports/export/download/'),
+          downloadUrl: expect.stringContaining(
+            '/admin/reports/export/download/',
+          ),
         }),
       );
     });
@@ -179,7 +204,10 @@ describe('Admin Reports Export Test Suite', () => {
       const res = createMockResponse();
       await controller.downloadExportFile('test_export.pdf', res);
 
-      expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'application/pdf');
+      expect(res.setHeader).toHaveBeenCalledWith(
+        'Content-Type',
+        'application/pdf',
+      );
       expect(res.sendFile).toHaveBeenCalledWith(testFile);
 
       // Clean up test file

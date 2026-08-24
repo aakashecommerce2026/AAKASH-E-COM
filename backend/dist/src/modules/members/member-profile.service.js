@@ -66,7 +66,13 @@ let MemberProfileService = class MemberProfileService {
             where: { id: memberId },
             include: {
                 referrer: {
-                    select: { id: true, memberCode: true, name: true, email: true, mobile: true },
+                    select: {
+                        id: true,
+                        memberCode: true,
+                        name: true,
+                        email: true,
+                        mobile: true,
+                    },
                 },
             },
         });
@@ -76,11 +82,13 @@ let MemberProfileService = class MemberProfileService {
         return this.mapToResponseDto(member);
     }
     async updateProfile(memberId, updateDto, actorId, actorRole) {
-        const member = await this.prisma.member.findUnique({ where: { id: memberId } });
+        const member = await this.prisma.member.findUnique({
+            where: { id: memberId },
+        });
         if (!member) {
             throw new common_1.NotFoundException(`Member with ID '${memberId}' not found`);
         }
-        const { email, mobile, name, username, address, profilePhoto, upiId, bankDetails } = updateDto;
+        const { email, mobile, name, username, address, profilePhoto, upiId, bankDetails, } = updateDto;
         if (mobile || email || username) {
             const existing = await this.prisma.member.findFirst({
                 where: {
@@ -119,7 +127,11 @@ let MemberProfileService = class MemberProfileService {
                 ...(profilePhoto !== undefined ? { profilePhoto } : {}),
                 ...(upiId !== undefined ? { upiId } : {}),
                 ...(bankDetails !== undefined
-                    ? { bankDetails: bankDetails ? JSON.parse(JSON.stringify(bankDetails)) : null }
+                    ? {
+                        bankDetails: bankDetails
+                            ? JSON.parse(JSON.stringify(bankDetails))
+                            : null,
+                    }
                     : {}),
             },
         });
@@ -137,7 +149,9 @@ let MemberProfileService = class MemberProfileService {
         return this.mapToResponseDto(updatedMember);
     }
     async updateProfilePhoto(memberId, photoUrl) {
-        const member = await this.prisma.member.findUnique({ where: { id: memberId } });
+        const member = await this.prisma.member.findUnique({
+            where: { id: memberId },
+        });
         if (!member) {
             throw new common_1.NotFoundException(`Member with ID '${memberId}' not found`);
         }
@@ -161,7 +175,9 @@ let MemberProfileService = class MemberProfileService {
         return this.mapToResponseDto(updatedMember);
     }
     async updateUpi(memberId, dto, actorId, actorRole) {
-        const member = await this.prisma.member.findUnique({ where: { id: memberId } });
+        const member = await this.prisma.member.findUnique({
+            where: { id: memberId },
+        });
         if (!member) {
             throw new common_1.NotFoundException(`Member with ID '${memberId}' not found`);
         }
@@ -192,7 +208,9 @@ let MemberProfileService = class MemberProfileService {
         return this.mapToResponseDto(updatedMember);
     }
     async changeMemberPassword(memberId, dto, actorId, actorRole) {
-        const member = await this.prisma.member.findUnique({ where: { id: memberId } });
+        const member = await this.prisma.member.findUnique({
+            where: { id: memberId },
+        });
         if (!member) {
             throw new common_1.NotFoundException(`Member with ID '${memberId}' not found`);
         }

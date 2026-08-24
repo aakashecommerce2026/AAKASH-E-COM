@@ -57,7 +57,6 @@ const generateUniqueReferralCode = (memberName, existingMembers = []) => {
 };
 
 import OtpVerificationModal from '../components/OtpVerificationModal';
-import RegisterModal from '../components/RegisterModal';
 
 const MemberManagement = () => {
   const dispatch = useDispatch();

@@ -31,13 +31,18 @@ export class DistributionService {
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
     private readonly notificationsService: NotificationsService,
-    @Optional() @InjectQueue('distribution-queue') private readonly distributionQueue?: Queue,
+    @Optional()
+    @InjectQueue('distribution-queue')
+    private readonly distributionQueue?: Queue,
   ) {}
 
   /**
    * Helper to build date range filters from optional ISO date strings.
    */
-  private buildDateWhere(startDate?: string, endDate?: string): Prisma.DateTimeFilter | undefined {
+  private buildDateWhere(
+    startDate?: string,
+    endDate?: string,
+  ): Prisma.DateTimeFilter | undefined {
     if (!startDate && !endDate) return undefined;
 
     const dateFilter: Prisma.DateTimeFilter = {};
@@ -84,7 +89,8 @@ export class DistributionService {
     return {
       pendingMembershipLedgersCount: pendingMembershipLedgers,
       pendingRepurchaseLedgersCount: pendingRepurchaseLedgers,
-      totalPendingLedgersCount: pendingMembershipLedgers + pendingRepurchaseLedgers,
+      totalPendingLedgersCount:
+        pendingMembershipLedgers + pendingRepurchaseLedgers,
       membershipGrossAmount: membershipGross,
       repurchaseGrossAmount: repurchaseGross,
       totalGrossAmount: membershipGross + repurchaseGross,
@@ -95,7 +101,14 @@ export class DistributionService {
    * 1. GET /admin/distribution/pending — aggregated view of all PENDING membership + repurchase commissions
    */
   async getPendingCommissions(query: QueryPendingDistributionDto) {
-    const { startDate, endDate, memberId, commissionType = 'ALL', page = 1, limit = 10 } = query;
+    const {
+      startDate,
+      endDate,
+      memberId,
+      commissionType = 'ALL',
+      page = 1,
+      limit = 10,
+    } = query;
 
     const dateFilter = this.buildDateWhere(startDate, endDate);
 
@@ -113,8 +126,10 @@ export class DistributionService {
       ...(memberId ? { beneficiaryMemberId: memberId } : {}),
     };
 
-    const fetchMembership = commissionType === 'ALL' || commissionType === 'MEMBERSHIP';
-    const fetchRepurchase = commissionType === 'ALL' || commissionType === 'REPURCHASE';
+    const fetchMembership =
+      commissionType === 'ALL' || commissionType === 'MEMBERSHIP';
+    const fetchRepurchase =
+      commissionType === 'ALL' || commissionType === 'REPURCHASE';
 
     const [memLedgers, repLedgers] = await Promise.all([
       fetchMembership
@@ -122,7 +137,15 @@ export class DistributionService {
             where: memWhere,
             include: {
               beneficiaryMember: {
-                select: { id: true, memberCode: true, name: true, mobile: true, email: true, bankDetails: true, status: true },
+                select: {
+                  id: true,
+                  memberCode: true,
+                  name: true,
+                  mobile: true,
+                  email: true,
+                  bankDetails: true,
+                  status: true,
+                },
               },
             },
           })
@@ -132,7 +155,15 @@ export class DistributionService {
             where: repWhere,
             include: {
               beneficiaryMember: {
-                select: { id: true, memberCode: true, name: true, mobile: true, email: true, bankDetails: true, status: true },
+                select: {
+                  id: true,
+                  memberCode: true,
+                  name: true,
+                  mobile: true,
+                  email: true,
+                  bankDetails: true,
+                  status: true,
+                },
               },
             },
           })
@@ -163,7 +194,11 @@ export class DistributionService {
         });
       }
       const entry = memberMap.get(bId)!;
-      entry.membershipLedgers.push({ ...l, amount: Number(l.amount), percentage: Number(l.percentage) });
+      entry.membershipLedgers.push({
+        ...l,
+        amount: Number(l.amount),
+        percentage: Number(l.percentage),
+      });
       entry.membershipGrossAmount += Number(l.amount);
     }
 
@@ -179,7 +214,11 @@ export class DistributionService {
         });
       }
       const entry = memberMap.get(bId)!;
-      entry.repurchaseLedgers.push({ ...l, amount: Number(l.amount), percentage: Number(l.percentage) });
+      entry.repurchaseLedgers.push({
+        ...l,
+        amount: Number(l.amount),
+        percentage: Number(l.percentage),
+      });
       entry.repurchaseGrossAmount += Number(l.amount);
     }
 
@@ -188,18 +227,25 @@ export class DistributionService {
 
     // Calculate per-member payouts with 5% TDS and 5% Admin Fee
     const formattedData = allBeneficiaryEntries.map((item) => {
-      const grossAmount = Math.round((item.membershipGrossAmount + item.repurchaseGrossAmount) * 100) / 100;
+      const grossAmount =
+        Math.round(
+          (item.membershipGrossAmount + item.repurchaseGrossAmount) * 100,
+        ) / 100;
       const tdsAmount = Math.round(grossAmount * 0.05 * 100) / 100; // 5% TDS
       const adminFee = Math.round(grossAmount * 0.05 * 100) / 100; // 5% Admin Fee
-      const netAmount = Math.round((grossAmount - tdsAmount - adminFee) * 100) / 100;
+      const netAmount =
+        Math.round((grossAmount - tdsAmount - adminFee) * 100) / 100;
 
       return {
         member: item.member,
         membershipPendingCount: item.membershipLedgers.length,
-        membershipGrossAmount: Math.round(item.membershipGrossAmount * 100) / 100,
+        membershipGrossAmount:
+          Math.round(item.membershipGrossAmount * 100) / 100,
         repurchasePendingCount: item.repurchaseLedgers.length,
-        repurchaseGrossAmount: Math.round(item.repurchaseGrossAmount * 100) / 100,
-        totalLedgerCount: item.membershipLedgers.length + item.repurchaseLedgers.length,
+        repurchaseGrossAmount:
+          Math.round(item.repurchaseGrossAmount * 100) / 100,
+        totalLedgerCount:
+          item.membershipLedgers.length + item.repurchaseLedgers.length,
         grossAmount,
         tdsAmount,
         adminFee,
@@ -297,7 +343,9 @@ export class DistributionService {
           actorRole,
         });
 
-        this.logger.log(`Enqueued distribution batch '${batch.batchNo}' (${batch.id}) to Bull queue.`);
+        this.logger.log(
+          `Enqueued distribution batch '${batch.batchNo}' (${batch.id}) to Bull queue.`,
+        );
 
         return {
           id: batch.id,
@@ -308,7 +356,9 @@ export class DistributionService {
           createdAt: batch.createdAt,
         };
       } catch (err) {
-        this.logger.warn(`Bull queue dispatch failed (${(err as Error).message}). Executing inline fallback.`);
+        this.logger.warn(
+          `Bull queue dispatch failed (${(err as Error).message}). Executing inline fallback.`,
+        );
       }
     }
 
@@ -325,7 +375,8 @@ export class DistributionService {
     actorId?: string,
     actorRole?: MemberRole,
   ) {
-    const { cutoffDate, membershipLedgerIds, repurchaseLedgerIds, memberIds } = dto;
+    const { cutoffDate, membershipLedgerIds, repurchaseLedgerIds, memberIds } =
+      dto;
     const dateFilter = cutoffDate ? { lte: new Date(cutoffDate) } : undefined;
 
     return this.prisma.$transaction(async (tx: any) => {
@@ -340,8 +391,12 @@ export class DistributionService {
         status: CommissionStatus.PENDING,
         distributionRecordId: null,
         ...(dateFilter ? { createdAt: dateFilter } : {}),
-        ...(membershipLedgerIds && membershipLedgerIds.length > 0 ? { id: { in: membershipLedgerIds } } : {}),
-        ...(memberIds && memberIds.length > 0 ? { beneficiaryMemberId: { in: memberIds } } : {}),
+        ...(membershipLedgerIds && membershipLedgerIds.length > 0
+          ? { id: { in: membershipLedgerIds } }
+          : {}),
+        ...(memberIds && memberIds.length > 0
+          ? { beneficiaryMemberId: { in: memberIds } }
+          : {}),
       };
 
       // 3. Fetch matching pending repurchase commission ledgers
@@ -349,8 +404,12 @@ export class DistributionService {
         status: CommissionStatus.PENDING,
         distributionRecordId: null,
         ...(dateFilter ? { createdAt: dateFilter } : {}),
-        ...(repurchaseLedgerIds && repurchaseLedgerIds.length > 0 ? { id: { in: repurchaseLedgerIds } } : {}),
-        ...(memberIds && memberIds.length > 0 ? { beneficiaryMemberId: { in: memberIds } } : {}),
+        ...(repurchaseLedgerIds && repurchaseLedgerIds.length > 0
+          ? { id: { in: repurchaseLedgerIds } }
+          : {}),
+        ...(memberIds && memberIds.length > 0
+          ? { beneficiaryMemberId: { in: memberIds } }
+          : {}),
       };
 
       const [memLedgers, repLedgers] = await Promise.all([
@@ -361,9 +420,14 @@ export class DistributionService {
       if (memLedgers.length === 0 && repLedgers.length === 0) {
         await tx.distributionBatch.update({
           where: { id: batchId },
-          data: { status: DistributionBatchStatus.FAILED, remarks: 'No pending ledgers matched criteria' },
+          data: {
+            status: DistributionBatchStatus.FAILED,
+            remarks: 'No pending ledgers matched criteria',
+          },
         });
-        throw new BadRequestException('No pending commission ledgers match the selected distribution criteria.');
+        throw new BadRequestException(
+          'No pending commission ledgers match the selected distribution criteria.',
+        );
       }
 
       // 4. Group selected ledgers by beneficiary member
@@ -379,7 +443,11 @@ export class DistributionService {
       for (const l of memLedgers) {
         const bId = l.beneficiaryMemberId;
         if (!memberGroupMap.has(bId)) {
-          memberGroupMap.set(bId, { membershipLedgers: [], repurchaseLedgers: [], grossAmount: 0 });
+          memberGroupMap.set(bId, {
+            membershipLedgers: [],
+            repurchaseLedgers: [],
+            grossAmount: 0,
+          });
         }
         const g = memberGroupMap.get(bId)!;
         g.membershipLedgers.push(l);
@@ -389,7 +457,11 @@ export class DistributionService {
       for (const l of repLedgers) {
         const bId = l.beneficiaryMemberId;
         if (!memberGroupMap.has(bId)) {
-          memberGroupMap.set(bId, { membershipLedgers: [], repurchaseLedgers: [], grossAmount: 0 });
+          memberGroupMap.set(bId, {
+            membershipLedgers: [],
+            repurchaseLedgers: [],
+            grossAmount: 0,
+          });
         }
         const g = memberGroupMap.get(bId)!;
         g.repurchaseLedgers.push(l);
@@ -407,7 +479,8 @@ export class DistributionService {
         const grossAmount = Math.round(group.grossAmount * 100) / 100;
         const tdsAmount = Math.round(grossAmount * 0.05 * 100) / 100; // 5% TDS
         const adminFee = Math.round(grossAmount * 0.05 * 100) / 100; // 5% Admin Fee
-        const netAmount = Math.round((grossAmount - tdsAmount - adminFee) * 100) / 100;
+        const netAmount =
+          Math.round((grossAmount - tdsAmount - adminFee) * 100) / 100;
 
         batchTotalGross += grossAmount;
         batchTotalTds += tdsAmount;
@@ -416,15 +489,23 @@ export class DistributionService {
 
         const memberInfo = await tx.member.findUnique({
           where: { id: bId },
-          select: { id: true, memberCode: true, name: true, mobile: true, email: true, bankDetails: true },
+          select: {
+            id: true,
+            memberCode: true,
+            name: true,
+            mobile: true,
+            email: true,
+            bankDetails: true,
+          },
         });
 
         const commissionType =
-          group.membershipLedgers.length > 0 && group.repurchaseLedgers.length > 0
+          group.membershipLedgers.length > 0 &&
+          group.repurchaseLedgers.length > 0
             ? 'COMBINED'
             : group.membershipLedgers.length > 0
-            ? 'MEMBERSHIP'
-            : 'REPURCHASE';
+              ? 'MEMBERSHIP'
+              : 'REPURCHASE';
 
         // Create DistributionRecord for member
         const record = await tx.distributionRecord.create({
@@ -487,17 +568,32 @@ export class DistributionService {
         where: { id: batchId },
         data: {
           totalMembers: memberGroupMap.size,
-          totalGrossAmount: new Prisma.Decimal(Math.round(batchTotalGross * 100) / 100),
-          totalTdsAmount: new Prisma.Decimal(Math.round(batchTotalTds * 100) / 100),
-          totalAdminFee: new Prisma.Decimal(Math.round(batchTotalAdminFee * 100) / 100),
-          totalNetAmount: new Prisma.Decimal(Math.round(batchTotalNet * 100) / 100),
+          totalGrossAmount: new Prisma.Decimal(
+            Math.round(batchTotalGross * 100) / 100,
+          ),
+          totalTdsAmount: new Prisma.Decimal(
+            Math.round(batchTotalTds * 100) / 100,
+          ),
+          totalAdminFee: new Prisma.Decimal(
+            Math.round(batchTotalAdminFee * 100) / 100,
+          ),
+          totalNetAmount: new Prisma.Decimal(
+            Math.round(batchTotalNet * 100) / 100,
+          ),
           status: DistributionBatchStatus.COMPLETED,
           completedAt: new Date(),
         },
         include: {
           records: {
             include: {
-              member: { select: { id: true, memberCode: true, name: true, mobile: true } },
+              member: {
+                select: {
+                  id: true,
+                  memberCode: true,
+                  name: true,
+                  mobile: true,
+                },
+              },
             },
           },
         },
@@ -628,15 +724,40 @@ export class DistributionService {
         OR: [{ id: batchId }, { batchNo: batchId }],
       },
       include: {
-        processor: { select: { id: true, memberCode: true, name: true, email: true } },
+        processor: {
+          select: { id: true, memberCode: true, name: true, email: true },
+        },
         records: {
           include: {
-            member: { select: { id: true, memberCode: true, name: true, mobile: true, email: true } },
+            member: {
+              select: {
+                id: true,
+                memberCode: true,
+                name: true,
+                mobile: true,
+                email: true,
+              },
+            },
             membershipCommissions: {
-              select: { id: true, sourceMemberId: true, level: true, percentage: true, amount: true, createdAt: true },
+              select: {
+                id: true,
+                sourceMemberId: true,
+                level: true,
+                percentage: true,
+                amount: true,
+                createdAt: true,
+              },
             },
             repurchaseCommissions: {
-              select: { id: true, repurchaseEntryId: true, sourceMemberId: true, level: true, percentage: true, amount: true, createdAt: true },
+              select: {
+                id: true,
+                repurchaseEntryId: true,
+                sourceMemberId: true,
+                level: true,
+                percentage: true,
+                amount: true,
+                createdAt: true,
+              },
             },
           },
         },
@@ -675,8 +796,16 @@ export class DistributionService {
         paymentRef: r.paymentRef,
         bankDetails: r.bankDetails,
         status: r.status,
-        membershipCommissions: r.membershipCommissions.map((m: any) => ({ ...m, amount: Number(m.amount), percentage: Number(m.percentage) })),
-        repurchaseCommissions: r.repurchaseCommissions.map((rc: any) => ({ ...rc, amount: Number(rc.amount), percentage: Number(rc.percentage) })),
+        membershipCommissions: r.membershipCommissions.map((m: any) => ({
+          ...m,
+          amount: Number(m.amount),
+          percentage: Number(m.percentage),
+        })),
+        repurchaseCommissions: r.repurchaseCommissions.map((rc: any) => ({
+          ...rc,
+          amount: Number(rc.amount),
+          percentage: Number(rc.percentage),
+        })),
       })),
     };
   }

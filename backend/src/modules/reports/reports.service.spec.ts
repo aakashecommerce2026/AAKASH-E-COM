@@ -69,10 +69,7 @@ describe('ReportsService Unit Tests', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ReportsService,
-        { provide: PrismaService, useValue: prisma },
-      ],
+      providers: [ReportsService, { provide: PrismaService, useValue: prisma }],
     }).compile();
 
     service = module.get<ReportsService>(ReportsService);
@@ -87,8 +84,16 @@ describe('ReportsService Unit Tests', () => {
       prisma.membershipCommissionLedger.count.mockResolvedValue(2);
       prisma.membershipCommissionLedger.findMany.mockResolvedValue(mockLedgers);
       prisma.membershipCommissionLedger.groupBy.mockResolvedValue([
-        { status: CommissionStatus.PENDING, _sum: { amount: 100 }, _count: { id: 1 } },
-        { status: CommissionStatus.HOLD, _sum: { amount: 50 }, _count: { id: 1 } },
+        {
+          status: CommissionStatus.PENDING,
+          _sum: { amount: 100 },
+          _count: { id: 1 },
+        },
+        {
+          status: CommissionStatus.HOLD,
+          _sum: { amount: 50 },
+          _count: { id: 1 },
+        },
       ]);
 
       const result = await service.getAdminMembershipEarnings({
@@ -111,9 +116,15 @@ describe('ReportsService Unit Tests', () => {
 
     it('should filter by level, status, and specific memberId', async () => {
       prisma.membershipCommissionLedger.count.mockResolvedValue(1);
-      prisma.membershipCommissionLedger.findMany.mockResolvedValue([mockLedgers[0]]);
+      prisma.membershipCommissionLedger.findMany.mockResolvedValue([
+        mockLedgers[0],
+      ]);
       prisma.membershipCommissionLedger.groupBy.mockResolvedValue([
-        { status: CommissionStatus.PENDING, _sum: { amount: 100 }, _count: { id: 1 } },
+        {
+          status: CommissionStatus.PENDING,
+          _sum: { amount: 100 },
+          _count: { id: 1 },
+        },
       ]);
 
       const result = await service.getAdminMembershipEarnings({
@@ -151,7 +162,9 @@ describe('ReportsService Unit Tests', () => {
           { level: 2, status: CommissionStatus.HOLD, _sum: { amount: 50 } },
         ]);
 
-      const result = await service.getLevelWiseEarnings({ startDate: '2026-01-01' });
+      const result = await service.getLevelWiseEarnings({
+        startDate: '2026-01-01',
+      });
 
       expect(result.length).toBe(20);
       expect(result[0]).toEqual({
@@ -181,16 +194,31 @@ describe('ReportsService Unit Tests', () => {
     it('should return aggregated earnings grouped by beneficiary member', async () => {
       prisma.membershipCommissionLedger.groupBy
         .mockResolvedValueOnce([
-          { beneficiaryMemberId: mockMember2.id, _sum: { amount: 150 }, _count: { id: 2 } },
+          {
+            beneficiaryMemberId: mockMember2.id,
+            _sum: { amount: 150 },
+            _count: { id: 2 },
+          },
         ])
         .mockResolvedValueOnce([
-          { beneficiaryMemberId: mockMember2.id, status: CommissionStatus.PENDING, _sum: { amount: 100 } },
-          { beneficiaryMemberId: mockMember2.id, status: CommissionStatus.HOLD, _sum: { amount: 50 } },
+          {
+            beneficiaryMemberId: mockMember2.id,
+            status: CommissionStatus.PENDING,
+            _sum: { amount: 100 },
+          },
+          {
+            beneficiaryMemberId: mockMember2.id,
+            status: CommissionStatus.HOLD,
+            _sum: { amount: 50 },
+          },
         ]);
 
       prisma.member.findMany.mockResolvedValue([mockMember2]);
 
-      const result = await service.getMemberWiseEarnings({ page: 1, limit: 10 });
+      const result = await service.getMemberWiseEarnings({
+        page: 1,
+        limit: 10,
+      });
 
       expect(result.data.length).toBe(1);
       expect(result.data[0].member.id).toBe(mockMember2.id);
@@ -203,7 +231,9 @@ describe('ReportsService Unit Tests', () => {
     it('should return empty result if no beneficiary members match search', async () => {
       prisma.membershipCommissionLedger.groupBy.mockResolvedValue([]);
 
-      const result = await service.getMemberWiseEarnings({ search: 'NonExistent' });
+      const result = await service.getMemberWiseEarnings({
+        search: 'NonExistent',
+      });
 
       expect(result.data).toEqual([]);
       expect(result.meta.total).toBe(0);
@@ -216,11 +246,22 @@ describe('ReportsService Unit Tests', () => {
       prisma.membershipCommissionLedger.count.mockResolvedValue(2);
       prisma.membershipCommissionLedger.findMany.mockResolvedValue(mockLedgers);
       prisma.membershipCommissionLedger.groupBy.mockResolvedValue([
-        { status: CommissionStatus.PENDING, _sum: { amount: 100 }, _count: { id: 1 } },
-        { status: CommissionStatus.HOLD, _sum: { amount: 50 }, _count: { id: 1 } },
+        {
+          status: CommissionStatus.PENDING,
+          _sum: { amount: 100 },
+          _count: { id: 1 },
+        },
+        {
+          status: CommissionStatus.HOLD,
+          _sum: { amount: 50 },
+          _count: { id: 1 },
+        },
       ]);
 
-      const result = await service.getMemberEarnings(mockMember2.id, { page: 1, limit: 10 });
+      const result = await service.getMemberEarnings(mockMember2.id, {
+        page: 1,
+        limit: 10,
+      });
 
       expect(result.data.length).toBe(2);
       expect(result.summary).toEqual({

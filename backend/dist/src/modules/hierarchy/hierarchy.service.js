@@ -278,7 +278,10 @@ let HierarchyService = class HierarchyService {
         const branches = await this.getBranchCounts(memberId, maxLevels);
         const levelMap = new Map();
         for (const node of downline) {
-            const entry = levelMap.get(node.level) || { totalCount: 0, activeCount: 0 };
+            const entry = levelMap.get(node.level) || {
+                totalCount: 0,
+                activeCount: 0,
+            };
             entry.totalCount++;
             if (node.status === 'ACTIVE') {
                 entry.activeCount++;

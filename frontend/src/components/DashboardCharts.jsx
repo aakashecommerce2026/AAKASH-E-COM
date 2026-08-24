@@ -38,15 +38,7 @@ const adminMonthlyPerformance = [
   { month: 'Jun', earnings: 520000, payouts: 128000, newMembers: 42, tds: 12800, repurchase: 130000 },
 ];
 
-// Member Performance Mock Dataset
-const memberMonthlyPerformance = [
-  { month: 'Jan', directCommissions: 15000, indirectCommissions: 5000, referrals: 2 },
-  { month: 'Feb', directCommissions: 22000, indirectCommissions: 8000, referrals: 3 },
-  { month: 'Mar', directCommissions: 18000, indirectCommissions: 6000, referrals: 1 },
-  { month: 'Apr', directCommissions: 30000, indirectCommissions: 12000, referrals: 4 },
-  { month: 'May', directCommissions: 45000, indirectCommissions: 18000, referrals: 6 },
-  { month: 'Jun', directCommissions: 50000, indirectCommissions: 22000, referrals: 8 },
-];
+
 
 // 20-Level Tree Commission Allocation Data
 const levelDistributionData = [

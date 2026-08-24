@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Dialog,
@@ -83,7 +83,7 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '' }) => {
       setOtpSent(false);
       setOtp('');
     }
-  }, [open, defaultSponsorCode, authUser]);
+  }, [open, defaultSponsorCode, authUser, name]);
 
   // Cooldown timer effect for OTP resend
   useEffect(() => {

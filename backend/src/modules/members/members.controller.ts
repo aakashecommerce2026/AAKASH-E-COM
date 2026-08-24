@@ -29,20 +29,29 @@ export class MembersController {
   constructor(private readonly membersService: MembersService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new member (hashes password with 12 bcrypt salt rounds)' })
+  @ApiOperation({
+    summary: 'Create a new member (hashes password with 12 bcrypt salt rounds)',
+  })
   @ApiResponse({
     status: 201,
     description: 'Member created successfully',
     type: MemberResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Validation error' })
-  @ApiResponse({ status: 409, description: 'Member code, mobile, or email already exists' })
-  async create(@Body() createMemberDto: CreateMemberDto): Promise<MemberResponseDto> {
+  @ApiResponse({
+    status: 409,
+    description: 'Member code, mobile, or email already exists',
+  })
+  async create(
+    @Body() createMemberDto: CreateMemberDto,
+  ): Promise<MemberResponseDto> {
     return this.membersService.create(createMemberDto);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get paginated member list with search and filters' })
+  @ApiOperation({
+    summary: 'Get paginated member list with search and filters',
+  })
   @ApiResponse({ status: 200, description: 'Paginated members response' })
   async findAll(@Query() query: QueryMembersDto) {
     return this.membersService.findAll(query);
@@ -52,10 +61,16 @@ export class MembersController {
   @UseGuards(JwtAuthGuard, RolesGuard, OwnershipGuard)
   @Roles(MemberRole.ADMIN, MemberRole.SUB_ADMIN, MemberRole.MEMBER)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get member details by ID (Protected by Roles & Ownership Guard)' })
+  @ApiOperation({
+    summary: 'Get member details by ID (Protected by Roles & Ownership Guard)',
+  })
   @ApiResponse({ status: 200, type: MemberResponseDto })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden: Insufficient role permissions or ownership check failed' })
+  @ApiResponse({
+    status: 403,
+    description:
+      'Forbidden: Insufficient role permissions or ownership check failed',
+  })
   @ApiResponse({ status: 404, description: 'Member not found' })
   async findOne(@Param('id') id: string): Promise<MemberResponseDto> {
     return this.membersService.findById(id);

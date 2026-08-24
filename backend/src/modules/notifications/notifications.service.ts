@@ -33,7 +33,9 @@ export class NotificationsService {
    * Per-member notification hook triggered when commission payout is marked as DISBURSED.
    * Dispatches notifications via configured channels (EMAIL, SMS, IN_APP).
    */
-  async notifyMemberCommissionDistributed(params: NotifyDistributionParams): Promise<void> {
+  async notifyMemberCommissionDistributed(
+    params: NotifyDistributionParams,
+  ): Promise<void> {
     const {
       memberId,
       memberCode,
@@ -57,7 +59,9 @@ export class NotificationsService {
 
     // 1. In-App Notification Hook
     if (channels.includes('IN_APP')) {
-      this.logger.log(`[IN_APP NOTIFICATION] Member: ${memberCode} (${memberId}) | ${messageContent}`);
+      this.logger.log(
+        `[IN_APP NOTIFICATION] Member: ${memberCode} (${memberId}) | ${messageContent}`,
+      );
     }
 
     // 2. Email Notification Hook
@@ -74,13 +78,17 @@ export class NotificationsService {
           paymentRef,
         );
       } else {
-        this.logger.log(`[EMAIL NOTIFICATION] To: ${email} | Subject: Commission Payout Disbursed - ${batchNo}`);
+        this.logger.log(
+          `[EMAIL NOTIFICATION] To: ${email} | Subject: Commission Payout Disbursed - ${batchNo}`,
+        );
       }
     }
 
     // 3. SMS Notification Hook Placeholder
     if (channels.includes('SMS') && mobile) {
-      this.logger.log(`[SMS NOTIFICATION] To: ${mobile} | Message: ${messageContent}`);
+      this.logger.log(
+        `[SMS NOTIFICATION] To: ${mobile} | Message: ${messageContent}`,
+      );
     }
 
     // 4. Log NOTIFY_DISTRIBUTION_MEMBER action to activity_logs

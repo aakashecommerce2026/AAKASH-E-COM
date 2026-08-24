@@ -3,7 +3,12 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { DashboardCacheService } from './dashboard-cache.service';
 import { QueryDashboardDto } from './dto/query-dashboard.dto';
 import { QueryActivityDto, ActivityCategory } from './dto/query-activity.dto';
-import { MemberStatus, CommissionStatus, DistributionRecordStatus, Prisma } from '@prisma/client';
+import {
+  MemberStatus,
+  CommissionStatus,
+  DistributionRecordStatus,
+  Prisma,
+} from '@prisma/client';
 
 export interface IMemberStatsResponse {
   totalMembers: number;
@@ -139,7 +144,15 @@ export class DashboardService {
   private getDateBoundaries() {
     const now = new Date();
 
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const todayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      0,
+      0,
+      0,
+      0,
+    );
 
     // Monday as start of week
     const dayOfWeek = now.getDay();
@@ -148,7 +161,15 @@ export class DashboardService {
     weekStart.setDate(now.getDate() - distanceToMonday);
     weekStart.setHours(0, 0, 0, 0);
 
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    const monthStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      1,
+      0,
+      0,
+      0,
+      0,
+    );
 
     return { now, todayStart, weekStart, monthStart };
   }
@@ -156,7 +177,10 @@ export class DashboardService {
   /**
    * Helper to build date range filters for Prisma
    */
-  private buildDateWhere(startDate?: string, endDate?: string): Prisma.DateTimeFilter | undefined {
+  private buildDateWhere(
+    startDate?: string,
+    endDate?: string,
+  ): Prisma.DateTimeFilter | undefined {
     if (!startDate && !endDate) return undefined;
 
     const dateFilter: Prisma.DateTimeFilter = {};
@@ -175,11 +199,14 @@ export class DashboardService {
    * 1. GET /admin/dashboard/members
    * Aggregates total members, joined today/this week/this month with date-truncated queries.
    */
-  async getMemberStats(query: QueryDashboardDto): Promise<IMemberStatsResponse> {
+  async getMemberStats(
+    query: QueryDashboardDto,
+  ): Promise<IMemberStatsResponse> {
     const cacheKey = `admin:dashboard:members:${JSON.stringify(query)}`;
 
     if (!query.refresh) {
-      const cached = await this.cacheService.get<IMemberStatsResponse>(cacheKey);
+      const cached =
+        await this.cacheService.get<IMemberStatsResponse>(cacheKey);
       if (cached) {
         return cached;
       }
@@ -193,24 +220,29 @@ export class DashboardService {
       where.joiningDate = dateFilter;
     }
 
-    const [totalMembers, joinedToday, joinedThisWeek, joinedThisMonth, statusGroups] =
-      await Promise.all([
-        this.prisma.member.count({ where }),
-        this.prisma.member.count({
-          where: { ...where, joiningDate: { gte: todayStart } },
-        }),
-        this.prisma.member.count({
-          where: { ...where, joiningDate: { gte: weekStart } },
-        }),
-        this.prisma.member.count({
-          where: { ...where, joiningDate: { gte: monthStart } },
-        }),
-        this.prisma.member.groupBy({
-          by: ['status'],
-          where,
-          _count: { id: true },
-        }),
-      ]);
+    const [
+      totalMembers,
+      joinedToday,
+      joinedThisWeek,
+      joinedThisMonth,
+      statusGroups,
+    ] = await Promise.all([
+      this.prisma.member.count({ where }),
+      this.prisma.member.count({
+        where: { ...where, joiningDate: { gte: todayStart } },
+      }),
+      this.prisma.member.count({
+        where: { ...where, joiningDate: { gte: weekStart } },
+      }),
+      this.prisma.member.count({
+        where: { ...where, joiningDate: { gte: monthStart } },
+      }),
+      this.prisma.member.groupBy({
+        by: ['status'],
+        where,
+        _count: { id: true },
+      }),
+    ]);
 
     // Build complete status breakdown map with defaults
     const statusBreakdown: Record<MemberStatus, number> = {
@@ -229,8 +261,10 @@ export class DashboardService {
     let registrationTrend: Array<{ date: string; count: number }> = [];
     try {
       if (typeof this.prisma.$queryRaw === 'function') {
-        const rawResults: Array<{ date: Date | string; count: bigint | number }> =
-          await this.prisma.$queryRaw`
+        const rawResults: Array<{
+          date: Date | string;
+          count: bigint | number;
+        }> = await this.prisma.$queryRaw`
             SELECT 
               DATE_TRUNC('day', joining_date) AS date, 
               COUNT(id)::int AS count
@@ -247,12 +281,17 @@ export class DashboardService {
           `;
 
         registrationTrend = rawResults.map((r) => ({
-          date: r.date instanceof Date ? r.date.toISOString().split('T')[0] : String(r.date).split('T')[0],
+          date:
+            r.date instanceof Date
+              ? r.date.toISOString().split('T')[0]
+              : String(r.date).split('T')[0],
           count: Number(r.count),
         }));
       }
     } catch (err: any) {
-      this.logger.debug(`Raw date-trunc query skipped or unsupported in environment: ${err?.message}`);
+      this.logger.debug(
+        `Raw date-trunc query skipped or unsupported in environment: ${err?.message}`,
+      );
       registrationTrend = [
         { date: todayStart.toISOString().split('T')[0], count: joinedToday },
       ];
@@ -276,11 +315,14 @@ export class DashboardService {
    * 2. GET /admin/dashboard/earnings
    * Aggregates total membership earnings, repurchase earnings, total distributed, pending distributions.
    */
-  async getEarningsStats(query: QueryDashboardDto): Promise<IEarningsStatsResponse> {
+  async getEarningsStats(
+    query: QueryDashboardDto,
+  ): Promise<IEarningsStatsResponse> {
     const cacheKey = `admin:dashboard:earnings:${JSON.stringify(query)}`;
 
     if (!query.refresh) {
-      const cached = await this.cacheService.get<IEarningsStatsResponse>(cacheKey);
+      const cached =
+        await this.cacheService.get<IEarningsStatsResponse>(cacheKey);
       if (cached) {
         return cached;
       }
@@ -318,11 +360,19 @@ export class DashboardService {
       }),
       this.prisma.distributionRecord.aggregate({
         where: { ...distributionWhere, status: DistributionRecordStatus.PAID },
-        _sum: { netAmount: true, grossAmount: true, tdsAmount: true, adminFee: true },
+        _sum: {
+          netAmount: true,
+          grossAmount: true,
+          tdsAmount: true,
+          adminFee: true,
+        },
         _count: { id: true },
       }),
       this.prisma.distributionRecord.aggregate({
-        where: { ...distributionWhere, status: DistributionRecordStatus.PENDING },
+        where: {
+          ...distributionWhere,
+          status: DistributionRecordStatus.PENDING,
+        },
         _sum: { netAmount: true, grossAmount: true },
         _count: { id: true },
       }),
@@ -366,12 +416,15 @@ export class DashboardService {
 
     // Total distributed payouts (paid distribution records)
     const totalDistributed = Number(disbursedRecordSum._sum.netAmount ?? 0);
-    const totalGrossDistributed = Number(disbursedRecordSum._sum.grossAmount ?? 0);
+    const totalGrossDistributed = Number(
+      disbursedRecordSum._sum.grossAmount ?? 0,
+    );
     const totalTdsDeducted = Number(disbursedRecordSum._sum.tdsAmount ?? 0);
     const totalAdminFeeDeducted = Number(disbursedRecordSum._sum.adminFee ?? 0);
 
     // Pending distributions (pending ledgers + pending distribution records)
-    const pendingLedgersAmount = membershipBreakdown.PENDING + repurchaseBreakdown.PENDING;
+    const pendingLedgersAmount =
+      membershipBreakdown.PENDING + repurchaseBreakdown.PENDING;
     const pendingRecordsAmount = Number(pendingRecordSum._sum.netAmount ?? 0);
     const pendingDistributions = pendingLedgersAmount + pendingRecordsAmount;
 
@@ -403,18 +456,23 @@ export class DashboardService {
    * 3. GET /admin/dashboard/business
    * Combined view aggregating repurchase summary, growth summary, and earnings summary.
    */
-  async getBusinessStats(query: QueryDashboardDto): Promise<IBusinessStatsResponse> {
+  async getBusinessStats(
+    query: QueryDashboardDto,
+  ): Promise<IBusinessStatsResponse> {
     const cacheKey = `admin:dashboard:business:${JSON.stringify(query)}`;
 
     if (!query.refresh) {
-      const cached = await this.cacheService.get<IBusinessStatsResponse>(cacheKey);
+      const cached =
+        await this.cacheService.get<IBusinessStatsResponse>(cacheKey);
       if (cached) {
         return cached;
       }
     }
 
     const { todayStart, weekStart, monthStart } = this.getDateBoundaries();
-    const repurchaseWhere: Prisma.RepurchaseEntryWhereInput = { deletedAt: null };
+    const repurchaseWhere: Prisma.RepurchaseEntryWhereInput = {
+      deletedAt: null,
+    };
 
     const dateFilter = this.buildDateWhere(query.startDate, query.endDate);
     if (dateFilter) {
@@ -451,20 +509,34 @@ export class DashboardService {
       this.getEarningsStats(query),
     ]);
 
-    const totalRepurchaseVolume = Number(repurchaseVolumeAggregate._sum.amount ?? 0);
+    const totalRepurchaseVolume = Number(
+      repurchaseVolumeAggregate._sum.amount ?? 0,
+    );
     const todayVolume = Number(todayVolumeAggregate._sum.amount ?? 0);
     const weekVolume = Number(weekVolumeAggregate._sum.amount ?? 0);
     const monthVolume = Number(monthVolumeAggregate._sum.amount ?? 0);
-    const averageOrderValue = repurchaseCount > 0 ? Number((totalRepurchaseVolume / repurchaseCount).toFixed(2)) : 0;
+    const averageOrderValue =
+      repurchaseCount > 0
+        ? Number((totalRepurchaseVolume / repurchaseCount).toFixed(2))
+        : 0;
 
     const activeMembersCount = memberStats.statusBreakdown.ACTIVE || 0;
-    const activationRate = memberStats.totalMembers > 0
-      ? Number(((activeMembersCount / memberStats.totalMembers) * 100).toFixed(2))
-      : 0;
+    const activationRate =
+      memberStats.totalMembers > 0
+        ? Number(
+            ((activeMembersCount / memberStats.totalMembers) * 100).toFixed(2),
+          )
+        : 0;
 
-    const payoutRatio = earningsStats.totalEarnings > 0
-      ? Number(((earningsStats.totalDistributed / earningsStats.totalEarnings) * 100).toFixed(2))
-      : 0;
+    const payoutRatio =
+      earningsStats.totalEarnings > 0
+        ? Number(
+            (
+              (earningsStats.totalDistributed / earningsStats.totalEarnings) *
+              100
+            ).toFixed(2),
+          )
+        : 0;
 
     const result: IBusinessStatsResponse = {
       repurchaseSummary: {
@@ -474,7 +546,8 @@ export class DashboardService {
         todayVolume,
         thisWeekVolume: weekVolume,
         thisMonthVolume: monthVolume,
-        totalRepurchaseCommissionGenerated: earningsStats.totalRepurchaseEarnings,
+        totalRepurchaseCommissionGenerated:
+          earningsStats.totalRepurchaseEarnings,
       },
       growthSummary: {
         totalMembers: memberStats.totalMembers,
@@ -504,26 +577,38 @@ export class DashboardService {
    * 4. GET /admin/dashboard/activity
    * Unified activity feed pulling recent registrations, repurchases, distributions, and system activity logs.
    */
-  async getActivityFeed(query: QueryActivityDto): Promise<IActivityFeedResponse> {
+  async getActivityFeed(
+    query: QueryActivityDto,
+  ): Promise<IActivityFeedResponse> {
     const cacheKey = `admin:dashboard:activity:${JSON.stringify(query)}`;
 
     if (!query.refresh) {
-      const cached = await this.cacheService.get<IActivityFeedResponse>(cacheKey);
+      const cached =
+        await this.cacheService.get<IActivityFeedResponse>(cacheKey);
       if (cached) {
         return cached;
       }
     }
 
-    const { type = ActivityCategory.ALL, page = 1, limit = 10, startDate, endDate } = query;
+    const {
+      type = ActivityCategory.ALL,
+      page = 1,
+      limit = 10,
+      startDate,
+      endDate,
+    } = query;
     const items: IActivityFeedItem[] = [];
 
     const dateFilter = this.buildDateWhere(startDate, endDate);
 
     const fetchAll = type === ActivityCategory.ALL;
-    const fetchRegistrations = fetchAll || type === ActivityCategory.MEMBER_REGISTRATION;
+    const fetchRegistrations =
+      fetchAll || type === ActivityCategory.MEMBER_REGISTRATION;
     const fetchRepurchases = fetchAll || type === ActivityCategory.REPURCHASE;
-    const fetchDistributions = fetchAll || type === ActivityCategory.DISTRIBUTION;
-    const fetchSystemActivities = fetchAll || type === ActivityCategory.SYSTEM_ACTIVITY;
+    const fetchDistributions =
+      fetchAll || type === ActivityCategory.DISTRIBUTION;
+    const fetchSystemActivities =
+      fetchAll || type === ActivityCategory.SYSTEM_ACTIVITY;
 
     const promises: Promise<void>[] = [];
 
@@ -553,7 +638,13 @@ export class DashboardService {
               category: ActivityCategory.MEMBER_REGISTRATION,
               action: `New member registered: ${m.name} (${m.memberCode})`,
               timestamp: m.joiningDate.toISOString(),
-              actor: m.referrer ? { id: m.referrer.id, memberCode: m.referrer.memberCode, name: m.referrer.name } : null,
+              actor: m.referrer
+                ? {
+                    id: m.referrer.id,
+                    memberCode: m.referrer.memberCode,
+                    name: m.referrer.name,
+                  }
+                : null,
               details: {
                 memberId: m.id,
                 memberCode: m.memberCode,
@@ -586,7 +677,9 @@ export class DashboardService {
               amount: true,
               transactionDate: true,
               remarks: true,
-              member: { select: { id: true, memberCode: true, name: true, role: true } },
+              member: {
+                select: { id: true, memberCode: true, name: true, role: true },
+              },
             },
           });
 
@@ -596,7 +689,14 @@ export class DashboardService {
               category: ActivityCategory.REPURCHASE,
               action: `Repurchase recorded for ${r.member?.name || 'Member'} (${r.member?.memberCode}): ₹${Number(r.amount).toLocaleString('en-IN')}`,
               timestamp: r.transactionDate.toISOString(),
-              actor: r.member ? { id: r.member.id, memberCode: r.member.memberCode, name: r.member.name, role: r.member.role } : null,
+              actor: r.member
+                ? {
+                    id: r.member.id,
+                    memberCode: r.member.memberCode,
+                    name: r.member.name,
+                    role: r.member.role,
+                  }
+                : null,
               details: {
                 repurchaseId: r.id,
                 transactionRef: r.transactionRef,
@@ -626,7 +726,9 @@ export class DashboardService {
               status: true,
               createdAt: true,
               completedAt: true,
-              processor: { select: { id: true, memberCode: true, name: true, role: true } },
+              processor: {
+                select: { id: true, memberCode: true, name: true, role: true },
+              },
             },
           });
 
@@ -637,7 +739,14 @@ export class DashboardService {
               category: ActivityCategory.DISTRIBUTION,
               action: `Payout Batch ${b.batchNo} (${b.status}): Net ₹${Number(b.totalNetAmount).toLocaleString('en-IN')} for ${b.totalMembers} members`,
               timestamp: time.toISOString(),
-              actor: b.processor ? { id: b.processor.id, memberCode: b.processor.memberCode, name: b.processor.name, role: b.processor.role } : null,
+              actor: b.processor
+                ? {
+                    id: b.processor.id,
+                    memberCode: b.processor.memberCode,
+                    name: b.processor.name,
+                    role: b.processor.role,
+                  }
+                : null,
               details: {
                 batchId: b.id,
                 batchNo: b.batchNo,
@@ -668,7 +777,9 @@ export class DashboardService {
               actorRole: true,
               metadata: true,
               createdAt: true,
-              actor: { select: { id: true, memberCode: true, name: true, role: true } },
+              actor: {
+                select: { id: true, memberCode: true, name: true, role: true },
+              },
             },
           });
 
@@ -678,7 +789,14 @@ export class DashboardService {
               category: ActivityCategory.SYSTEM_ACTIVITY,
               action: `System Activity: ${l.actionType} on ${l.entityType}${l.entityId ? ':' + l.entityId : ''}`,
               timestamp: l.createdAt.toISOString(),
-              actor: l.actor ? { id: l.actor.id, memberCode: l.actor.memberCode, name: l.actor.name, role: l.actor.role || l.actorRole } : null,
+              actor: l.actor
+                ? {
+                    id: l.actor.id,
+                    memberCode: l.actor.memberCode,
+                    name: l.actor.name,
+                    role: l.actor.role || l.actorRole,
+                  }
+                : null,
               details: {
                 actionType: l.actionType,
                 entityType: l.entityType,
@@ -694,7 +812,10 @@ export class DashboardService {
     await Promise.all(promises);
 
     // Sort combined activities most-recent-first (descending timestamp)
-    items.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    items.sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    );
 
     // Paginate results
     const total = items.length;
@@ -727,7 +848,8 @@ export class DashboardService {
     const cacheKey = `member:dashboard:${memberId}`;
 
     if (!refresh) {
-      const cached = await this.cacheService.get<IMemberPersonalDashboardResponse>(cacheKey);
+      const cached =
+        await this.cacheService.get<IMemberPersonalDashboardResponse>(cacheKey);
       if (cached) {
         return cached;
       }
@@ -762,7 +884,9 @@ export class DashboardService {
       recentRepurchaseLedgers,
     ] = await Promise.all([
       this.prisma.member.count({ where: { referrerId: memberId } }),
-      this.prisma.member.count({ where: { referrerId: memberId, status: MemberStatus.ACTIVE } }),
+      this.prisma.member.count({
+        where: { referrerId: memberId, status: MemberStatus.ACTIVE },
+      }),
       this.prisma.membershipCommissionLedger.groupBy({
         by: ['status'],
         where: { beneficiaryMemberId: memberId },
@@ -807,7 +931,9 @@ export class DashboardService {
 
     try {
       if (typeof this.prisma.$queryRaw === 'function') {
-        const downlineNodes = await this.prisma.$queryRaw<Array<{ id: string; status: string }>>`
+        const downlineNodes = await this.prisma.$queryRaw<
+          Array<{ id: string; status: string }>
+        >`
           WITH RECURSIVE downline AS (
             SELECT id, status, 1 AS level
             FROM members
@@ -824,7 +950,9 @@ export class DashboardService {
         `;
 
         totalDownlineMembers = downlineNodes.length;
-        activeDownlineMembers = downlineNodes.filter((n) => n.status === MemberStatus.ACTIVE).length;
+        activeDownlineMembers = downlineNodes.filter(
+          (n) => n.status === MemberStatus.ACTIVE,
+        ).length;
       }
     } catch (err: any) {
       this.logger.debug(`Downline CTE query skipped or error: ${err?.message}`);
@@ -865,11 +993,15 @@ export class DashboardService {
     });
 
     const totalEarnings = membershipEarnings + repurchaseEarnings;
-    const totalDisbursed = (membershipBreakdown.DISBURSED || 0) + (repurchaseBreakdown.DISBURSED || 0);
-    const totalPending = (membershipBreakdown.PENDING || 0) + (repurchaseBreakdown.PENDING || 0);
+    const totalDisbursed =
+      (membershipBreakdown.DISBURSED || 0) +
+      (repurchaseBreakdown.DISBURSED || 0);
+    const totalPending =
+      (membershipBreakdown.PENDING || 0) + (repurchaseBreakdown.PENDING || 0);
 
     // Merge recent commissions
-    const recentCommissions: IMemberPersonalDashboardResponse['recentCommissions'] = [];
+    const recentCommissions: IMemberPersonalDashboardResponse['recentCommissions'] =
+      [];
 
     recentMembershipLedgers.forEach((m: any) => {
       recentCommissions.push({
@@ -895,7 +1027,10 @@ export class DashboardService {
       });
     });
 
-    recentCommissions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    recentCommissions.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
     const topRecentCommissions = recentCommissions.slice(0, 5);
 
     const result: IMemberPersonalDashboardResponse = {

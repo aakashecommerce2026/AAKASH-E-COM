@@ -42,7 +42,9 @@ describe('MembershipCommissionService Unit Tests', () => {
       ],
     }).compile();
 
-    service = module.get<MembershipCommissionService>(MembershipCommissionService);
+    service = module.get<MembershipCommissionService>(
+      MembershipCommissionService,
+    );
   });
 
   it('should be defined', () => {
@@ -69,7 +71,9 @@ describe('MembershipCommissionService Unit Tests', () => {
     });
 
     it('should fetch active config schedule for latest active version', async () => {
-      prisma.membershipCommissionConfig.findFirst.mockResolvedValue({ version: 2 });
+      prisma.membershipCommissionConfig.findFirst.mockResolvedValue({
+        version: 2,
+      });
       prisma.membershipCommissionConfig.findMany.mockResolvedValue([
         { id: 'c1', version: 2, level: 1, percentage: 12.0, isActive: true },
         { id: 'c2', version: 2, level: 2, percentage: 6.0, isActive: true },
@@ -88,8 +92,9 @@ describe('MembershipCommissionService Unit Tests', () => {
         { level: 2, percentage: 7.5, description: 'Updated Level 2' },
       ];
 
-      prisma.membershipCommissionConfig.upsert.mockImplementation(({ create }: any) =>
-        Promise.resolve({ id: `cfg-${create.level}`, ...create }),
+      prisma.membershipCommissionConfig.upsert.mockImplementation(
+        ({ create }: any) =>
+          Promise.resolve({ id: `cfg-${create.level}`, ...create }),
       );
 
       const result = await service.publishConfigVersion(
@@ -97,10 +102,12 @@ describe('MembershipCommissionService Unit Tests', () => {
         'admin-id',
       );
 
-      expect(prisma.membershipCommissionConfig.updateMany).toHaveBeenCalledWith({
-        where: { isActive: true },
-        data: { isActive: false },
-      });
+      expect(prisma.membershipCommissionConfig.updateMany).toHaveBeenCalledWith(
+        {
+          where: { isActive: true },
+          data: { isActive: false },
+        },
+      );
       expect(result.length).toBe(2);
       expect(result[0].percentage).toBe(15.0);
       expect(auditService.logAction).toHaveBeenCalled();
@@ -168,25 +175,35 @@ describe('MembershipCommissionService Unit Tests', () => {
       prisma.membershipCommissionConfig.findFirst.mockResolvedValue(null); // use 20-level defaults
 
       const memberMap = new Map<string, any>();
-      memberMap.set('m-new', { id: 'm-new', memberCode: 'AK20', referrerId: 'm-up-1' });
+      memberMap.set('m-new', {
+        id: 'm-new',
+        memberCode: 'AK20',
+        referrerId: 'm-up-1',
+      });
 
       for (let i = 1; i <= 20; i++) {
         const id = `m-up-${i}`;
         const parentId = i < 20 ? `m-up-${i + 1}` : null;
-        memberMap.set(id, { id, memberCode: `AK${20 - i}`, referrerId: parentId, status: 'ACTIVE' });
+        memberMap.set(id, {
+          id,
+          memberCode: `AK${20 - i}`,
+          referrerId: parentId,
+          status: 'ACTIVE',
+        });
       }
 
       prisma.member.findUnique.mockImplementation(({ where }: any) =>
         Promise.resolve(memberMap.get(where.id) || null),
       );
 
-      prisma.membershipCommissionLedger.create.mockImplementation(({ data }: any) =>
-        Promise.resolve({
-          id: `led-${data.level}`,
-          ...data,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }),
+      prisma.membershipCommissionLedger.create.mockImplementation(
+        ({ data }: any) =>
+          Promise.resolve({
+            id: `led-${data.level}`,
+            ...data,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }),
       );
 
       const results = await service.calculateForNewMember('m-new', 1000);
@@ -219,22 +236,39 @@ describe('MembershipCommissionService Unit Tests', () => {
       prisma.membershipCommissionConfig.findFirst.mockResolvedValue(null);
 
       const memberMap = new Map<string, any>();
-      memberMap.set('m-new-short', { id: 'm-new-short', memberCode: 'AK10', referrerId: 'm-up-1' });
-      memberMap.set('m-up-1', { id: 'm-up-1', memberCode: 'AK9', referrerId: 'm-up-2' });
-      memberMap.set('m-up-2', { id: 'm-up-2', memberCode: 'AK8', referrerId: 'm-up-3' });
-      memberMap.set('m-up-3', { id: 'm-up-3', memberCode: 'AK7', referrerId: null });
+      memberMap.set('m-new-short', {
+        id: 'm-new-short',
+        memberCode: 'AK10',
+        referrerId: 'm-up-1',
+      });
+      memberMap.set('m-up-1', {
+        id: 'm-up-1',
+        memberCode: 'AK9',
+        referrerId: 'm-up-2',
+      });
+      memberMap.set('m-up-2', {
+        id: 'm-up-2',
+        memberCode: 'AK8',
+        referrerId: 'm-up-3',
+      });
+      memberMap.set('m-up-3', {
+        id: 'm-up-3',
+        memberCode: 'AK7',
+        referrerId: null,
+      });
 
       prisma.member.findUnique.mockImplementation(({ where }: any) =>
         Promise.resolve(memberMap.get(where.id) || null),
       );
 
-      prisma.membershipCommissionLedger.create.mockImplementation(({ data }: any) =>
-        Promise.resolve({
-          id: `led-${data.level}`,
-          ...data,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }),
+      prisma.membershipCommissionLedger.create.mockImplementation(
+        ({ data }: any) =>
+          Promise.resolve({
+            id: `led-${data.level}`,
+            ...data,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }),
       );
 
       const results = await service.calculateForNewMember('m-new-short', 1000);
@@ -252,24 +286,34 @@ describe('MembershipCommissionService Unit Tests', () => {
       prisma.membershipCommissionConfig.findFirst.mockResolvedValue(null);
 
       const memberMap = new Map<string, any>();
-      memberMap.set('m-new-5', { id: 'm-new-5', memberCode: 'AK5', referrerId: 'm-up-1' });
+      memberMap.set('m-new-5', {
+        id: 'm-new-5',
+        memberCode: 'AK5',
+        referrerId: 'm-up-1',
+      });
       for (let i = 1; i <= 5; i++) {
         const id = `m-up-${i}`;
         const parentId = i < 5 ? `m-up-${i + 1}` : null;
-        memberMap.set(id, { id, memberCode: `AK${5 - i}`, referrerId: parentId, status: 'ACTIVE' });
+        memberMap.set(id, {
+          id,
+          memberCode: `AK${5 - i}`,
+          referrerId: parentId,
+          status: 'ACTIVE',
+        });
       }
 
       prisma.member.findUnique.mockImplementation(({ where }: any) =>
         Promise.resolve(memberMap.get(where.id) || null),
       );
 
-      prisma.membershipCommissionLedger.create.mockImplementation(({ data }: any) =>
-        Promise.resolve({
-          id: `led-${data.level}`,
-          ...data,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }),
+      prisma.membershipCommissionLedger.create.mockImplementation(
+        ({ data }: any) =>
+          Promise.resolve({
+            id: `led-${data.level}`,
+            ...data,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }),
       );
 
       const results = await service.calculateForNewMember('m-new-5', 1000);
@@ -284,24 +328,34 @@ describe('MembershipCommissionService Unit Tests', () => {
       prisma.membershipCommissionConfig.findFirst.mockResolvedValue(null);
 
       const memberMap = new Map<string, any>();
-      memberMap.set('m-new-deep', { id: 'm-new-deep', memberCode: 'AK25', referrerId: 'm-up-1' });
+      memberMap.set('m-new-deep', {
+        id: 'm-new-deep',
+        memberCode: 'AK25',
+        referrerId: 'm-up-1',
+      });
       for (let i = 1; i <= 25; i++) {
         const id = `m-up-${i}`;
         const parentId = i < 25 ? `m-up-${i + 1}` : null;
-        memberMap.set(id, { id, memberCode: `AK${25 - i}`, referrerId: parentId, status: 'ACTIVE' });
+        memberMap.set(id, {
+          id,
+          memberCode: `AK${25 - i}`,
+          referrerId: parentId,
+          status: 'ACTIVE',
+        });
       }
 
       prisma.member.findUnique.mockImplementation(({ where }: any) =>
         Promise.resolve(memberMap.get(where.id) || null),
       );
 
-      prisma.membershipCommissionLedger.create.mockImplementation(({ data }: any) =>
-        Promise.resolve({
-          id: `led-${data.level}`,
-          ...data,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }),
+      prisma.membershipCommissionLedger.create.mockImplementation(
+        ({ data }: any) =>
+          Promise.resolve({
+            id: `led-${data.level}`,
+            ...data,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }),
       );
 
       const results = await service.calculateForNewMember('m-new-deep', 1000);
@@ -317,24 +371,42 @@ describe('MembershipCommissionService Unit Tests', () => {
       prisma.membershipCommissionConfig.findFirst.mockResolvedValue(null);
 
       const memberMap = new Map<string, any>();
-      memberMap.set('m-new-inactive-test', { id: 'm-new-inactive-test', memberCode: 'AK100', referrerId: 'm-up-active' });
-      memberMap.set('m-up-active', { id: 'm-up-active', memberCode: 'AK101', referrerId: 'm-up-blocked', status: 'ACTIVE' });
-      memberMap.set('m-up-blocked', { id: 'm-up-blocked', memberCode: 'AK102', referrerId: null, status: 'BLOCKED' });
+      memberMap.set('m-new-inactive-test', {
+        id: 'm-new-inactive-test',
+        memberCode: 'AK100',
+        referrerId: 'm-up-active',
+      });
+      memberMap.set('m-up-active', {
+        id: 'm-up-active',
+        memberCode: 'AK101',
+        referrerId: 'm-up-blocked',
+        status: 'ACTIVE',
+      });
+      memberMap.set('m-up-blocked', {
+        id: 'm-up-blocked',
+        memberCode: 'AK102',
+        referrerId: null,
+        status: 'BLOCKED',
+      });
 
       prisma.member.findUnique.mockImplementation(({ where }: any) =>
         Promise.resolve(memberMap.get(where.id) || null),
       );
 
-      prisma.membershipCommissionLedger.create.mockImplementation(({ data }: any) =>
-        Promise.resolve({
-          id: `led-${data.level}`,
-          ...data,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }),
+      prisma.membershipCommissionLedger.create.mockImplementation(
+        ({ data }: any) =>
+          Promise.resolve({
+            id: `led-${data.level}`,
+            ...data,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }),
       );
 
-      const results = await service.calculateForNewMember('m-new-inactive-test', 1000);
+      const results = await service.calculateForNewMember(
+        'm-new-inactive-test',
+        1000,
+      );
 
       expect(results.length).toBe(2);
       // Level 1 upline is ACTIVE -> status = PENDING
@@ -354,18 +426,29 @@ describe('MembershipCommissionService Unit Tests', () => {
 
       // Create cycle: m-new -> m-up-1 -> m-new
       prisma.member.findUnique.mockImplementation(({ where }: any) => {
-        if (where.id === 'm-new') return Promise.resolve({ id: 'm-new', memberCode: 'AK1', referrerId: 'm-up-1' });
-        if (where.id === 'm-up-1') return Promise.resolve({ id: 'm-up-1', memberCode: 'AK2', referrerId: 'm-new' });
+        if (where.id === 'm-new')
+          return Promise.resolve({
+            id: 'm-new',
+            memberCode: 'AK1',
+            referrerId: 'm-up-1',
+          });
+        if (where.id === 'm-up-1')
+          return Promise.resolve({
+            id: 'm-up-1',
+            memberCode: 'AK2',
+            referrerId: 'm-new',
+          });
         return Promise.resolve(null);
       });
 
-      prisma.membershipCommissionLedger.create.mockImplementation(({ data }: any) =>
-        Promise.resolve({
-          id: `led-${data.level}`,
-          ...data,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }),
+      prisma.membershipCommissionLedger.create.mockImplementation(
+        ({ data }: any) =>
+          Promise.resolve({
+            id: `led-${data.level}`,
+            ...data,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }),
       );
 
       const results = await service.calculateForNewMember('m-new', 1000);

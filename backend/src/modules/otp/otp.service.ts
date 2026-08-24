@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -25,7 +21,9 @@ export class OtpService {
   /**
    * Generates a 6-digit OTP, stores bcrypt hash in DB, and dispatches email
    */
-  async sendOtp(dto: SendOtpDto): Promise<{ message: string; cooldownSeconds: number; rawOtp?: string }> {
+  async sendOtp(
+    dto: SendOtpDto,
+  ): Promise<{ message: string; cooldownSeconds: number; rawOtp?: string }> {
     const { email, purpose } = dto;
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -70,7 +68,9 @@ export class OtpService {
     // Send email asynchronously
     await this.emailService.sendOtpEmail(normalizedEmail, rawOtp, purpose);
 
-    this.logger.log(`Generated and dispatched OTP for ${normalizedEmail} (${purpose})`);
+    this.logger.log(
+      `Generated and dispatched OTP for ${normalizedEmail} (${purpose})`,
+    );
 
     return {
       message: `OTP sent successfully to ${normalizedEmail}`,
@@ -82,7 +82,9 @@ export class OtpService {
   /**
    * Validates a 6-digit OTP against stored bcrypt hash
    */
-  async verifyOtp(dto: VerifyOtpDto): Promise<{ verified: boolean; message: string }> {
+  async verifyOtp(
+    dto: VerifyOtpDto,
+  ): Promise<{ verified: boolean; message: string }> {
     const { email, otp, purpose } = dto;
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -98,7 +100,9 @@ export class OtpService {
     });
 
     if (!activeOtpRecord) {
-      throw new BadRequestException('Invalid or expired OTP code. Please request a new code.');
+      throw new BadRequestException(
+        'Invalid or expired OTP code. Please request a new code.',
+      );
     }
 
     if (activeOtpRecord.attempts >= this.MAX_ATTEMPTS) {
@@ -121,7 +125,8 @@ export class OtpService {
         data: { attempts: { increment: 1 } },
       });
 
-      const remainingAttempts = this.MAX_ATTEMPTS - (activeOtpRecord.attempts + 1);
+      const remainingAttempts =
+        this.MAX_ATTEMPTS - (activeOtpRecord.attempts + 1);
       throw new BadRequestException(
         `Incorrect OTP code. ${remainingAttempts} attempt(s) remaining.`,
       );
@@ -133,7 +138,9 @@ export class OtpService {
       data: { isUsed: true },
     });
 
-    this.logger.log(`Successfully verified OTP for ${normalizedEmail} (${purpose})`);
+    this.logger.log(
+      `Successfully verified OTP for ${normalizedEmail} (${purpose})`,
+    );
 
     return {
       verified: true,

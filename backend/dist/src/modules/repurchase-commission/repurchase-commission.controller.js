@@ -118,7 +118,10 @@ __decorate([
         summary: 'Manually trigger or re-process 20-level repurchase commission engine for an entry (Admin)',
         description: 'Walks up the 20-level referral tree for target repurchaseEntryId and calculates repurchase commission ledgers.',
     }),
-    (0, swagger_1.ApiParam)({ name: 'repurchaseEntryId', description: 'UUID of the target repurchase entry' }),
+    (0, swagger_1.ApiParam)({
+        name: 'repurchaseEntryId',
+        description: 'UUID of the target repurchase entry',
+    }),
     (0, swagger_1.ApiResponse)({
         status: 201,
         description: 'Repurchase commission ledgers generated successfully',

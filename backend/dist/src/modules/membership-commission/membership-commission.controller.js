@@ -119,7 +119,10 @@ __decorate([
         summary: 'Manually trigger or re-process 20-level registration commission engine for a member (Admin)',
         description: 'Walks up the 20-level referral tree for target memberId and calculates membership commission ledgers if not already present.',
     }),
-    (0, swagger_1.ApiParam)({ name: 'memberId', description: 'UUID of the newly registered member' }),
+    (0, swagger_1.ApiParam)({
+        name: 'memberId',
+        description: 'UUID of the newly registered member',
+    }),
     (0, swagger_1.ApiResponse)({
         status: 201,
         description: 'Commission ledgers generated successfully',

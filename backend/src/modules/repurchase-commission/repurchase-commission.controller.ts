@@ -38,7 +38,8 @@ export class RepurchaseCommissionController {
 
   @Get('config')
   @ApiOperation({
-    summary: 'Get active 20-level repurchase commission rate configuration table',
+    summary:
+      'Get active 20-level repurchase commission rate configuration table',
     description:
       'Fetches the active version (or specified version) 20-level percentage schedule for repurchase commissions.',
   })
@@ -58,13 +59,15 @@ export class RepurchaseCommissionController {
   @Post('config')
   @Roles(MemberRole.ADMIN)
   @ApiOperation({
-    summary: 'Publish a versioned 20-level repurchase commission rate configuration (Admin only)',
+    summary:
+      'Publish a versioned 20-level repurchase commission rate configuration (Admin only)',
     description:
       'Stores a new versioned 20-level percentage schedule in DB (must sum to EXACTLY 5.00%). Deactivates older active versions.',
   })
   @ApiResponse({
     status: 201,
-    description: 'Repurchase commission configuration created and activated successfully',
+    description:
+      'Repurchase commission configuration created and activated successfully',
     type: [RepurchaseCommissionConfigResponseDto],
   })
   async updateConfig(
@@ -105,11 +108,15 @@ export class RepurchaseCommissionController {
   @Post('trigger/:repurchaseEntryId')
   @Roles(MemberRole.ADMIN, MemberRole.SUB_ADMIN)
   @ApiOperation({
-    summary: 'Manually trigger or re-process 20-level repurchase commission engine for an entry (Admin)',
+    summary:
+      'Manually trigger or re-process 20-level repurchase commission engine for an entry (Admin)',
     description:
       'Walks up the 20-level referral tree for target repurchaseEntryId and calculates repurchase commission ledgers.',
   })
-  @ApiParam({ name: 'repurchaseEntryId', description: 'UUID of the target repurchase entry' })
+  @ApiParam({
+    name: 'repurchaseEntryId',
+    description: 'UUID of the target repurchase entry',
+  })
   @ApiResponse({
     status: 201,
     description: 'Repurchase commission ledgers generated successfully',
@@ -117,6 +124,8 @@ export class RepurchaseCommissionController {
   async triggerRepurchaseCommission(
     @Param('repurchaseEntryId') repurchaseEntryId: string,
   ) {
-    return this.repurchaseCommissionService.calculateForEntry(repurchaseEntryId);
+    return this.repurchaseCommissionService.calculateForEntry(
+      repurchaseEntryId,
+    );
   }
 }

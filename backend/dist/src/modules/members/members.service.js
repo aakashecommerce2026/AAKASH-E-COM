@@ -77,11 +77,15 @@ let MembersService = class MembersService {
         const count = await this.prisma.member.count();
         let nextNum = 10001 + count;
         let code = `AK${nextNum}`;
-        let exists = await this.prisma.member.findUnique({ where: { memberCode: code } });
+        let exists = await this.prisma.member.findUnique({
+            where: { memberCode: code },
+        });
         while (exists) {
             nextNum++;
             code = `AK${nextNum}`;
-            exists = await this.prisma.member.findUnique({ where: { memberCode: code } });
+            exists = await this.prisma.member.findUnique({
+                where: { memberCode: code },
+            });
         }
         return code;
     }
@@ -167,7 +171,9 @@ let MembersService = class MembersService {
                     referrerId: referrerId || null,
                     role: role || client_1.MemberRole.MEMBER,
                     status: status || client_1.MemberStatus.ACTIVE,
-                    bankDetails: bankDetails ? JSON.parse(JSON.stringify(bankDetails)) : undefined,
+                    bankDetails: bankDetails
+                        ? JSON.parse(JSON.stringify(bankDetails))
+                        : undefined,
                 },
             });
             const generatedCommissions = await this.membershipCommissionService.calculateForNewMember(createdMember.id, 1000, tx);
@@ -202,11 +208,15 @@ let MembersService = class MembersService {
                 }, tx);
             }
             if (this.promotionsService && referrerId) {
-                await this.promotionsService.evaluateAndPromoteMember(referrerId, tx).catch(() => { });
+                await this.promotionsService
+                    .evaluateAndPromoteMember(referrerId, tx)
+                    .catch(() => { });
             }
             const result = this.mapToResponseDto(createdMember);
             if (this.emailService && createdMember.email) {
-                this.emailService.sendWelcomeEmail(createdMember.email, createdMember.name, createdMember.memberCode).catch(() => { });
+                this.emailService
+                    .sendWelcomeEmail(createdMember.email, createdMember.name, createdMember.memberCode)
+                    .catch(() => { });
             }
             return result;
         });
@@ -253,7 +263,9 @@ let MembersService = class MembersService {
                 throw new common_1.BadRequestException('A member cannot be set as their own referrer');
             }
             if (referrerId !== null) {
-                const referrer = await this.prisma.member.findUnique({ where: { id: referrerId } });
+                const referrer = await this.prisma.member.findUnique({
+                    where: { id: referrerId },
+                });
                 if (!referrer) {
                     throw new common_1.BadRequestException(`Referrer with ID '${referrerId}' does not exist`);
                 }
@@ -273,7 +285,11 @@ let MembersService = class MembersService {
                 ...(passwordHash ? { passwordHash } : {}),
                 ...(referrerId !== undefined ? { referrerId } : {}),
                 ...(bankDetails !== undefined
-                    ? { bankDetails: bankDetails ? JSON.parse(JSON.stringify(bankDetails)) : null }
+                    ? {
+                        bankDetails: bankDetails
+                            ? JSON.parse(JSON.stringify(bankDetails))
+                            : null,
+                    }
                     : {}),
             },
         });
@@ -299,7 +315,9 @@ let MembersService = class MembersService {
         if (newReferrerId === id) {
             throw new common_1.BadRequestException('A member cannot be set as their own referrer');
         }
-        const newReferrer = await this.prisma.member.findUnique({ where: { id: newReferrerId } });
+        const newReferrer = await this.prisma.member.findUnique({
+            where: { id: newReferrerId },
+        });
         if (!newReferrer) {
             throw new common_1.BadRequestException(`New referrer with ID '${newReferrerId}' does not exist`);
         }
@@ -396,7 +414,7 @@ let MembersService = class MembersService {
         return result;
     }
     async findAll(query) {
-        const { page = 1, limit = 10, search, status, role, sortBy = 'createdAt', sortOrder = 'desc' } = query;
+        const { page = 1, limit = 10, search, status, role, sortBy = 'createdAt', sortOrder = 'desc', } = query;
         const skip = (page - 1) * limit;
         const where = {};
         if (status) {
@@ -414,8 +432,16 @@ let MembersService = class MembersService {
                 { email: { contains: term, mode: 'insensitive' } },
             ];
         }
-        const validSortFields = ['createdAt', 'joiningDate', 'name', 'memberCode', 'status'];
-        const orderByField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+        const validSortFields = [
+            'createdAt',
+            'joiningDate',
+            'name',
+            'memberCode',
+            'status',
+        ];
+        const orderByField = validSortFields.includes(sortBy)
+            ? sortBy
+            : 'createdAt';
         const [total, members] = await Promise.all([
             this.prisma.member.count({ where }),
             this.prisma.member.findMany({

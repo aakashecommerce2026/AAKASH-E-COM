@@ -23,8 +23,18 @@ let MembersModule = class MembersModule {
 exports.MembersModule = MembersModule;
 exports.MembersModule = MembersModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule, audit_module_1.AuditModule, membership_commission_module_1.MembershipCommissionModule, email_module_1.EmailModule, promotions_module_1.PromotionsModule],
-        controllers: [members_controller_1.MembersController, admin_members_controller_1.AdminMembersController, member_profile_controller_1.MemberProfileController],
+        imports: [
+            prisma_module_1.PrismaModule,
+            audit_module_1.AuditModule,
+            membership_commission_module_1.MembershipCommissionModule,
+            email_module_1.EmailModule,
+            promotions_module_1.PromotionsModule,
+        ],
+        controllers: [
+            members_controller_1.MembersController,
+            admin_members_controller_1.AdminMembersController,
+            member_profile_controller_1.MemberProfileController,
+        ],
         providers: [members_service_1.MembersService, member_profile_service_1.MemberProfileService],
         exports: [members_service_1.MembersService, member_profile_service_1.MemberProfileService],
     })

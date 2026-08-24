@@ -36,7 +36,10 @@ __decorate([
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     (0, swagger_1.ApiOperation)({ summary: 'Send 6-digit email OTP verification code' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'OTP dispatched successfully' }),
-    (0, swagger_1.ApiResponse)({ status: 400, description: 'Validation error or rate limit cooldown active' }),
+    (0, swagger_1.ApiResponse)({
+        status: 400,
+        description: 'Validation error or rate limit cooldown active',
+    }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [send_otp_dto_1.SendOtpDto]),
@@ -47,7 +50,10 @@ __decorate([
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     (0, swagger_1.ApiOperation)({ summary: 'Verify 6-digit email OTP code' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'OTP verified successfully' }),
-    (0, swagger_1.ApiResponse)({ status: 400, description: 'Invalid, expired, or incorrect OTP code' }),
+    (0, swagger_1.ApiResponse)({
+        status: 400,
+        description: 'Invalid, expired, or incorrect OTP code',
+    }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [verify_otp_dto_1.VerifyOtpDto]),

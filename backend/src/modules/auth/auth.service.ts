@@ -70,7 +70,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid admin credentials');
     }
 
-    const isPasswordValid = await this.comparePassword(password, member.passwordHash);
+    const isPasswordValid = await this.comparePassword(
+      password,
+      member.passwordHash,
+    );
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid admin credentials');
     }
@@ -102,7 +105,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid member credentials');
     }
 
-    const isPasswordValid = await this.comparePassword(password, member.passwordHash);
+    const isPasswordValid = await this.comparePassword(
+      password,
+      member.passwordHash,
+    );
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid member credentials');
     }
@@ -117,7 +123,11 @@ export class AuthService {
   /**
    * Validates credentials by memberCode, email, or mobile with optional portal role enforcement.
    */
-  async validateUser(identifier: string, password: string, portalType?: string) {
+  async validateUser(
+    identifier: string,
+    password: string,
+    portalType?: string,
+  ) {
     const member = await this.prisma.member.findFirst({
       where: {
         OR: [
@@ -133,7 +143,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await this.comparePassword(password, member.passwordHash);
+    const isPasswordValid = await this.comparePassword(
+      password,
+      member.passwordHash,
+    );
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -145,11 +158,15 @@ export class AuthService {
     const isAdminRole = member.role === 'ADMIN' || member.role === 'SUB_ADMIN';
 
     if (portalType === 'Admin' && !isAdminRole) {
-      throw new UnauthorizedException('Access denied. Only admin credentials can log in to the Admin Portal.');
+      throw new UnauthorizedException(
+        'Access denied. Only admin credentials can log in to the Admin Portal.',
+      );
     }
 
     if (portalType === 'Member' && isAdminRole) {
-      throw new UnauthorizedException('Access denied. Admin credentials must be used on the Admin Login portal.');
+      throw new UnauthorizedException(
+        'Access denied. Admin credentials must be used on the Admin Login portal.',
+      );
     }
 
     return member;
@@ -187,13 +204,19 @@ export class AuthService {
   /**
    * Rotates access and refresh tokens using a valid refresh token.
    */
-  async refreshToken(refreshTokenDto: RefreshTokenDto): Promise<AuthResponseDto> {
+  async refreshToken(
+    refreshTokenDto: RefreshTokenDto,
+  ): Promise<AuthResponseDto> {
     const { refreshToken } = refreshTokenDto;
     let payload: JwtPayload;
 
     try {
-      const secret = this.configService.get<string>('JWT_SECRET') || 'dev-jwt-secret-key-12345';
-      payload = await this.jwtService.verifyAsync<JwtPayload>(refreshToken, { secret });
+      const secret =
+        this.configService.get<string>('JWT_SECRET') ||
+        'dev-jwt-secret-key-12345';
+      payload = await this.jwtService.verifyAsync<JwtPayload>(refreshToken, {
+        secret,
+      });
     } catch {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
@@ -232,7 +255,8 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
-    const currentPwd = changePasswordDto.currentPassword || changePasswordDto.oldPassword;
+    const currentPwd =
+      changePasswordDto.currentPassword || changePasswordDto.oldPassword;
     if (!currentPwd) {
       throw new BadRequestException('Current password is required');
     }
@@ -246,7 +270,9 @@ export class AuthService {
       throw new BadRequestException('Current password does not match');
     }
 
-    const newPasswordHash = await this.hashPassword(changePasswordDto.newPassword);
+    const newPasswordHash = await this.hashPassword(
+      changePasswordDto.newPassword,
+    );
 
     await this.prisma.member.update({
       where: { id: userId },
@@ -280,7 +306,9 @@ export class AuthService {
     role: string;
     status: string;
   }): Promise<AuthResponseDto> {
-    const secret = this.configService.get<string>('JWT_SECRET') || 'dev-jwt-secret-key-12345';
+    const secret =
+      this.configService.get<string>('JWT_SECRET') ||
+      'dev-jwt-secret-key-12345';
 
     const accessPayload: JwtPayload = {
       sub: member.id,
@@ -334,7 +362,10 @@ export class AuthService {
     });
 
     if (!member || !member.email) {
-      return { message: 'If an account with that email exists, a password reset link has been sent.' };
+      return {
+        message:
+          'If an account with that email exists, a password reset link has been sent.',
+      };
     }
 
     if (member.status === 'BLOCKED' || member.status === 'SUSPENDED') {
@@ -348,7 +379,9 @@ export class AuthService {
       });
 
       const otpCode = rawOtp || '';
-      const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+      const frontendUrl =
+        this.configService.get<string>('FRONTEND_URL') ||
+        'http://localhost:5173';
       const resetLink = `${frontendUrl}/reset-password?email=${encodeURIComponent(member.email)}&token=${encodeURIComponent(otpCode)}`;
 
       this.logger.log(`
@@ -366,7 +399,10 @@ ${resetLink}
       );
     }
 
-    return { message: 'If an account with that email exists, a password reset link has been sent.' };
+    return {
+      message:
+        'If an account with that email exists, a password reset link has been sent.',
+    };
   }
 
   /**
@@ -418,6 +454,9 @@ ${resetLink}
       );
     }
 
-    return { message: 'Password has been reset successfully. You can now log in with your new password.' };
+    return {
+      message:
+        'Password has been reset successfully. You can now log in with your new password.',
+    };
   }
 }

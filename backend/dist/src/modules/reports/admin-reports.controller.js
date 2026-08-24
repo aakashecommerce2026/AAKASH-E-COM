@@ -109,7 +109,11 @@ let AdminReportsController = class AdminReportsController {
     }
     async getExportStatus(jobId) {
         if (!this.exportQueue) {
-            return { jobId, status: 'completed', message: 'Direct execution mode (Queue offline)' };
+            return {
+                jobId,
+                status: 'completed',
+                message: 'Direct execution mode (Queue offline)',
+            };
         }
         const job = await this.exportQueue.getJob(jobId);
         if (!job) {
@@ -132,7 +136,9 @@ let AdminReportsController = class AdminReportsController {
             throw new common_1.NotFoundException(`Exported file '${safeFilename}' not found or expired`);
         }
         const ext = path.extname(safeFilename).toLowerCase();
-        const contentType = ext === '.pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        const contentType = ext === '.pdf'
+            ? 'application/pdf'
+            : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
         res.setHeader('Content-Type', contentType);
         res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
         return res.sendFile(filePath);
@@ -184,7 +190,10 @@ __decorate([
         summary: 'GET /admin/reports/daily — Daily reports for member registrations, repurchase, earnings, or business summary',
         description: 'Generates daily-bucketed reports for member registrations, repurchase activities, earnings summary, or business summary.',
     }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Structured JSON daily report output' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Structured JSON daily report output',
+    }),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [query_period_report_dto_1.QueryPeriodReportDto]),
@@ -196,7 +205,10 @@ __decorate([
         summary: 'GET /admin/reports/weekly — Weekly reports for member registrations, repurchase, earnings, or business summary',
         description: 'Generates weekly-bucketed reports for member registrations, repurchase activities, earnings summary, or business summary.',
     }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Structured JSON weekly report output' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Structured JSON weekly report output',
+    }),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [query_period_report_dto_1.QueryPeriodReportDto]),
@@ -208,7 +220,10 @@ __decorate([
         summary: 'GET /admin/reports/monthly — Monthly reports for member registrations, repurchase, earnings, or business summary',
         description: 'Generates monthly-bucketed reports for member registrations, repurchase activities, earnings summary, or business summary.',
     }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Structured JSON monthly report output' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Structured JSON monthly report output',
+    }),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [query_period_report_dto_1.QueryPeriodReportDto]),
@@ -220,7 +235,10 @@ __decorate([
         summary: 'GET /admin/reports/export/pdf — Export reports to PDF format',
         description: 'Builds a PDF report document using pdf-lib. If async=true, enqueues Bull queue job and returns download link.',
     }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'PDF file binary stream or queued background job details' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'PDF file binary stream or queued background job details',
+    }),
     __param(0, (0, common_1.Query)()),
     __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
@@ -233,7 +251,10 @@ __decorate([
         summary: 'GET /admin/reports/export/excel — Export reports to Excel format using ExcelJS',
         description: 'Builds an Excel spreadsheet matching report type column headers. If async=true, enqueues Bull queue job.',
     }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Excel spreadsheet binary stream or queued background job details' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Excel spreadsheet binary stream or queued background job details',
+    }),
     __param(0, (0, common_1.Query)()),
     __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
@@ -246,7 +267,10 @@ __decorate([
         summary: 'GET /admin/reports/export/status/:jobId — Check background export job status',
         description: 'Queries status of background report export job dispatched to Bull queue.',
     }),
-    (0, swagger_1.ApiParam)({ name: 'jobId', description: 'Job ID returned when enqueuing export' }),
+    (0, swagger_1.ApiParam)({
+        name: 'jobId',
+        description: 'Job ID returned when enqueuing export',
+    }),
     __param(0, (0, common_1.Param)('jobId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),

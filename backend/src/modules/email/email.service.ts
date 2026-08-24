@@ -16,14 +16,22 @@ export class EmailService {
 
   constructor(private readonly configService: ConfigService) {
     const host = this.configService.get<string>('SMTP_HOST');
-    const port = parseInt(this.configService.get<string>('SMTP_PORT') || '587', 10);
+    const port = parseInt(
+      this.configService.get<string>('SMTP_PORT') || '587',
+      10,
+    );
     const user = this.configService.get<string>('SMTP_USER');
     const rawPass = this.configService.get<string>('SMTP_PASS') || '';
     const pass = rawPass.replace(/\s+/g, '');
     const service = this.configService.get<string>('SMTP_SERVICE'); // e.g. 'gmail'
     const secure = this.configService.get<string>('SMTP_SECURE') === 'true';
-    const fromName = this.configService.get<string>('EMAIL_FROM_NAME') || 'AAKASH E-COM Notifications';
-    const fromEmail = this.configService.get<string>('EMAIL_FROM_ADDRESS') || user || 'noreply@aakashecom.com';
+    const fromName =
+      this.configService.get<string>('EMAIL_FROM_NAME') ||
+      'AAKASH E-COM Notifications';
+    const fromEmail =
+      this.configService.get<string>('EMAIL_FROM_ADDRESS') ||
+      user ||
+      'noreply@aakashecom.com';
 
     this.fromAddress = `"${fromName}" <${fromEmail}>`;
 
@@ -45,7 +53,9 @@ export class EmailService {
         this.transporter = nodemailer.createTransport(transportConfig);
         this.logger.log(`Initialized SMTP transport via ${service || host}`);
       } catch (err: any) {
-        this.logger.warn(`Failed to initialize Nodemailer transport: ${err.message}. Running in DEV simulation mode.`);
+        this.logger.warn(
+          `Failed to initialize Nodemailer transport: ${err.message}. Running in DEV simulation mode.`,
+        );
       }
     } else {
       this.logger.warn(
@@ -81,7 +91,9 @@ ${text || html}
         html,
         text: text || html.replace(/<[^>]*>?/gm, ''),
       });
-      this.logger.log(`Email dispatched successfully to ${to} (MessageId: ${info.messageId})`);
+      this.logger.log(
+        `Email dispatched successfully to ${to} (MessageId: ${info.messageId})`,
+      );
       const nodemailer = require('nodemailer');
       const previewUrl = nodemailer.getTestMessageUrl(info);
       if (previewUrl) {
@@ -117,7 +129,11 @@ ${text || html}
   /**
    * Sends 6-Digit OTP Email
    */
-  async sendOtpEmail(email: string, otp: string, purpose: string): Promise<boolean> {
+  async sendOtpEmail(
+    email: string,
+    otp: string,
+    purpose: string,
+  ): Promise<boolean> {
     const formattedPurpose = purpose.replace(/_/g, ' ').toLowerCase();
     const subject = `Your Verification OTP Code: ${otp} - AAKASH E-COM`;
 
@@ -156,7 +172,11 @@ ${text || html}
   /**
    * Sends Welcome Email upon member registration
    */
-  async sendWelcomeEmail(email: string, name: string, memberCode: string): Promise<boolean> {
+  async sendWelcomeEmail(
+    email: string,
+    name: string,
+    memberCode: string,
+  ): Promise<boolean> {
     const subject = `Welcome to AAKASH E-COM, ${name}! Your Member Code is ${memberCode}`;
 
     const html = `

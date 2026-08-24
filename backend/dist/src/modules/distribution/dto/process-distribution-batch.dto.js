@@ -32,28 +32,37 @@ __decorate([
     __metadata("design:type", String)
 ], ProcessDistributionBatchDto.prototype, "cutoffDate", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Explicit list of membership commission ledger UUIDs to process' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Explicit list of membership commission ledger UUIDs to process',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.IsString)({ each: true }),
     __metadata("design:type", Array)
 ], ProcessDistributionBatchDto.prototype, "membershipLedgerIds", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Explicit list of repurchase commission ledger UUIDs to process' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Explicit list of repurchase commission ledger UUIDs to process',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.IsString)({ each: true }),
     __metadata("design:type", Array)
 ], ProcessDistributionBatchDto.prototype, "repurchaseLedgerIds", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Filter processing to specific member UUIDs' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Filter processing to specific member UUIDs',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.IsString)({ each: true }),
     __metadata("design:type", Array)
 ], ProcessDistributionBatchDto.prototype, "memberIds", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'Monthly payout run for August 2026', description: 'Batch notes or remarks' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        example: 'Monthly payout run for August 2026',
+        description: 'Batch notes or remarks',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)

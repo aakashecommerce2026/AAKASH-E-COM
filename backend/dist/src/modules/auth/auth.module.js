@@ -44,7 +44,14 @@ exports.AuthModule = AuthModule = __decorate([
         ],
         controllers: [auth_controller_1.AuthController],
         providers: [auth_service_1.AuthService, jwt_strategy_1.JwtStrategy, roles_guard_1.RolesGuard, ownership_guard_1.OwnershipGuard],
-        exports: [auth_service_1.AuthService, jwt_1.JwtModule, jwt_strategy_1.JwtStrategy, passport_1.PassportModule, roles_guard_1.RolesGuard, ownership_guard_1.OwnershipGuard],
+        exports: [
+            auth_service_1.AuthService,
+            jwt_1.JwtModule,
+            jwt_strategy_1.JwtStrategy,
+            passport_1.PassportModule,
+            roles_guard_1.RolesGuard,
+            ownership_guard_1.OwnershipGuard,
+        ],
     })
 ], AuthModule);
 //# sourceMappingURL=auth.module.js.map

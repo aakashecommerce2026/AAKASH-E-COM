@@ -30,8 +30,14 @@ __decorate([
     __metadata("design:type", String)
 ], QueryPendingDistributionDto.prototype, "startDate", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Filter cutoff end date (ISO string e.g. 2026-08-31)' }),
-    (0, class_transformer_1.Transform)(({ obj, value }) => value || obj?.end_date || obj?.endDate || obj?.cutoff_date || obj?.cutoffDate),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Filter cutoff end date (ISO string e.g. 2026-08-31)',
+    }),
+    (0, class_transformer_1.Transform)(({ obj, value }) => value ||
+        obj?.end_date ||
+        obj?.endDate ||
+        obj?.cutoff_date ||
+        obj?.cutoffDate),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
@@ -44,7 +50,11 @@ __decorate([
     __metadata("design:type", String)
 ], QueryPendingDistributionDto.prototype, "memberId", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Filter by commission type', enum: ['MEMBERSHIP', 'REPURCHASE', 'ALL'], default: 'ALL' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Filter by commission type',
+        enum: ['MEMBERSHIP', 'REPURCHASE', 'ALL'],
+        default: 'ALL',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)

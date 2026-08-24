@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { MembersService } from './members.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
@@ -74,7 +78,10 @@ describe('Admin Members Integration Test Suite', () => {
         MembersService,
         { provide: PrismaService, useValue: prisma },
         { provide: AuditService, useValue: auditService },
-        { provide: MembershipCommissionService, useValue: mockMembershipCommissionService },
+        {
+          provide: MembershipCommissionService,
+          useValue: mockMembershipCommissionService,
+        },
       ],
     }).compile();
 
@@ -119,7 +126,10 @@ describe('Admin Members Integration Test Suite', () => {
     });
 
     it('should reject creation if referrer is INACTIVE', async () => {
-      const inactiveReferrer = { ...mockActiveReferrer, status: MemberStatus.BLOCKED };
+      const inactiveReferrer = {
+        ...mockActiveReferrer,
+        status: MemberStatus.BLOCKED,
+      };
       prisma.member.findFirst.mockResolvedValue(null);
       prisma.member.findUnique.mockImplementation(async ({ where }: any) => {
         if (where?.id === inactiveReferrer.id) return inactiveReferrer;
@@ -140,7 +150,10 @@ describe('Admin Members Integration Test Suite', () => {
   describe('2. Member Editing & Commission Safeguard', () => {
     it('should edit member details and log activity audit', async () => {
       prisma.member.findUnique.mockResolvedValue(mockMember);
-      prisma.member.update.mockResolvedValue({ ...mockMember, name: 'Jane Doe Updated' });
+      prisma.member.update.mockResolvedValue({
+        ...mockMember,
+        name: 'Jane Doe Updated',
+      });
 
       const result = await service.update(
         mockMember.id,
@@ -188,7 +201,10 @@ describe('Admin Members Integration Test Suite', () => {
         .mockResolvedValueOnce(newReferrer) // new referrer lookup
         .mockResolvedValueOnce(newReferrer); // cycle check upline lookup
 
-      prisma.member.update.mockResolvedValue({ ...mockMember, referrerId: newReferrer.id });
+      prisma.member.update.mockResolvedValue({
+        ...mockMember,
+        referrerId: newReferrer.id,
+      });
 
       const result = await service.reassignReferrer(
         mockMember.id,

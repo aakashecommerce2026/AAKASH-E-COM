@@ -48,25 +48,48 @@ describe('Member Network Visibility & Security Restrictions Test Suite', () => {
 
   describe('1. Endpoint Server-Side Root Enforcement & Parameter Tamper Resistance', () => {
     it('GET /member/network/direct-referrals — should pass authenticated memberId strictly to service with maxLevels = 1', async () => {
-      mockHierarchyService.getDownline.mockResolvedValueOnce([mockDownlineNode]);
+      mockHierarchyService.getDownline.mockResolvedValueOnce([
+        mockDownlineNode,
+      ]);
 
       const result = await controller.getDirectReferrals(mockRootMemberId);
 
       expect(result).toEqual([mockDownlineNode]);
-      expect(mockHierarchyService.getDownline).toHaveBeenCalledWith(mockRootMemberId, 1);
+      expect(mockHierarchyService.getDownline).toHaveBeenCalledWith(
+        mockRootMemberId,
+        1,
+      );
     });
 
     it('GET /member/network/downline — should enforce authenticated memberId as root, ignoring query parameters', async () => {
-      mockHierarchyService.getDownline.mockResolvedValueOnce([mockDownlineNode]);
+      mockHierarchyService.getDownline.mockResolvedValueOnce([
+        mockDownlineNode,
+      ]);
 
-      const queryParams = { maxLevels: 15, memberId: mockUplineMemberId, rootMemberId: mockCrossBranchMemberId } as any;
-      const result = await controller.getDownline(mockRootMemberId, queryParams);
+      const queryParams = {
+        maxLevels: 15,
+        memberId: mockUplineMemberId,
+        rootMemberId: mockCrossBranchMemberId,
+      } as any;
+      const result = await controller.getDownline(
+        mockRootMemberId,
+        queryParams,
+      );
 
       expect(result).toEqual([mockDownlineNode]);
       // Verify service was called with mockRootMemberId from JWT, NOT mockUplineMemberId or mockCrossBranchMemberId
-      expect(mockHierarchyService.getDownline).toHaveBeenCalledWith(mockRootMemberId, 15);
-      expect(mockHierarchyService.getDownline).not.toHaveBeenCalledWith(mockUplineMemberId, expect.anything());
-      expect(mockHierarchyService.getDownline).not.toHaveBeenCalledWith(mockCrossBranchMemberId, expect.anything());
+      expect(mockHierarchyService.getDownline).toHaveBeenCalledWith(
+        mockRootMemberId,
+        15,
+      );
+      expect(mockHierarchyService.getDownline).not.toHaveBeenCalledWith(
+        mockUplineMemberId,
+        expect.anything(),
+      );
+      expect(mockHierarchyService.getDownline).not.toHaveBeenCalledWith(
+        mockCrossBranchMemberId,
+        expect.anything(),
+      );
     });
 
     it('GET /member/network/summary — should return hierarchy summary strictly for authenticated memberId', async () => {
@@ -76,22 +99,37 @@ describe('Member Network Visibility & Security Restrictions Test Suite', () => {
         activeDownline: 5,
         totalBranches: 2,
       };
-      mockHierarchyService.getHierarchySummary.mockResolvedValueOnce(mockSummary as any);
+      mockHierarchyService.getHierarchySummary.mockResolvedValueOnce(
+        mockSummary as any,
+      );
 
-      const result = await controller.getNetworkSummary(mockRootMemberId, { maxLevels: 20 });
+      const result = await controller.getNetworkSummary(mockRootMemberId, {
+        maxLevels: 20,
+      });
 
       expect(result).toEqual(mockSummary);
-      expect(mockHierarchyService.getHierarchySummary).toHaveBeenCalledWith(mockRootMemberId, 20);
+      expect(mockHierarchyService.getHierarchySummary).toHaveBeenCalledWith(
+        mockRootMemberId,
+        20,
+      );
     });
 
     it('GET /member/network/search — should execute search downline strictly under authenticated memberId root', async () => {
-      mockHierarchyService.searchDownline.mockResolvedValueOnce([mockDownlineNode]);
+      mockHierarchyService.searchDownline.mockResolvedValueOnce([
+        mockDownlineNode,
+      ]);
 
       const searchQuery = { q: 'Child' };
-      const result = await controller.searchDownline(mockRootMemberId, searchQuery);
+      const result = await controller.searchDownline(
+        mockRootMemberId,
+        searchQuery,
+      );
 
       expect(result).toEqual([mockDownlineNode]);
-      expect(mockHierarchyService.searchDownline).toHaveBeenCalledWith(mockRootMemberId, searchQuery);
+      expect(mockHierarchyService.searchDownline).toHaveBeenCalledWith(
+        mockRootMemberId,
+        searchQuery,
+      );
     });
   });
 
@@ -99,7 +137,10 @@ describe('Member Network Visibility & Security Restrictions Test Suite', () => {
     it('should return false for isInDownlineOf when target member is an Upline sponsor', async () => {
       mockHierarchyService.isInDownlineOf.mockResolvedValueOnce(false);
 
-      const isDownline = await service.isInDownlineOf(mockUplineMemberId, mockRootMemberId);
+      const isDownline = await service.isInDownlineOf(
+        mockUplineMemberId,
+        mockRootMemberId,
+      );
 
       expect(isDownline).toBe(false);
     });
@@ -107,7 +148,10 @@ describe('Member Network Visibility & Security Restrictions Test Suite', () => {
     it('should return false for isInDownlineOf when target member belongs to an Other/Cross Branch', async () => {
       mockHierarchyService.isInDownlineOf.mockResolvedValueOnce(false);
 
-      const isDownline = await service.isInDownlineOf(mockCrossBranchMemberId, mockRootMemberId);
+      const isDownline = await service.isInDownlineOf(
+        mockCrossBranchMemberId,
+        mockRootMemberId,
+      );
 
       expect(isDownline).toBe(false);
     });
@@ -115,7 +159,10 @@ describe('Member Network Visibility & Security Restrictions Test Suite', () => {
     it('should return true for isInDownlineOf when target member is a valid downline node', async () => {
       mockHierarchyService.isInDownlineOf.mockResolvedValueOnce(true);
 
-      const isDownline = await service.isInDownlineOf('downline-child-uuid-2001', mockRootMemberId);
+      const isDownline = await service.isInDownlineOf(
+        'downline-child-uuid-2001',
+        mockRootMemberId,
+      );
 
       expect(isDownline).toBe(true);
     });

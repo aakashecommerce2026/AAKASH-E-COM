@@ -1,5 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { CommissionStatus } from '@prisma/client';
 
@@ -18,12 +25,16 @@ export class QueryMembershipCommissionDto {
   @Min(1)
   limit?: number = 10;
 
-  @ApiPropertyOptional({ description: 'Filter by Source Member ID (registered member)' })
+  @ApiPropertyOptional({
+    description: 'Filter by Source Member ID (registered member)',
+  })
   @IsOptional()
   @IsUUID()
   sourceMemberId?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by Beneficiary Member ID (earning member)' })
+  @ApiPropertyOptional({
+    description: 'Filter by Beneficiary Member ID (earning member)',
+  })
   @IsOptional()
   @IsUUID()
   beneficiaryMemberId?: string;
@@ -35,12 +46,18 @@ export class QueryMembershipCommissionDto {
   @Min(1)
   level?: number;
 
-  @ApiPropertyOptional({ enum: CommissionStatus, description: 'Filter by Commission Status' })
+  @ApiPropertyOptional({
+    enum: CommissionStatus,
+    description: 'Filter by Commission Status',
+  })
   @IsOptional()
   @IsEnum(CommissionStatus)
   status?: CommissionStatus;
 
-  @ApiPropertyOptional({ example: 'createdAt', description: 'Sort field: createdAt, amount, level' })
+  @ApiPropertyOptional({
+    example: 'createdAt',
+    description: 'Sort field: createdAt, amount, level',
+  })
   @IsOptional()
   @IsString()
   sortBy?: string = 'createdAt';

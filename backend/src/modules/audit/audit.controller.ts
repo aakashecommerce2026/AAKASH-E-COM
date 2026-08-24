@@ -1,5 +1,10 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { MemberRole } from '@prisma/client';
 import { AuditService } from './audit.service';
 import { QueryAuditLogsDto } from './dto/query-audit-logs.dto';
@@ -18,7 +23,8 @@ export class AuditController {
   @Get()
   @ApiOperation({
     summary: 'GET /admin/audit-logs — Query audit and activity log entries',
-    description: 'Provides paginated audit log entries with filters for actor, action type, entity type, date range, and search.',
+    description:
+      'Provides paginated audit log entries with filters for actor, action type, entity type, date range, and search.',
   })
   @ApiResponse({ status: 200, description: 'Paginated audit log entries list' })
   async getAuditLogs(@Query() query: QueryAuditLogsDto) {

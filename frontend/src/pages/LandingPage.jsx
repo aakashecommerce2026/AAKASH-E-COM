@@ -16,34 +16,17 @@ import {
   Stack,
   Slider,
   CircularProgress,
-  IconButton,
-  Drawer,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  ListItemIcon,
-  Divider,
 } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import VerifiedIcon from '@mui/icons-material/Verified';
-import PaymentsIcon from '@mui/icons-material/Payments';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
-import SecurityIcon from '@mui/icons-material/Security';
-import SpeedIcon from '@mui/icons-material/Speed';
 import LoginIcon from '@mui/icons-material/Login';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import ErrorIcon from '@mui/icons-material/Error';
 import CalculateIcon from '@mui/icons-material/Calculate';
-import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
-import MenuIcon from '@mui/icons-material/Menu';
-import CloseIcon from '@mui/icons-material/Close';
-import SearchIcon from '@mui/icons-material/Search';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import RegisterModal from '../components/RegisterModal';
 import { membersApi } from '../services/api';
 
@@ -52,7 +35,6 @@ const LandingPage = () => {
   const { token } = useSelector((state) => state.auth);
 
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [testSponsorCode, setTestSponsorCode] = useState('');
   const [testSponsorResult, setTestSponsorResult] = useState(null);
@@ -131,13 +113,6 @@ const LandingPage = () => {
     setTestSponsorCode(code);
     setRegisterModalOpen(true);
   };
-
-  const navLinks = [
-    { label: 'Sponsor Lookup', href: '#sponsor-lookup', icon: <SearchIcon fontSize="small" /> },
-    { label: 'Compensation Matrix', href: '#matrix', icon: <AssessmentIcon fontSize="small" /> },
-    { label: 'Income Calculator', href: '#calculator', icon: <CalculateIcon fontSize="small" /> },
-    { label: 'Verified Onboarding', href: '#onboarding', icon: <VerifiedUserIcon fontSize="small" /> },
-  ];
 
   return (
     <Box sx={{ bgcolor: '#F8FAFC', minHeight: '100vh', color: '#0F172A', fontFamily: 'Inter, sans-serif' }}>

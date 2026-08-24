@@ -35,7 +35,10 @@ __decorate([
         summary: 'GET /member/activity — Scoped activity history feed',
         description: 'Fetches earnings activities, repurchase activities, distribution payout activities, and historical records scoped strictly to the logged-in member. Sorted most-recent-first and paginated.',
     }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Member activity history feed returned successfully' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Member activity history feed returned successfully',
+    }),
     (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized' }),
     __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
     __param(1, (0, common_1.Query)()),

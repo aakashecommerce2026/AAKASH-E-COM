@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
-import { ExecutionContext, ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import {
+  ExecutionContext,
+  ForbiddenException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { MemberRole } from '@prisma/client';
 import { RolesGuard } from './roles.guard';
 
@@ -47,21 +51,27 @@ describe('RolesGuard', () => {
   });
 
   it('should allow access if user has required ADMIN role', () => {
-    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([MemberRole.ADMIN]);
+    jest
+      .spyOn(reflector, 'getAllAndOverride')
+      .mockReturnValue([MemberRole.ADMIN]);
     const context = mockExecutionContext({ role: MemberRole.ADMIN });
 
     expect(guard.canActivate(context)).toBe(true);
   });
 
   it('should BLOCK a MEMBER from hitting an ADMIN route and throw ForbiddenException', () => {
-    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([MemberRole.ADMIN]);
+    jest
+      .spyOn(reflector, 'getAllAndOverride')
+      .mockReturnValue([MemberRole.ADMIN]);
     const context = mockExecutionContext({ role: MemberRole.MEMBER });
 
     expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
   });
 
   it('should throw UnauthorizedException if no user is present on request', () => {
-    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([MemberRole.ADMIN]);
+    jest
+      .spyOn(reflector, 'getAllAndOverride')
+      .mockReturnValue([MemberRole.ADMIN]);
     const context = mockExecutionContext(undefined);
 
     expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);

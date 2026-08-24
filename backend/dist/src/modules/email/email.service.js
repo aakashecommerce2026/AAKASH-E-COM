@@ -27,8 +27,11 @@ let EmailService = EmailService_1 = class EmailService {
         const pass = rawPass.replace(/\s+/g, '');
         const service = this.configService.get('SMTP_SERVICE');
         const secure = this.configService.get('SMTP_SECURE') === 'true';
-        const fromName = this.configService.get('EMAIL_FROM_NAME') || 'AAKASH E-COM Notifications';
-        const fromEmail = this.configService.get('EMAIL_FROM_ADDRESS') || user || 'noreply@aakashecom.com';
+        const fromName = this.configService.get('EMAIL_FROM_NAME') ||
+            'AAKASH E-COM Notifications';
+        const fromEmail = this.configService.get('EMAIL_FROM_ADDRESS') ||
+            user ||
+            'noreply@aakashecom.com';
         this.fromAddress = `"${fromName}" <${fromEmail}>`;
         if ((host || service) && user && pass) {
             try {

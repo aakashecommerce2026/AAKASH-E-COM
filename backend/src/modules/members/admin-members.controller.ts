@@ -39,11 +39,22 @@ export class AdminMembersController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
-    summary: 'Create member (Admin), auto-generate memberCode & temp password if missing, link active referrer, log audit',
+    summary:
+      'Create member (Admin), auto-generate memberCode & temp password if missing, link active referrer, log audit',
   })
-  @ApiResponse({ status: 201, description: 'Member created successfully', type: MemberResponseDto })
-  @ApiResponse({ status: 400, description: 'Validation error or invalid active referrer' })
-  @ApiResponse({ status: 409, description: 'Member code, mobile, or email collision' })
+  @ApiResponse({
+    status: 201,
+    description: 'Member created successfully',
+    type: MemberResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error or invalid active referrer',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Member code, mobile, or email collision',
+  })
   async createMember(
     @Body() dto: CreateAdminMemberDto,
     @CurrentUser('id') actorId: string,
@@ -54,8 +65,15 @@ export class AdminMembersController {
 
   @Put(':id')
   @ApiOperation({ summary: 'Edit member details and log activity audit' })
-  @ApiResponse({ status: 200, description: 'Member updated successfully', type: MemberResponseDto })
-  @ApiResponse({ status: 400, description: 'Invalid data, self-referrer error, or commission restriction' })
+  @ApiResponse({
+    status: 200,
+    description: 'Member updated successfully',
+    type: MemberResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid data, self-referrer error, or commission restriction',
+  })
   @ApiResponse({ status: 404, description: 'Member not found' })
   async updateMember(
     @Param('id') id: string,
@@ -68,9 +86,20 @@ export class AdminMembersController {
 
   @Post(':id/reassign-referrer')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Guarded flow to reassign a member referrer with cycle checks and audit logging' })
-  @ApiResponse({ status: 200, description: 'Referrer reassigned successfully', type: MemberResponseDto })
-  @ApiResponse({ status: 400, description: 'Circular dependency, inactive referrer, or self-referral error' })
+  @ApiOperation({
+    summary:
+      'Guarded flow to reassign a member referrer with cycle checks and audit logging',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Referrer reassigned successfully',
+    type: MemberResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Circular dependency, inactive referrer, or self-referral error',
+  })
   @ApiResponse({ status: 404, description: 'Member or new referrer not found' })
   async reassignReferrer(
     @Param('id') id: string,
@@ -82,22 +111,31 @@ export class AdminMembersController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get paginated member list with search and filters' })
+  @ApiOperation({
+    summary: 'Get paginated member list with search and filters',
+  })
   @ApiResponse({ status: 200, description: 'Paginated members response' })
   async getMembers(@Query() query: QueryMembersDto) {
     return this.membersService.findAll(query);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'View single member details with populated referrer info' })
-  @ApiResponse({ status: 200, description: 'Member profile with populated referrer' })
+  @ApiOperation({
+    summary: 'View single member details with populated referrer info',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Member profile with populated referrer',
+  })
   @ApiResponse({ status: 404, description: 'Member not found' })
   async getMemberById(@Param('id') id: string) {
     return this.membersService.findByIdWithReferrer(id);
   }
 
   @Get(':id/referrer')
-  @ApiOperation({ summary: 'Get direct referrer member details for specified member ID' })
+  @ApiOperation({
+    summary: 'Get direct referrer member details for specified member ID',
+  })
   @ApiResponse({ status: 200, description: 'Referrer profile details' })
   @ApiResponse({ status: 404, description: 'Member not found' })
   async getMemberReferrer(@Param('id') id: string) {
@@ -105,8 +143,14 @@ export class AdminMembersController {
   }
 
   @Get(':id/downline-preview')
-  @ApiOperation({ summary: 'Get shallow (1-level) direct downline referrals preview for specified member ID' })
-  @ApiResponse({ status: 200, description: 'Direct downline referrals list and summary counts' })
+  @ApiOperation({
+    summary:
+      'Get shallow (1-level) direct downline referrals preview for specified member ID',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Direct downline referrals list and summary counts',
+  })
   @ApiResponse({ status: 404, description: 'Member not found' })
   async getMemberDownlinePreview(@Param('id') id: string) {
     return this.membersService.getDownlinePreview(id);

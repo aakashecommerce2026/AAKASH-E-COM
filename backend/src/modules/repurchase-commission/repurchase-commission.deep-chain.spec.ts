@@ -84,7 +84,9 @@ describe('25-Member Deep Chain & 5% Pool Mathematical Sum-Check Test Suite (Repu
       ],
     }).compile();
 
-    service = module.get<RepurchaseCommissionService>(RepurchaseCommissionService);
+    service = module.get<RepurchaseCommissionService>(
+      RepurchaseCommissionService,
+    );
   });
 
   it('should be defined', () => {
@@ -118,52 +120,52 @@ describe('25-Member Deep Chain & 5% Pool Mathematical Sum-Check Test Suite (Repu
 
       // Level 1: 1.50% of 10,000 = ₹150.00
       expect(ledgers[0].level).toBe(1);
-      expect(ledgers[0].percentage).toBe(1.50);
-      expect(ledgers[0].amount).toBe(150.00);
+      expect(ledgers[0].percentage).toBe(1.5);
+      expect(ledgers[0].amount).toBe(150.0);
 
       // Level 2: 0.75% of 10,000 = ₹75.00
       expect(ledgers[1].level).toBe(2);
       expect(ledgers[1].percentage).toBe(0.75);
-      expect(ledgers[1].amount).toBe(75.00);
+      expect(ledgers[1].amount).toBe(75.0);
 
       // Level 3: 0.45% of 10,000 = ₹45.00
       expect(ledgers[2].level).toBe(3);
       expect(ledgers[2].percentage).toBe(0.45);
-      expect(ledgers[2].amount).toBe(45.00);
+      expect(ledgers[2].amount).toBe(45.0);
 
       // Level 4: 0.30% of 10,000 = ₹30.00
       expect(ledgers[3].level).toBe(4);
-      expect(ledgers[3].percentage).toBe(0.30);
-      expect(ledgers[3].amount).toBe(30.00);
+      expect(ledgers[3].percentage).toBe(0.3);
+      expect(ledgers[3].amount).toBe(30.0);
 
       // Level 5: 0.20% of 10,000 = ₹20.00
       expect(ledgers[4].level).toBe(5);
-      expect(ledgers[4].percentage).toBe(0.20);
-      expect(ledgers[4].amount).toBe(20.00);
+      expect(ledgers[4].percentage).toBe(0.2);
+      expect(ledgers[4].amount).toBe(20.0);
 
       // Levels 6 to 15: 0.15% of 10,000 = ₹15.00
       for (let lvl = 6; lvl <= 15; lvl++) {
         const item = ledgers.find((l) => l.level === lvl)!;
         expect(item.percentage).toBe(0.15);
-        expect(item.amount).toBe(15.00);
+        expect(item.amount).toBe(15.0);
       }
 
       // Level 16: 0.07% of 10,000 = ₹7.00
       expect(ledgers[15].level).toBe(16);
       expect(ledgers[15].percentage).toBe(0.07);
-      expect(ledgers[15].amount).toBe(7.00);
+      expect(ledgers[15].amount).toBe(7.0);
 
       // Levels 17 to 19: 0.06% of 10,000 = ₹6.00
       for (let lvl = 17; lvl <= 19; lvl++) {
         const item = ledgers.find((l) => l.level === lvl)!;
         expect(item.percentage).toBe(0.06);
-        expect(item.amount).toBe(6.00);
+        expect(item.amount).toBe(6.0);
       }
 
       // Level 20: 0.05% of 10,000 = ₹5.00
       expect(ledgers[19].level).toBe(20);
       expect(ledgers[19].percentage).toBe(0.05);
-      expect(ledgers[19].amount).toBe(5.00);
+      expect(ledgers[19].amount).toBe(5.0);
     });
   });
 
@@ -171,11 +173,14 @@ describe('25-Member Deep Chain & 5% Pool Mathematical Sum-Check Test Suite (Repu
     it('sum of percentage payouts across all levels should equal EXACTLY 5.00% (never exceed 5% pool)', async () => {
       const ledgers = await service.calculateForEntry('rep-entry-deep-25');
 
-      const totalPercentageSum = ledgers.reduce((acc, l) => acc + l.percentage, 0);
+      const totalPercentageSum = ledgers.reduce(
+        (acc, l) => acc + l.percentage,
+        0,
+      );
       const roundedPercentage = Math.round(totalPercentageSum * 100) / 100;
 
-      expect(roundedPercentage).toBe(5.00);
-      expect(roundedPercentage).toBeLessThanOrEqual(5.00);
+      expect(roundedPercentage).toBe(5.0);
+      expect(roundedPercentage).toBeLessThanOrEqual(5.0);
     });
 
     it('sum of total distributed commission amount should equal EXACTLY ₹500.00 for ₹10,000 repurchase (never exceed 5% of amount)', async () => {
@@ -200,25 +205,30 @@ describe('25-Member Deep Chain & 5% Pool Mathematical Sum-Check Test Suite (Repu
         deletedAt: null,
       };
 
-      prisma.repurchaseEntry.findFirst.mockImplementation(async ({ where }: any) => {
-        if (where.id === 'rep-entry-shallow-5') return shallowEntry;
-        return null;
-      });
+      prisma.repurchaseEntry.findFirst.mockImplementation(
+        async ({ where }: any) => {
+          if (where.id === 'rep-entry-shallow-5') return shallowEntry;
+          return null;
+        },
+      );
 
       const ledgers = await service.calculateForEntry('rep-entry-shallow-5');
 
       expect(ledgers.length).toBe(4); // M4, M3, M2, M1
 
-      const totalPercentageSum = ledgers.reduce((acc, l) => acc + l.percentage, 0);
+      const totalPercentageSum = ledgers.reduce(
+        (acc, l) => acc + l.percentage,
+        0,
+      );
       const totalAmountSum = ledgers.reduce((acc, l) => acc + l.amount, 0);
 
       // Levels 1..4 sum: 1.50 + 0.75 + 0.45 + 0.30 = 3.00%
-      expect(totalPercentageSum).toBe(3.00);
-      expect(totalPercentageSum).toBeLessThanOrEqual(5.00);
+      expect(totalPercentageSum).toBe(3.0);
+      expect(totalPercentageSum).toBeLessThanOrEqual(5.0);
 
       // Total amount: 3% of 5,000 = ₹150.00 <= ₹250 (5%)
-      expect(totalAmountSum).toBe(150.00);
-      expect(totalAmountSum).toBeLessThanOrEqual(250.00);
+      expect(totalAmountSum).toBe(150.0);
+      expect(totalAmountSum).toBeLessThanOrEqual(250.0);
     });
 
     it('should return 0 ledgers for root member with no uplines', async () => {
@@ -229,10 +239,12 @@ describe('25-Member Deep Chain & 5% Pool Mathematical Sum-Check Test Suite (Repu
         deletedAt: null,
       };
 
-      prisma.repurchaseEntry.findFirst.mockImplementation(async ({ where }: any) => {
-        if (where.id === 'rep-entry-root-1') return rootEntry;
-        return null;
-      });
+      prisma.repurchaseEntry.findFirst.mockImplementation(
+        async ({ where }: any) => {
+          if (where.id === 'rep-entry-root-1') return rootEntry;
+          return null;
+        },
+      );
 
       const ledgers = await service.calculateForEntry('rep-entry-root-1');
       expect(ledgers.length).toBe(0);

@@ -34,7 +34,10 @@ __decorate([
         summary: 'GET /member/earnings/total — Combined total earnings summary',
         description: 'Aggregates combined membership earnings, repurchase earnings, total distributed payouts, and pending distributions scoped strictly to the authenticated member.',
     }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Combined total earnings summary returned successfully' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Combined total earnings summary returned successfully',
+    }),
     (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized' }),
     __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
     __metadata("design:type", Function),

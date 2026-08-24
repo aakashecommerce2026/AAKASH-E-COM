@@ -1,11 +1,18 @@
-import { ExecutionContext, ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import {
+  ExecutionContext,
+  ForbiddenException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { MemberRole } from '@prisma/client';
 import { OwnershipGuard } from './ownership.guard';
 
 describe('OwnershipGuard', () => {
   let guard: OwnershipGuard;
 
-  const mockExecutionContext = (user?: any, params: any = {}): ExecutionContext => {
+  const mockExecutionContext = (
+    user?: any,
+    params: any = {},
+  ): ExecutionContext => {
     return {
       switchToHttp: () => ({
         getRequest: () => ({

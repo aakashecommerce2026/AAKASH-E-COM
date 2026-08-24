@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { RepurchaseService } from './repurchase.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
@@ -76,7 +80,10 @@ describe('RepurchaseService Unit Tests & Rules Verification', () => {
         RepurchaseService,
         { provide: PrismaService, useValue: prisma },
         { provide: AuditService, useValue: auditService },
-        { provide: RepurchaseCommissionService, useValue: repurchaseCommissionService },
+        {
+          provide: RepurchaseCommissionService,
+          useValue: repurchaseCommissionService,
+        },
       ],
     }).compile();
 
@@ -105,10 +112,9 @@ describe('RepurchaseService Unit Tests & Rules Verification', () => {
       );
 
       expect(result.id).toEqual(mockRepurchaseEntry.id);
-      expect(repurchaseCommissionService.calculateForEntry).toHaveBeenCalledWith(
-        mockRepurchaseEntry.id,
-        expect.anything(),
-      );
+      expect(
+        repurchaseCommissionService.calculateForEntry,
+      ).toHaveBeenCalledWith(mockRepurchaseEntry.id, expect.anything());
       expect(auditService.logAction).toHaveBeenCalledWith(
         expect.objectContaining({
           actionType: 'CREATE_REPURCHASE_ENTRY',
@@ -136,10 +142,13 @@ describe('RepurchaseService Unit Tests & Rules Verification', () => {
       prisma.repurchaseEntry.findFirst.mockResolvedValue(null);
       prisma.member.findFirst.mockResolvedValue(mockActiveMember);
 
-      const p2002Error = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
-        code: 'P2002',
-        clientVersion: '6.0.0',
-      });
+      const p2002Error = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed',
+        {
+          code: 'P2002',
+          clientVersion: '6.0.0',
+        },
+      );
       prisma.repurchaseEntry.create.mockRejectedValue(p2002Error);
 
       await expect(
@@ -224,7 +233,11 @@ describe('RepurchaseService Unit Tests & Rules Verification', () => {
         deletedAt: new Date(),
       });
 
-      const result = await service.remove(mockRepurchaseEntry.id, 'admin-uuid-1', MemberRole.ADMIN);
+      const result = await service.remove(
+        mockRepurchaseEntry.id,
+        'admin-uuid-1',
+        MemberRole.ADMIN,
+      );
 
       expect(result.message).toContain('soft-deleted successfully');
       expect(auditService.logAction).toHaveBeenCalledWith(
@@ -241,7 +254,9 @@ describe('RepurchaseService Unit Tests & Rules Verification', () => {
       prisma.repurchaseEntry.findFirst.mockResolvedValue(mockRepurchaseEntry);
       prisma.repurchaseCommissionLedger.count.mockResolvedValue(3);
 
-      await expect(service.remove(mockRepurchaseEntry.id)).rejects.toThrow(BadRequestException);
+      await expect(service.remove(mockRepurchaseEntry.id)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 });

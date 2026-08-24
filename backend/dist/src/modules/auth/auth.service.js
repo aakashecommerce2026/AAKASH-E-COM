@@ -178,8 +178,11 @@ let AuthService = AuthService_1 = class AuthService {
         const { refreshToken } = refreshTokenDto;
         let payload;
         try {
-            const secret = this.configService.get('JWT_SECRET') || 'dev-jwt-secret-key-12345';
-            payload = await this.jwtService.verifyAsync(refreshToken, { secret });
+            const secret = this.configService.get('JWT_SECRET') ||
+                'dev-jwt-secret-key-12345';
+            payload = await this.jwtService.verifyAsync(refreshToken, {
+                secret,
+            });
         }
         catch {
             throw new common_1.UnauthorizedException('Invalid or expired refresh token');
@@ -231,7 +234,8 @@ let AuthService = AuthService_1 = class AuthService {
         return { message: 'Password changed successfully' };
     }
     async generateAuthTokens(member) {
-        const secret = this.configService.get('JWT_SECRET') || 'dev-jwt-secret-key-12345';
+        const secret = this.configService.get('JWT_SECRET') ||
+            'dev-jwt-secret-key-12345';
         const accessPayload = {
             sub: member.id,
             memberCode: member.memberCode,
@@ -274,7 +278,9 @@ let AuthService = AuthService_1 = class AuthService {
             where: { email: dto.email.trim().toLowerCase() },
         });
         if (!member || !member.email) {
-            return { message: 'If an account with that email exists, a password reset link has been sent.' };
+            return {
+                message: 'If an account with that email exists, a password reset link has been sent.',
+            };
         }
         if (member.status === 'BLOCKED' || member.status === 'SUSPENDED') {
             throw new common_1.UnauthorizedException('Account is blocked or suspended');
@@ -285,7 +291,8 @@ let AuthService = AuthService_1 = class AuthService {
                 purpose: otp_purpose_enum_1.OtpPurpose.PASSWORD_RESET,
             });
             const otpCode = rawOtp || '';
-            const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:5173';
+            const frontendUrl = this.configService.get('FRONTEND_URL') ||
+                'http://localhost:5173';
             const resetLink = `${frontendUrl}/reset-password?email=${encodeURIComponent(member.email)}&token=${encodeURIComponent(otpCode)}`;
             this.logger.log(`
 ==================================================
@@ -295,7 +302,9 @@ ${resetLink}
 `);
             await this.emailService.sendPasswordResetLinkEmail(member.email, member.name, resetLink, otpCode);
         }
-        return { message: 'If an account with that email exists, a password reset link has been sent.' };
+        return {
+            message: 'If an account with that email exists, a password reset link has been sent.',
+        };
     }
     async resetPassword(dto) {
         const { email, token, newPassword } = dto;
@@ -331,7 +340,9 @@ ${resetLink}
         if (this.emailService && member.email) {
             await this.emailService.sendSecurityAlertEmail(member.email, member.name, 'Password Reset Completed');
         }
-        return { message: 'Password has been reset successfully. You can now log in with your new password.' };
+        return {
+            message: 'Password has been reset successfully. You can now log in with your new password.',
+        };
     }
 };
 exports.AuthService = AuthService;

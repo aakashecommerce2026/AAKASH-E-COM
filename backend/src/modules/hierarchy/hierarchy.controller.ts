@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -35,7 +29,10 @@ export class HierarchyController {
     description:
       'Traverses the referral network downwards from target memberId up to parameterized depth (default 10, max 20 levels). Uses high-performance PostgreSQL Recursive CTE.',
   })
-  @ApiParam({ name: 'memberId', description: 'UUID of the root member to traverse downline from' })
+  @ApiParam({
+    name: 'memberId',
+    description: 'UUID of the root member to traverse downline from',
+  })
   @ApiResponse({
     status: 200,
     description: 'Level-tagged recursive downline tree nodes array',
@@ -68,7 +65,8 @@ export class HierarchyController {
   @Get(':memberId/direct-referrals')
   @ApiOperation({
     summary: 'Get Level-1 direct referrals only for specified member ID',
-    description: 'Fetches direct referrals (Level 1 only) sponsored by target memberId.',
+    description:
+      'Fetches direct referrals (Level 1 only) sponsored by target memberId.',
   })
   @ApiParam({ name: 'memberId', description: 'UUID of the target member' })
   @ApiResponse({
@@ -102,7 +100,10 @@ export class HierarchyController {
     description:
       'Walks upwards from target memberId through direct sponsors to the root sponsor. Used for internal debugging and lineage checks.',
   })
-  @ApiParam({ name: 'memberId', description: 'UUID of the target member to walk upline from' })
+  @ApiParam({
+    name: 'memberId',
+    description: 'UUID of the target member to walk upline from',
+  })
   @ApiResponse({
     status: 200,
     description: 'Level-tagged upline referral chain array',
@@ -138,7 +139,10 @@ export class HierarchyController {
     description:
       'Filters downline nodes under target memberId by matching query parameter q against name, memberCode, mobile, or email.',
   })
-  @ApiParam({ name: 'memberId', description: 'UUID of the root member whose downline is searched' })
+  @ApiParam({
+    name: 'memberId',
+    description: 'UUID of the root member whose downline is searched',
+  })
   @ApiResponse({
     status: 200,
     description: 'Matching downline hierarchy nodes array',
@@ -170,7 +174,8 @@ export class HierarchyController {
 
   @Get(':memberId/growth')
   @ApiOperation({
-    summary: 'Get network growth breakdown (new joins per level per week or month)',
+    summary:
+      'Get network growth breakdown (new joins per level per week or month)',
     description:
       'Aggregates new member registrations per level per time bucket (week or month) for Admin Analyze Network Growth requirement.',
   })
@@ -203,14 +208,16 @@ export class HierarchyController {
 
   @Get(':memberId/branch-counts')
   @ApiOperation({
-    summary: 'Get branch count breakdown for each Level-1 leg under target member',
+    summary:
+      'Get branch count breakdown for each Level-1 leg under target member',
     description:
       'Computes total downline and active member counts for each direct Level-1 referral leg under target memberId.',
   })
   @ApiParam({ name: 'memberId', description: 'UUID of the target member' })
   @ApiResponse({
     status: 200,
-    description: 'Branch leg breakdown array with total and active downline counts',
+    description:
+      'Branch leg breakdown array with total and active downline counts',
     schema: {
       example: [
         {

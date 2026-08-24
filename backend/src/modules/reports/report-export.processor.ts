@@ -34,20 +34,33 @@ export class ReportExportProcessor {
   @Process('generate-report')
   async handleReportExport(job: Job<ReportExportJobData>) {
     const { jobId, format, type, period, query } = job.data;
-    this.logger.log(`Processing background report export job ${job.id} (Type: ${type}, Format: ${format})`);
+    this.logger.log(
+      `Processing background report export job ${job.id} (Type: ${type}, Format: ${format})`,
+    );
 
     // 1. Fetch report data
-    const reportData = await this.adminReportsService.getPeriodReport(period, query);
+    const reportData = await this.adminReportsService.getPeriodReport(
+      period,
+      query,
+    );
 
     // 2. Render report buffer
     let buffer: Buffer;
     let extension: string;
 
     if (format === 'pdf') {
-      buffer = await this.pdfExportService.generateReportPdf(type, period, reportData);
+      buffer = await this.pdfExportService.generateReportPdf(
+        type,
+        period,
+        reportData,
+      );
       extension = 'pdf';
     } else {
-      buffer = await this.excelExportService.generateReportExcel(type, period, reportData);
+      buffer = await this.excelExportService.generateReportExcel(
+        type,
+        period,
+        reportData,
+      );
       extension = 'xlsx';
     }
 
@@ -56,7 +69,9 @@ export class ReportExportProcessor {
     const filePath = path.join(this.exportsDir, filename);
     fs.writeFileSync(filePath, buffer);
 
-    this.logger.log(`Export job ${job.id} completed. Saved file to ${filePath}`);
+    this.logger.log(
+      `Export job ${job.id} completed. Saved file to ${filePath}`,
+    );
 
     return {
       jobId,

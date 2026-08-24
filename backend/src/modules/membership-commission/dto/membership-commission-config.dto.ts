@@ -34,18 +34,27 @@ export class LevelRateDto {
 }
 
 export class CreateCommissionConfigDto {
-  @ApiProperty({ example: 2, description: 'Version number for rate table configuration' })
+  @ApiProperty({
+    example: 2,
+    description: 'Version number for rate table configuration',
+  })
   @IsInt()
   @Min(1)
   version!: number;
 
-  @ApiProperty({ type: [LevelRateDto], description: 'List of rates for 20 levels' })
+  @ApiProperty({
+    type: [LevelRateDto],
+    description: 'List of rates for 20 levels',
+  })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => LevelRateDto)
   rates!: LevelRateDto[];
 
-  @ApiPropertyOptional({ example: true, description: 'Set as current active version' })
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Set as current active version',
+  })
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;

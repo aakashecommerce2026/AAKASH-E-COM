@@ -36,19 +36,26 @@ __decorate([
     __metadata("design:type", String)
 ], QueryAuditLogsDto.prototype, "actorId", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ enum: client_1.MemberRole, description: 'Filter by actor role' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        enum: client_1.MemberRole,
+        description: 'Filter by actor role',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(client_1.MemberRole),
     __metadata("design:type", String)
 ], QueryAuditLogsDto.prototype, "actorRole", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Filter by action type (e.g. CREATE_MEMBER, MEMBER_LOGIN)' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Filter by action type (e.g. CREATE_MEMBER, MEMBER_LOGIN)',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], QueryAuditLogsDto.prototype, "actionType", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Filter by entity type (e.g. Member, RepurchaseEntry)' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Filter by entity type (e.g. Member, RepurchaseEntry)',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
@@ -72,7 +79,9 @@ __decorate([
     __metadata("design:type", String)
 ], QueryAuditLogsDto.prototype, "endDate", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Search query across actionType or entityType' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Search query across actionType or entityType',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
@@ -101,7 +110,11 @@ __decorate([
     __metadata("design:type", String)
 ], QueryAuditLogsDto.prototype, "sortBy", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Sort order', enum: ['asc', 'desc'], default: 'desc' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Sort order',
+        enum: ['asc', 'desc'],
+        default: 'desc',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)

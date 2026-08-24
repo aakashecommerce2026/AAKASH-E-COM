@@ -14,26 +14,70 @@ import {
 import { CommissionStatus, MemberStatus, Prisma } from '@prisma/client';
 
 export const DEFAULT_REPURCHASE_COMMISSION_RATES = [
-  { level: 1, percentage: 1.50, description: 'Level 1 Repurchase Commission' },
+  { level: 1, percentage: 1.5, description: 'Level 1 Repurchase Commission' },
   { level: 2, percentage: 0.75, description: 'Level 2 Repurchase Commission' },
   { level: 3, percentage: 0.45, description: 'Level 3 Repurchase Commission' },
-  { level: 4, percentage: 0.30, description: 'Level 4 Repurchase Commission' },
-  { level: 5, percentage: 0.20, description: 'Level 5 Repurchase Commission' },
+  { level: 4, percentage: 0.3, description: 'Level 4 Repurchase Commission' },
+  { level: 5, percentage: 0.2, description: 'Level 5 Repurchase Commission' },
   { level: 6, percentage: 0.15, description: 'Level 6 Repurchase Commission' },
   { level: 7, percentage: 0.15, description: 'Level 7 Repurchase Commission' },
   { level: 8, percentage: 0.15, description: 'Level 8 Repurchase Commission' },
   { level: 9, percentage: 0.15, description: 'Level 9 Repurchase Commission' },
-  { level: 10, percentage: 0.15, description: 'Level 10 Repurchase Commission' },
-  { level: 11, percentage: 0.15, description: 'Level 11 Repurchase Commission' },
-  { level: 12, percentage: 0.15, description: 'Level 12 Repurchase Commission' },
-  { level: 13, percentage: 0.15, description: 'Level 13 Repurchase Commission' },
-  { level: 14, percentage: 0.15, description: 'Level 14 Repurchase Commission' },
-  { level: 15, percentage: 0.15, description: 'Level 15 Repurchase Commission' },
-  { level: 16, percentage: 0.07, description: 'Level 16 Repurchase Commission' },
-  { level: 17, percentage: 0.06, description: 'Level 17 Repurchase Commission' },
-  { level: 18, percentage: 0.06, description: 'Level 18 Repurchase Commission' },
-  { level: 19, percentage: 0.06, description: 'Level 19 Repurchase Commission' },
-  { level: 20, percentage: 0.05, description: 'Level 20 Repurchase Commission' },
+  {
+    level: 10,
+    percentage: 0.15,
+    description: 'Level 10 Repurchase Commission',
+  },
+  {
+    level: 11,
+    percentage: 0.15,
+    description: 'Level 11 Repurchase Commission',
+  },
+  {
+    level: 12,
+    percentage: 0.15,
+    description: 'Level 12 Repurchase Commission',
+  },
+  {
+    level: 13,
+    percentage: 0.15,
+    description: 'Level 13 Repurchase Commission',
+  },
+  {
+    level: 14,
+    percentage: 0.15,
+    description: 'Level 14 Repurchase Commission',
+  },
+  {
+    level: 15,
+    percentage: 0.15,
+    description: 'Level 15 Repurchase Commission',
+  },
+  {
+    level: 16,
+    percentage: 0.07,
+    description: 'Level 16 Repurchase Commission',
+  },
+  {
+    level: 17,
+    percentage: 0.06,
+    description: 'Level 17 Repurchase Commission',
+  },
+  {
+    level: 18,
+    percentage: 0.06,
+    description: 'Level 18 Repurchase Commission',
+  },
+  {
+    level: 19,
+    percentage: 0.06,
+    description: 'Level 19 Repurchase Commission',
+  },
+  {
+    level: 20,
+    percentage: 0.05,
+    description: 'Level 20 Repurchase Commission',
+  },
 ];
 
 export interface RepurchaseCommissionLedgerResponseDto {
@@ -76,7 +120,7 @@ export class RepurchaseCommissionService implements OnModuleInit {
     const totalSum = config.reduce((acc, c) => acc + Number(c.percentage), 0);
     const roundedSum = Math.round(totalSum * 10000) / 10000;
 
-    if (config.length !== 20 || Math.abs(roundedSum - 5.00) > 0.0001) {
+    if (config.length !== 20 || Math.abs(roundedSum - 5.0) > 0.0001) {
       const errorMsg = `CRITICAL CONFIGURATION ERROR: Active Repurchase Commission Config has ${config.length} configured levels summing to ${roundedSum}%, but must sum to EXACTLY 5.00% across 20 levels!`;
       this.logger.error(errorMsg);
       throw new Error(errorMsg);
@@ -155,7 +199,9 @@ export class RepurchaseCommissionService implements OnModuleInit {
     });
 
     if (!repurchaseEntry) {
-      throw new NotFoundException(`Repurchase entry with ID '${repurchaseEntryId}' not found`);
+      throw new NotFoundException(
+        `Repurchase entry with ID '${repurchaseEntryId}' not found`,
+      );
     }
 
     const memberId = repurchaseEntry.memberId;
@@ -186,7 +232,13 @@ export class RepurchaseCommissionService implements OnModuleInit {
     });
 
     // 4. Walk the upline up to 20 levels via Recursive CTE (with fallback for unit-test/mock environments)
-    let uplineNodes: { id: string; memberCode?: string; referrerId?: string | null; status?: string; level: number }[] = [];
+    let uplineNodes: {
+      id: string;
+      memberCode?: string;
+      referrerId?: string | null;
+      status?: string;
+      level: number;
+    }[] = [];
 
     try {
       if (typeof db.$queryRaw === 'function') {
@@ -249,7 +301,12 @@ export class RepurchaseCommissionService implements OnModuleInit {
 
         const parent = await db.member.findUnique({
           where: { id: currentRefId },
-          select: { id: true, referrerId: true, memberCode: true, status: true },
+          select: {
+            id: true,
+            referrerId: true,
+            memberCode: true,
+            status: true,
+          },
         });
 
         if (!parent) break;
@@ -277,7 +334,8 @@ export class RepurchaseCommissionService implements OnModuleInit {
       const ratePercentage = rateMap.get(node.level) ?? 0;
 
       if (ratePercentage > 0) {
-        const commissionAmount = Math.round(repurchaseAmount * (ratePercentage / 100) * 100) / 100;
+        const commissionAmount =
+          Math.round(repurchaseAmount * (ratePercentage / 100) * 100) / 100;
 
         const ledgerStatus =
           !node.status || node.status === MemberStatus.ACTIVE
@@ -312,7 +370,9 @@ export class RepurchaseCommissionService implements OnModuleInit {
    */
   validateRatesSum(rates: { level: number; percentage: number }[]): void {
     if (rates.length !== 20) {
-      throw new BadRequestException(`Repurchase commission configuration must contain exactly 20 levels (provided ${rates.length})`);
+      throw new BadRequestException(
+        `Repurchase commission configuration must contain exactly 20 levels (provided ${rates.length})`,
+      );
     }
 
     const levels = new Set(rates.map((r) => r.level));
@@ -325,7 +385,7 @@ export class RepurchaseCommissionService implements OnModuleInit {
     const total = rates.reduce((acc, r) => acc + Number(r.percentage), 0);
     const roundedTotal = Math.round(total * 10000) / 10000;
 
-    if (Math.abs(roundedTotal - 5.00) > 0.0001) {
+    if (Math.abs(roundedTotal - 5.0) > 0.0001) {
       throw new BadRequestException(
         `Configured repurchase commission percentages sum to ${roundedTotal}%, but must sum to EXACTLY 5.00%`,
       );
@@ -335,7 +395,10 @@ export class RepurchaseCommissionService implements OnModuleInit {
   /**
    * Admin updates/publishes a new version of the 20-level repurchase commission rates.
    */
-  async updateConfig(dto: UpdateRepurchaseCommissionConfigDto, actorId?: string) {
+  async updateConfig(
+    dto: UpdateRepurchaseCommissionConfigDto,
+    actorId?: string,
+  ) {
     this.validateRatesSum(dto.rates);
 
     return this.prisma.$transaction(async (tx: any) => {
@@ -360,7 +423,8 @@ export class RepurchaseCommissionService implements OnModuleInit {
           level: r.level,
           percentage: new Prisma.Decimal(r.percentage),
           isActive: true,
-          description: r.description || `Level ${r.level} Repurchase Commission`,
+          description:
+            r.description || `Level ${r.level} Repurchase Commission`,
         })),
       });
 
@@ -414,7 +478,9 @@ export class RepurchaseCommissionService implements OnModuleInit {
     if (status) where.status = status;
 
     const validSortFields = ['createdAt', 'amount', 'level', 'status'];
-    const orderByField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const orderByField = validSortFields.includes(sortBy)
+      ? sortBy
+      : 'createdAt';
 
     const [total, ledgers] = await Promise.all([
       this.prisma.repurchaseCommissionLedger.count({ where }),
@@ -425,7 +491,12 @@ export class RepurchaseCommissionService implements OnModuleInit {
         orderBy: { [orderByField]: sortOrder },
         include: {
           repurchaseEntry: {
-            select: { id: true, transactionRef: true, amount: true, transactionDate: true },
+            select: {
+              id: true,
+              transactionRef: true,
+              amount: true,
+              transactionDate: true,
+            },
           },
           sourceMember: {
             select: { id: true, memberCode: true, name: true, mobile: true },
@@ -463,7 +534,12 @@ export class RepurchaseCommissionService implements OnModuleInit {
       where: { id },
       include: {
         repurchaseEntry: {
-          select: { id: true, transactionRef: true, amount: true, transactionDate: true },
+          select: {
+            id: true,
+            transactionRef: true,
+            amount: true,
+            transactionDate: true,
+          },
         },
         sourceMember: {
           select: { id: true, memberCode: true, name: true, mobile: true },
@@ -475,7 +551,9 @@ export class RepurchaseCommissionService implements OnModuleInit {
     });
 
     if (!ledger) {
-      throw new NotFoundException(`Repurchase commission ledger with ID '${id}' not found`);
+      throw new NotFoundException(
+        `Repurchase commission ledger with ID '${id}' not found`,
+      );
     }
 
     return {
@@ -501,4 +579,3 @@ export class RepurchaseCommissionService implements OnModuleInit {
     };
   }
 }
-

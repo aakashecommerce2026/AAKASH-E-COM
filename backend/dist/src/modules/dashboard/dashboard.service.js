@@ -63,7 +63,7 @@ let DashboardService = DashboardService_1 = class DashboardService {
         if (dateFilter) {
             where.joiningDate = dateFilter;
         }
-        const [totalMembers, joinedToday, joinedThisWeek, joinedThisMonth, statusGroups] = await Promise.all([
+        const [totalMembers, joinedToday, joinedThisWeek, joinedThisMonth, statusGroups,] = await Promise.all([
             this.prisma.member.count({ where }),
             this.prisma.member.count({
                 where: { ...where, joiningDate: { gte: todayStart } },
@@ -107,7 +107,9 @@ let DashboardService = DashboardService_1 = class DashboardService {
             LIMIT 30
           `;
                 registrationTrend = rawResults.map((r) => ({
-                    date: r.date instanceof Date ? r.date.toISOString().split('T')[0] : String(r.date).split('T')[0],
+                    date: r.date instanceof Date
+                        ? r.date.toISOString().split('T')[0]
+                        : String(r.date).split('T')[0],
                     count: Number(r.count),
                 }));
             }
@@ -162,11 +164,19 @@ let DashboardService = DashboardService_1 = class DashboardService {
             }),
             this.prisma.distributionRecord.aggregate({
                 where: { ...distributionWhere, status: client_1.DistributionRecordStatus.PAID },
-                _sum: { netAmount: true, grossAmount: true, tdsAmount: true, adminFee: true },
+                _sum: {
+                    netAmount: true,
+                    grossAmount: true,
+                    tdsAmount: true,
+                    adminFee: true,
+                },
                 _count: { id: true },
             }),
             this.prisma.distributionRecord.aggregate({
-                where: { ...distributionWhere, status: client_1.DistributionRecordStatus.PENDING },
+                where: {
+                    ...distributionWhere,
+                    status: client_1.DistributionRecordStatus.PENDING,
+                },
                 _sum: { netAmount: true, grossAmount: true },
                 _count: { id: true },
             }),
@@ -238,7 +248,9 @@ let DashboardService = DashboardService_1 = class DashboardService {
             }
         }
         const { todayStart, weekStart, monthStart } = this.getDateBoundaries();
-        const repurchaseWhere = { deletedAt: null };
+        const repurchaseWhere = {
+            deletedAt: null,
+        };
         const dateFilter = this.buildDateWhere(query.startDate, query.endDate);
         if (dateFilter) {
             repurchaseWhere.transactionDate = dateFilter;
@@ -268,13 +280,16 @@ let DashboardService = DashboardService_1 = class DashboardService {
         const todayVolume = Number(todayVolumeAggregate._sum.amount ?? 0);
         const weekVolume = Number(weekVolumeAggregate._sum.amount ?? 0);
         const monthVolume = Number(monthVolumeAggregate._sum.amount ?? 0);
-        const averageOrderValue = repurchaseCount > 0 ? Number((totalRepurchaseVolume / repurchaseCount).toFixed(2)) : 0;
+        const averageOrderValue = repurchaseCount > 0
+            ? Number((totalRepurchaseVolume / repurchaseCount).toFixed(2))
+            : 0;
         const activeMembersCount = memberStats.statusBreakdown.ACTIVE || 0;
         const activationRate = memberStats.totalMembers > 0
             ? Number(((activeMembersCount / memberStats.totalMembers) * 100).toFixed(2))
             : 0;
         const payoutRatio = earningsStats.totalEarnings > 0
-            ? Number(((earningsStats.totalDistributed / earningsStats.totalEarnings) * 100).toFixed(2))
+            ? Number(((earningsStats.totalDistributed / earningsStats.totalEarnings) *
+                100).toFixed(2))
             : 0;
         const result = {
             repurchaseSummary: {
@@ -316,7 +331,7 @@ let DashboardService = DashboardService_1 = class DashboardService {
                 return cached;
             }
         }
-        const { type = query_activity_dto_1.ActivityCategory.ALL, page = 1, limit = 10, startDate, endDate } = query;
+        const { type = query_activity_dto_1.ActivityCategory.ALL, page = 1, limit = 10, startDate, endDate, } = query;
         const items = [];
         const dateFilter = this.buildDateWhere(startDate, endDate);
         const fetchAll = type === query_activity_dto_1.ActivityCategory.ALL;
@@ -348,7 +363,13 @@ let DashboardService = DashboardService_1 = class DashboardService {
                         category: query_activity_dto_1.ActivityCategory.MEMBER_REGISTRATION,
                         action: `New member registered: ${m.name} (${m.memberCode})`,
                         timestamp: m.joiningDate.toISOString(),
-                        actor: m.referrer ? { id: m.referrer.id, memberCode: m.referrer.memberCode, name: m.referrer.name } : null,
+                        actor: m.referrer
+                            ? {
+                                id: m.referrer.id,
+                                memberCode: m.referrer.memberCode,
+                                name: m.referrer.name,
+                            }
+                            : null,
                         details: {
                             memberId: m.id,
                             memberCode: m.memberCode,
@@ -377,7 +398,9 @@ let DashboardService = DashboardService_1 = class DashboardService {
                         amount: true,
                         transactionDate: true,
                         remarks: true,
-                        member: { select: { id: true, memberCode: true, name: true, role: true } },
+                        member: {
+                            select: { id: true, memberCode: true, name: true, role: true },
+                        },
                     },
                 });
                 repurchases.forEach((r) => {
@@ -386,7 +409,14 @@ let DashboardService = DashboardService_1 = class DashboardService {
                         category: query_activity_dto_1.ActivityCategory.REPURCHASE,
                         action: `Repurchase recorded for ${r.member?.name || 'Member'} (${r.member?.memberCode}): ₹${Number(r.amount).toLocaleString('en-IN')}`,
                         timestamp: r.transactionDate.toISOString(),
-                        actor: r.member ? { id: r.member.id, memberCode: r.member.memberCode, name: r.member.name, role: r.member.role } : null,
+                        actor: r.member
+                            ? {
+                                id: r.member.id,
+                                memberCode: r.member.memberCode,
+                                name: r.member.name,
+                                role: r.member.role,
+                            }
+                            : null,
                         details: {
                             repurchaseId: r.id,
                             transactionRef: r.transactionRef,
@@ -412,7 +442,9 @@ let DashboardService = DashboardService_1 = class DashboardService {
                         status: true,
                         createdAt: true,
                         completedAt: true,
-                        processor: { select: { id: true, memberCode: true, name: true, role: true } },
+                        processor: {
+                            select: { id: true, memberCode: true, name: true, role: true },
+                        },
                     },
                 });
                 batches.forEach((b) => {
@@ -422,7 +454,14 @@ let DashboardService = DashboardService_1 = class DashboardService {
                         category: query_activity_dto_1.ActivityCategory.DISTRIBUTION,
                         action: `Payout Batch ${b.batchNo} (${b.status}): Net ₹${Number(b.totalNetAmount).toLocaleString('en-IN')} for ${b.totalMembers} members`,
                         timestamp: time.toISOString(),
-                        actor: b.processor ? { id: b.processor.id, memberCode: b.processor.memberCode, name: b.processor.name, role: b.processor.role } : null,
+                        actor: b.processor
+                            ? {
+                                id: b.processor.id,
+                                memberCode: b.processor.memberCode,
+                                name: b.processor.name,
+                                role: b.processor.role,
+                            }
+                            : null,
                         details: {
                             batchId: b.id,
                             batchNo: b.batchNo,
@@ -449,7 +488,9 @@ let DashboardService = DashboardService_1 = class DashboardService {
                         actorRole: true,
                         metadata: true,
                         createdAt: true,
-                        actor: { select: { id: true, memberCode: true, name: true, role: true } },
+                        actor: {
+                            select: { id: true, memberCode: true, name: true, role: true },
+                        },
                     },
                 });
                 logs.forEach((l) => {
@@ -458,7 +499,14 @@ let DashboardService = DashboardService_1 = class DashboardService {
                         category: query_activity_dto_1.ActivityCategory.SYSTEM_ACTIVITY,
                         action: `System Activity: ${l.actionType} on ${l.entityType}${l.entityId ? ':' + l.entityId : ''}`,
                         timestamp: l.createdAt.toISOString(),
-                        actor: l.actor ? { id: l.actor.id, memberCode: l.actor.memberCode, name: l.actor.name, role: l.actor.role || l.actorRole } : null,
+                        actor: l.actor
+                            ? {
+                                id: l.actor.id,
+                                memberCode: l.actor.memberCode,
+                                name: l.actor.name,
+                                role: l.actor.role || l.actorRole,
+                            }
+                            : null,
                         details: {
                             actionType: l.actionType,
                             entityType: l.entityType,
@@ -514,7 +562,9 @@ let DashboardService = DashboardService_1 = class DashboardService {
         }
         const [directReferralsCount, activeDirectReferralsCount, membershipGroups, repurchaseGroups, recentMembershipLedgers, recentRepurchaseLedgers,] = await Promise.all([
             this.prisma.member.count({ where: { referrerId: memberId } }),
-            this.prisma.member.count({ where: { referrerId: memberId, status: client_1.MemberStatus.ACTIVE } }),
+            this.prisma.member.count({
+                where: { referrerId: memberId, status: client_1.MemberStatus.ACTIVE },
+            }),
             this.prisma.membershipCommissionLedger.groupBy({
                 by: ['status'],
                 where: { beneficiaryMemberId: memberId },
@@ -607,7 +657,8 @@ let DashboardService = DashboardService_1 = class DashboardService {
             }
         });
         const totalEarnings = membershipEarnings + repurchaseEarnings;
-        const totalDisbursed = (membershipBreakdown.DISBURSED || 0) + (repurchaseBreakdown.DISBURSED || 0);
+        const totalDisbursed = (membershipBreakdown.DISBURSED || 0) +
+            (repurchaseBreakdown.DISBURSED || 0);
         const totalPending = (membershipBreakdown.PENDING || 0) + (repurchaseBreakdown.PENDING || 0);
         const recentCommissions = [];
         recentMembershipLedgers.forEach((m) => {

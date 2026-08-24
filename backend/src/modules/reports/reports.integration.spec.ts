@@ -58,21 +58,38 @@ describe('Membership Earnings Reports Integration Test Suite', () => {
         ]),
         groupBy: jest.fn().mockImplementation(async ({ by }: any) => {
           if (by.includes('beneficiaryMemberId')) {
-            return [{ beneficiaryMemberId: mockMemberUser.id, _sum: { amount: 100 }, _count: { id: 1 } }];
+            return [
+              {
+                beneficiaryMemberId: mockMemberUser.id,
+                _sum: { amount: 100 },
+                _count: { id: 1 },
+              },
+            ];
           }
           if (by.includes('level')) {
             return [{ level: 1, _sum: { amount: 100 }, _count: { id: 1 } }];
           }
-          return [{ status: CommissionStatus.PENDING, _sum: { amount: 100 }, _count: { id: 1 } }];
+          return [
+            {
+              status: CommissionStatus.PENDING,
+              _sum: { amount: 100 },
+              _count: { id: 1 },
+            },
+          ];
         }),
       },
-      $queryRaw: jest.fn().mockResolvedValue([
-        { date: new Date('2026-08-01'), count: 1, amount: 100 },
-      ]),
+      $queryRaw: jest
+        .fn()
+        .mockResolvedValue([
+          { date: new Date('2026-08-01'), count: 1, amount: 100 },
+        ]),
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [AdminEarningsMembershipController, MemberEarningsMembershipController],
+      controllers: [
+        AdminEarningsMembershipController,
+        MemberEarningsMembershipController,
+      ],
       providers: [
         ReportsService,
         MemberPortalReportsService,
@@ -80,8 +97,12 @@ describe('Membership Earnings Reports Integration Test Suite', () => {
       ],
     }).compile();
 
-    adminController = module.get<AdminEarningsMembershipController>(AdminEarningsMembershipController);
-    memberController = module.get<MemberEarningsMembershipController>(MemberEarningsMembershipController);
+    adminController = module.get<AdminEarningsMembershipController>(
+      AdminEarningsMembershipController,
+    );
+    memberController = module.get<MemberEarningsMembershipController>(
+      MemberEarningsMembershipController,
+    );
     service = module.get<ReportsService>(ReportsService);
   });
 
@@ -126,7 +147,10 @@ describe('Membership Earnings Reports Integration Test Suite', () => {
 
   describe('4. GET /member/earnings/membership', () => {
     it('should return member earnings scoped strictly to logged-in user JWT ID', async () => {
-      const result = await memberController.getMyMembershipEarnings(mockMemberUser.id, {});
+      const result = await memberController.getMyMembershipEarnings(
+        mockMemberUser.id,
+        {},
+      );
 
       expect(result).toBeDefined();
       expect(result.summary.totalEarned).toBe(100);

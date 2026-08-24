@@ -70,13 +70,18 @@ describe('MembershipCommission Engine Integration Test Suite', () => {
         findMany: jest.fn().mockResolvedValue([]),
         updateMany: jest.fn().mockResolvedValue({ count: 0 }),
         upsert: jest.fn().mockImplementation(({ create }: any) =>
-          Promise.resolve({ id: `cfg-${create.version}-${create.level}`, ...create }),
+          Promise.resolve({
+            id: `cfg-${create.version}-${create.level}`,
+            ...create,
+          }),
         ),
       },
       membershipCommissionLedger: {
         count: jest.fn().mockImplementation(async ({ where }: any) => {
           if (where?.sourceMemberId) {
-            return mockLedgersStore.filter((l) => l.sourceMemberId === where.sourceMemberId).length;
+            return mockLedgersStore.filter(
+              (l) => l.sourceMemberId === where.sourceMemberId,
+            ).length;
           }
           return mockLedgersStore.length;
         }),
@@ -122,8 +127,12 @@ describe('MembershipCommission Engine Integration Test Suite', () => {
       ],
     }).compile();
 
-    controller = module.get<MembershipCommissionController>(MembershipCommissionController);
-    service = module.get<MembershipCommissionService>(MembershipCommissionService);
+    controller = module.get<MembershipCommissionController>(
+      MembershipCommissionController,
+    );
+    service = module.get<MembershipCommissionService>(
+      MembershipCommissionService,
+    );
   });
 
   it('should be defined', () => {
@@ -158,16 +167,21 @@ describe('MembershipCommission Engine Integration Test Suite', () => {
 
       expect(res.length).toBe(3);
       expect(res[0].percentage).toBe(12.0);
-      expect(prisma.membershipCommissionConfig.updateMany).toHaveBeenCalledWith({
-        where: { isActive: true },
-        data: { isActive: false },
-      });
+      expect(prisma.membershipCommissionConfig.updateMany).toHaveBeenCalledWith(
+        {
+          where: { isActive: true },
+          data: { isActive: false },
+        },
+      );
     });
   });
 
   describe('2. Registration Commission Trigger & Ledger Query', () => {
     it('should calculate commissions up to available upline levels upon triggering for new member', async () => {
-      const res = await controller.triggerRegistrationCommission('member-new-1', 1000);
+      const res = await controller.triggerRegistrationCommission(
+        'member-new-1',
+        1000,
+      );
 
       expect(res.length).toBe(3); // Level 1 (upline 1), Level 2 (upline 2), Level 3 (upline 3)
 

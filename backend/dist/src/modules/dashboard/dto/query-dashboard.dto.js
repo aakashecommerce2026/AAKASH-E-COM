@@ -20,13 +20,17 @@ class QueryDashboardDto {
 }
 exports.QueryDashboardDto = QueryDashboardDto;
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Filter by start date (ISO string e.g. 2026-01-01)' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Filter by start date (ISO string e.g. 2026-01-01)',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], QueryDashboardDto.prototype, "startDate", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Filter by end date (ISO string e.g. 2026-12-31)' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Filter by end date (ISO string e.g. 2026-12-31)',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)

@@ -49,9 +49,14 @@ describe('MembershipCommissionService - 20-Level Deep Chain Test Suite', () => {
       membershipCommissionLedger: {
         count: jest.fn().mockResolvedValue(0),
         findUnique: jest.fn().mockImplementation(async ({ where }: any) => {
-          return mockLedgerStore.find(
-            (l) => l.sourceMemberId === where.sourceMemberId_level.sourceMemberId && l.level === where.sourceMemberId_level.level,
-          ) || null;
+          return (
+            mockLedgerStore.find(
+              (l) =>
+                l.sourceMemberId ===
+                  where.sourceMemberId_level.sourceMemberId &&
+                l.level === where.sourceMemberId_level.level,
+            ) || null
+          );
         }),
         createMany: jest.fn().mockImplementation(async ({ data }: any) => {
           const arr = Array.isArray(data) ? data : [data];
@@ -99,7 +104,9 @@ describe('MembershipCommissionService - 20-Level Deep Chain Test Suite', () => {
       ],
     }).compile();
 
-    service = module.get<MembershipCommissionService>(MembershipCommissionService);
+    service = module.get<MembershipCommissionService>(
+      MembershipCommissionService,
+    );
   });
 
   it('should be defined', () => {

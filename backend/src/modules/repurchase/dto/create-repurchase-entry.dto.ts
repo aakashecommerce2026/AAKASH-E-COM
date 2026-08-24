@@ -14,7 +14,9 @@ export class CreateRepurchaseEntryDto {
     example: 'REP-2026-00001',
     description: 'Unique Transaction Reference Code',
   })
-  @Transform(({ obj, value }) => value || obj?.transaction_ref || obj?.transactionRef)
+  @Transform(
+    ({ obj, value }) => value || obj?.transaction_ref || obj?.transactionRef,
+  )
   @IsString()
   @IsNotEmpty()
   transactionRef!: string;
@@ -28,7 +30,10 @@ export class CreateRepurchaseEntryDto {
   @IsNotEmpty()
   memberId!: string;
 
-  @ApiProperty({ example: 1500.5, description: 'Repurchase Purchase Amount (must be > 0)' })
+  @ApiProperty({
+    example: 1500.5,
+    description: 'Repurchase Purchase Amount (must be > 0)',
+  })
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0.01)
@@ -38,7 +43,9 @@ export class CreateRepurchaseEntryDto {
     example: '2026-08-06T12:00:00.000Z',
     description: 'Transaction Date',
   })
-  @Transform(({ obj, value }) => value || obj?.transaction_date || obj?.transactionDate)
+  @Transform(
+    ({ obj, value }) => value || obj?.transaction_date || obj?.transactionDate,
+  )
   @IsOptional()
   @IsDateString()
   transactionDate?: string;

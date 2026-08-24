@@ -5,7 +5,12 @@ import { MemberEarningsRepurchaseController } from './member-earnings-repurchase
 import { MemberEarningsTotalController } from './member-earnings-total.controller';
 import { MemberActivityController } from './member-activity.controller';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CommissionStatus, DistributionRecordStatus, MemberRole, MemberStatus } from '@prisma/client';
+import {
+  CommissionStatus,
+  DistributionRecordStatus,
+  MemberRole,
+  MemberStatus,
+} from '@prisma/client';
 
 describe('Member Portal Earnings Breakdown & Scoped Activity Integration Test Suite', () => {
   let membershipController: MemberEarningsMembershipController;
@@ -35,7 +40,12 @@ describe('Member Portal Earnings Breakdown & Scoped Activity Integration Test Su
       amount: 100,
       status: CommissionStatus.DISBURSED,
       createdAt: new Date('2026-08-10T10:00:00Z'),
-      sourceMember: { id: 'source-1', memberCode: 'AK10002', name: 'Child 1', mobile: '+919999999999' },
+      sourceMember: {
+        id: 'source-1',
+        memberCode: 'AK10002',
+        name: 'Child 1',
+        mobile: '+919999999999',
+      },
     },
     {
       id: 'mem-ledger-2',
@@ -46,7 +56,12 @@ describe('Member Portal Earnings Breakdown & Scoped Activity Integration Test Su
       amount: 50,
       status: CommissionStatus.PENDING,
       createdAt: new Date('2026-08-11T12:00:00Z'),
-      sourceMember: { id: 'source-2', memberCode: 'AK10003', name: 'Child 2', mobile: '+919888888888' },
+      sourceMember: {
+        id: 'source-2',
+        memberCode: 'AK10003',
+        name: 'Child 2',
+        mobile: '+919888888888',
+      },
     },
   ];
 
@@ -61,8 +76,18 @@ describe('Member Portal Earnings Breakdown & Scoped Activity Integration Test Su
       amount: 40,
       status: CommissionStatus.DISBURSED,
       createdAt: new Date('2026-08-12T08:00:00Z'),
-      sourceMember: { id: 'source-1', memberCode: 'AK10002', name: 'Child 1', mobile: '+919999999999' },
-      repurchaseEntry: { id: 'entry-1', transactionRef: 'TXN100', amount: 2000, transactionDate: new Date('2026-08-12T08:00:00Z') },
+      sourceMember: {
+        id: 'source-1',
+        memberCode: 'AK10002',
+        name: 'Child 1',
+        mobile: '+919999999999',
+      },
+      repurchaseEntry: {
+        id: 'entry-1',
+        transactionRef: 'TXN100',
+        amount: 2000,
+        transactionDate: new Date('2026-08-12T08:00:00Z'),
+      },
     },
   ];
 
@@ -76,8 +101,16 @@ describe('Member Portal Earnings Breakdown & Scoped Activity Integration Test Su
       groupBy: jest.fn().mockImplementation(({ by }) => {
         if (by.includes('status')) {
           return Promise.resolve([
-            { status: CommissionStatus.DISBURSED, _sum: { amount: 100 }, _count: { id: 1 } },
-            { status: CommissionStatus.PENDING, _sum: { amount: 50 }, _count: { id: 1 } },
+            {
+              status: CommissionStatus.DISBURSED,
+              _sum: { amount: 100 },
+              _count: { id: 1 },
+            },
+            {
+              status: CommissionStatus.PENDING,
+              _sum: { amount: 50 },
+              _count: { id: 1 },
+            },
           ]);
         }
         if (by.includes('level')) {
@@ -95,7 +128,11 @@ describe('Member Portal Earnings Breakdown & Scoped Activity Integration Test Su
       groupBy: jest.fn().mockImplementation(({ by }) => {
         if (by.includes('status')) {
           return Promise.resolve([
-            { status: CommissionStatus.DISBURSED, _sum: { amount: 40 }, _count: { id: 1 } },
+            {
+              status: CommissionStatus.DISBURSED,
+              _sum: { amount: 40 },
+              _count: { id: 1 },
+            },
           ]);
         }
         if (by.includes('level')) {
@@ -110,7 +147,12 @@ describe('Member Portal Earnings Breakdown & Scoped Activity Integration Test Su
       aggregate: jest.fn().mockImplementation(({ where }) => {
         if (where.status === DistributionRecordStatus.PAID) {
           return Promise.resolve({
-            _sum: { netAmount: 140, grossAmount: 140, tdsAmount: 0, adminFee: 0 },
+            _sum: {
+              netAmount: 140,
+              grossAmount: 140,
+              tdsAmount: 0,
+              adminFee: 0,
+            },
             _count: { id: 1 },
           });
         }
@@ -147,16 +189,27 @@ describe('Member Portal Earnings Breakdown & Scoped Activity Integration Test Su
       ],
     }).compile();
 
-    membershipController = module.get<MemberEarningsMembershipController>(MemberEarningsMembershipController);
-    repurchaseController = module.get<MemberEarningsRepurchaseController>(MemberEarningsRepurchaseController);
-    totalController = module.get<MemberEarningsTotalController>(MemberEarningsTotalController);
-    activityController = module.get<MemberActivityController>(MemberActivityController);
+    membershipController = module.get<MemberEarningsMembershipController>(
+      MemberEarningsMembershipController,
+    );
+    repurchaseController = module.get<MemberEarningsRepurchaseController>(
+      MemberEarningsRepurchaseController,
+    );
+    totalController = module.get<MemberEarningsTotalController>(
+      MemberEarningsTotalController,
+    );
+    activityController = module.get<MemberActivityController>(
+      MemberActivityController,
+    );
 
     jest.clearAllMocks();
   });
 
   it('1. GET /member/earnings/membership?range=daily — returns grouped breakdown and trend', async () => {
-    const result = await membershipController.getMyMembershipEarnings(mockMemberId, { range: 'daily' as any });
+    const result = await membershipController.getMyMembershipEarnings(
+      mockMemberId,
+      { range: 'daily' as any },
+    );
 
     expect(result).toBeDefined();
     expect(result.summary.totalEarned).toBe(150);
@@ -167,7 +220,10 @@ describe('Member Portal Earnings Breakdown & Scoped Activity Integration Test Su
   });
 
   it('2. GET /member/earnings/repurchase?range=weekly — returns repurchase breakdown and trend', async () => {
-    const result = await repurchaseController.getMyRepurchaseEarnings(mockMemberId, { range: 'weekly' as any });
+    const result = await repurchaseController.getMyRepurchaseEarnings(
+      mockMemberId,
+      { range: 'weekly' as any },
+    );
 
     expect(result).toBeDefined();
     expect(result.summary.totalEarned).toBe(40);
@@ -187,7 +243,10 @@ describe('Member Portal Earnings Breakdown & Scoped Activity Integration Test Su
   });
 
   it('4. GET /member/activity — returns scoped activity feed sorted most-recent-first', async () => {
-    const result = await activityController.getMyActivityHistory(mockMemberId, { page: 1, limit: 10 });
+    const result = await activityController.getMyActivityHistory(mockMemberId, {
+      page: 1,
+      limit: 10,
+    });
 
     expect(result).toBeDefined();
     expect(result.data).toBeDefined();

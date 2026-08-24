@@ -2,7 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { HierarchyNode } from './interfaces/hierarchy-node.interface';
 import { SearchDownlineQueryDto } from './dto/search-downline-query.dto';
-import { NetworkGrowthQueryDto, NetworkGrowthGroupBy } from './dto/network-growth-query.dto';
+import {
+  NetworkGrowthQueryDto,
+  NetworkGrowthGroupBy,
+} from './dto/network-growth-query.dto';
 import {
   NetworkGrowthPoint,
   BranchCountNode,
@@ -19,7 +22,10 @@ export class HierarchyService {
    * Fetches full downline referral tree for memberId up to maxLevels (parameterized, capped at 20 inside CTE SQL).
    * Uses high-performance PostgreSQL Recursive CTE via Prisma $queryRaw with SQL-level hard safety limits.
    */
-  async getDownline(memberId: string, maxLevels: number = 10): Promise<HierarchyNode[]> {
+  async getDownline(
+    memberId: string,
+    maxLevels: number = 10,
+  ): Promise<HierarchyNode[]> {
     const member = await this.prisma.member.findUnique({
       where: { id: memberId },
       select: { id: true },
@@ -29,7 +35,10 @@ export class HierarchyService {
       throw new NotFoundException(`Member with ID '${memberId}' not found`);
     }
 
-    const cappedLevels = Math.min(Math.max(1, maxLevels || 10), this.ABSOLUTE_MAX_LEVELS_CAP);
+    const cappedLevels = Math.min(
+      Math.max(1, maxLevels || 10),
+      this.ABSOLUTE_MAX_LEVELS_CAP,
+    );
 
     const downline = await this.prisma.$queryRaw<HierarchyNode[]>`
       WITH RECURSIVE downline AS (
@@ -74,7 +83,10 @@ export class HierarchyService {
    * Walks upline from memberId to the root sponsor up to maxLevels (parameterized, capped at 20 inside CTE SQL).
    * Uses high-performance PostgreSQL Recursive CTE via Prisma $queryRaw with SQL-level hard safety limits.
    */
-  async getUpline(memberId: string, maxLevels: number = 20): Promise<HierarchyNode[]> {
+  async getUpline(
+    memberId: string,
+    maxLevels: number = 20,
+  ): Promise<HierarchyNode[]> {
     const member = await this.prisma.member.findUnique({
       where: { id: memberId },
       select: { id: true },
@@ -84,7 +96,10 @@ export class HierarchyService {
       throw new NotFoundException(`Member with ID '${memberId}' not found`);
     }
 
-    const cappedLevels = Math.min(Math.max(1, maxLevels || 20), this.ABSOLUTE_MAX_LEVELS_CAP);
+    const cappedLevels = Math.min(
+      Math.max(1, maxLevels || 20),
+      this.ABSOLUTE_MAX_LEVELS_CAP,
+    );
 
     const upline = await this.prisma.$queryRaw<HierarchyNode[]>`
       WITH RECURSIVE upline AS (
@@ -143,7 +158,10 @@ export class HierarchyService {
     }
 
     const maxLevels = queryDto.maxLevels || 20;
-    const cappedLevels = Math.min(Math.max(1, maxLevels), this.ABSOLUTE_MAX_LEVELS_CAP);
+    const cappedLevels = Math.min(
+      Math.max(1, maxLevels),
+      this.ABSOLUTE_MAX_LEVELS_CAP,
+    );
     const searchTerm = `%${queryDto.q.trim()}%`;
 
     const results = await this.prisma.$queryRaw<HierarchyNode[]>`
@@ -208,7 +226,10 @@ export class HierarchyService {
     }
 
     const maxLevels = queryDto.maxLevels || 20;
-    const cappedLevels = Math.min(Math.max(1, maxLevels), this.ABSOLUTE_MAX_LEVELS_CAP);
+    const cappedLevels = Math.min(
+      Math.max(1, maxLevels),
+      this.ABSOLUTE_MAX_LEVELS_CAP,
+    );
     const groupBy = queryDto.groupBy || NetworkGrowthGroupBy.MONTH;
 
     const downlineNodes = await this.getDownline(memberId, cappedLevels);
@@ -216,11 +237,15 @@ export class HierarchyService {
     let filteredNodes = downlineNodes;
     if (queryDto.startDate) {
       const start = new Date(queryDto.startDate);
-      filteredNodes = filteredNodes.filter((n) => new Date(n.joiningDate) >= start);
+      filteredNodes = filteredNodes.filter(
+        (n) => new Date(n.joiningDate) >= start,
+      );
     }
     if (queryDto.endDate) {
       const end = new Date(queryDto.endDate);
-      filteredNodes = filteredNodes.filter((n) => new Date(n.joiningDate) <= end);
+      filteredNodes = filteredNodes.filter(
+        (n) => new Date(n.joiningDate) <= end,
+      );
     }
 
     const map = new Map<string, NetworkGrowthPoint>();
@@ -345,9 +370,15 @@ export class HierarchyService {
 
     const branches = await this.getBranchCounts(memberId, maxLevels);
 
-    const levelMap = new Map<number, { totalCount: number; activeCount: number }>();
+    const levelMap = new Map<
+      number,
+      { totalCount: number; activeCount: number }
+    >();
     for (const node of downline) {
-      const entry = levelMap.get(node.level) || { totalCount: 0, activeCount: 0 };
+      const entry = levelMap.get(node.level) || {
+        totalCount: 0,
+        activeCount: 0,
+      };
       entry.totalCount++;
       if (node.status === 'ACTIVE') {
         entry.activeCount++;
@@ -387,7 +418,10 @@ export class HierarchyService {
     if (memberId === targetId) return true;
 
     try {
-      const upline = await this.getUpline(targetId, this.ABSOLUTE_MAX_LEVELS_CAP);
+      const upline = await this.getUpline(
+        targetId,
+        this.ABSOLUTE_MAX_LEVELS_CAP,
+      );
       return upline.some((node) => node.id === memberId);
     } catch {
       return false;
@@ -397,7 +431,10 @@ export class HierarchyService {
   /**
    * Alias for isInDownlineOf.
    */
-  async isMemberInDownline(rootMemberId: string, targetMemberId: string): Promise<boolean> {
+  async isMemberInDownline(
+    rootMemberId: string,
+    targetMemberId: string,
+  ): Promise<boolean> {
     return this.isInDownlineOf(rootMemberId, targetMemberId);
   }
 }

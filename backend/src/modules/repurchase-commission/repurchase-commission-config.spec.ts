@@ -35,7 +35,9 @@ describe('RepurchaseCommissionService Configuration & Startup 5% Sum Validation'
       ],
     }).compile();
 
-    service = module.get<RepurchaseCommissionService>(RepurchaseCommissionService);
+    service = module.get<RepurchaseCommissionService>(
+      RepurchaseCommissionService,
+    );
   });
 
   it('should be defined', () => {
@@ -44,7 +46,9 @@ describe('RepurchaseCommissionService Configuration & Startup 5% Sum Validation'
 
   describe('1. Startup 5% Sum Validation (validateStartupConfig)', () => {
     it('should pass startup validation when active config percentages sum to EXACTLY 5.00% across 20 levels', async () => {
-      prisma.repurchaseCommissionConfig.findFirst.mockResolvedValue({ version: 1 });
+      prisma.repurchaseCommissionConfig.findFirst.mockResolvedValue({
+        version: 1,
+      });
       prisma.repurchaseCommissionConfig.findMany.mockResolvedValue(
         DEFAULT_REPURCHASE_COMMISSION_RATES.map((r) => ({
           ...r,
@@ -59,7 +63,9 @@ describe('RepurchaseCommissionService Configuration & Startup 5% Sum Validation'
     });
 
     it('should throw critical configuration error on startup if sum is NOT 5.00% (e.g. 5.50%)', async () => {
-      prisma.repurchaseCommissionConfig.findFirst.mockResolvedValue({ version: 1 });
+      prisma.repurchaseCommissionConfig.findFirst.mockResolvedValue({
+        version: 1,
+      });
       const badRates = DEFAULT_REPURCHASE_COMMISSION_RATES.map((r) => ({
         ...r,
         id: `id-${r.level}`,
@@ -75,14 +81,18 @@ describe('RepurchaseCommissionService Configuration & Startup 5% Sum Validation'
     });
 
     it('should throw critical configuration error if level count is NOT 20 (e.g. 19 levels)', async () => {
-      prisma.repurchaseCommissionConfig.findFirst.mockResolvedValue({ version: 1 });
-      const badRates = DEFAULT_REPURCHASE_COMMISSION_RATES.slice(0, 19).map((r) => ({
-        ...r,
-        id: `id-${r.level}`,
+      prisma.repurchaseCommissionConfig.findFirst.mockResolvedValue({
         version: 1,
-        isActive: true,
-        percentage: r.percentage,
-      }));
+      });
+      const badRates = DEFAULT_REPURCHASE_COMMISSION_RATES.slice(0, 19).map(
+        (r) => ({
+          ...r,
+          id: `id-${r.level}`,
+          version: 1,
+          isActive: true,
+          percentage: r.percentage,
+        }),
+      );
       prisma.repurchaseCommissionConfig.findMany.mockResolvedValue(badRates);
 
       await expect(service.validateStartupConfig()).rejects.toThrow(
@@ -98,7 +108,7 @@ describe('RepurchaseCommissionService Configuration & Startup 5% Sum Validation'
       const config = await service.getActiveConfig();
       expect(config.length).toBe(20);
       const totalSum = config.reduce((acc, c) => acc + c.percentage, 0);
-      expect(Math.round(totalSum * 100) / 100).toBe(5.00);
+      expect(Math.round(totalSum * 100) / 100).toBe(5.0);
     });
   });
 
@@ -109,13 +119,15 @@ describe('RepurchaseCommissionService Configuration & Startup 5% Sum Validation'
         percentage: r.level === 1 ? 10.0 : r.percentage,
       }));
 
-      await expect(service.updateConfig({ rates: invalidRates })).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.updateConfig({ rates: invalidRates }),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should update and activate new versioned config when rates sum to 5.00%', async () => {
-      prisma.repurchaseCommissionConfig.findFirst.mockResolvedValue({ version: 1 });
+      prisma.repurchaseCommissionConfig.findFirst.mockResolvedValue({
+        version: 1,
+      });
       prisma.repurchaseCommissionConfig.findMany.mockResolvedValue(
         DEFAULT_REPURCHASE_COMMISSION_RATES.map((r) => ({
           ...r,
@@ -132,7 +144,9 @@ describe('RepurchaseCommissionService Configuration & Startup 5% Sum Validation'
 
       expect(result.length).toBe(20);
       expect(auditService.logAction).toHaveBeenCalledWith(
-        expect.objectContaining({ actionType: 'UPDATE_REPURCHASE_COMMISSION_CONFIG' }),
+        expect.objectContaining({
+          actionType: 'UPDATE_REPURCHASE_COMMISSION_CONFIG',
+        }),
       );
     });
   });

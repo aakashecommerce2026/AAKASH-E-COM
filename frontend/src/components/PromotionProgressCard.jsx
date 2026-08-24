@@ -5,14 +5,12 @@ import {
   CardContent,
   Typography,
   LinearProgress,
-  Chip,
   Grid,
   Paper,
   Divider,
   CircularProgress,
   Tooltip,
 } from '@mui/material';
-import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import StarsIcon from '@mui/icons-material/Stars';

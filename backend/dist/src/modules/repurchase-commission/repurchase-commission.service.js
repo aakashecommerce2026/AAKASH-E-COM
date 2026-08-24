@@ -16,26 +16,70 @@ const prisma_service_1 = require("../../prisma/prisma.service");
 const audit_service_1 = require("../audit/audit.service");
 const client_1 = require("@prisma/client");
 exports.DEFAULT_REPURCHASE_COMMISSION_RATES = [
-    { level: 1, percentage: 1.50, description: 'Level 1 Repurchase Commission' },
+    { level: 1, percentage: 1.5, description: 'Level 1 Repurchase Commission' },
     { level: 2, percentage: 0.75, description: 'Level 2 Repurchase Commission' },
     { level: 3, percentage: 0.45, description: 'Level 3 Repurchase Commission' },
-    { level: 4, percentage: 0.30, description: 'Level 4 Repurchase Commission' },
-    { level: 5, percentage: 0.20, description: 'Level 5 Repurchase Commission' },
+    { level: 4, percentage: 0.3, description: 'Level 4 Repurchase Commission' },
+    { level: 5, percentage: 0.2, description: 'Level 5 Repurchase Commission' },
     { level: 6, percentage: 0.15, description: 'Level 6 Repurchase Commission' },
     { level: 7, percentage: 0.15, description: 'Level 7 Repurchase Commission' },
     { level: 8, percentage: 0.15, description: 'Level 8 Repurchase Commission' },
     { level: 9, percentage: 0.15, description: 'Level 9 Repurchase Commission' },
-    { level: 10, percentage: 0.15, description: 'Level 10 Repurchase Commission' },
-    { level: 11, percentage: 0.15, description: 'Level 11 Repurchase Commission' },
-    { level: 12, percentage: 0.15, description: 'Level 12 Repurchase Commission' },
-    { level: 13, percentage: 0.15, description: 'Level 13 Repurchase Commission' },
-    { level: 14, percentage: 0.15, description: 'Level 14 Repurchase Commission' },
-    { level: 15, percentage: 0.15, description: 'Level 15 Repurchase Commission' },
-    { level: 16, percentage: 0.07, description: 'Level 16 Repurchase Commission' },
-    { level: 17, percentage: 0.06, description: 'Level 17 Repurchase Commission' },
-    { level: 18, percentage: 0.06, description: 'Level 18 Repurchase Commission' },
-    { level: 19, percentage: 0.06, description: 'Level 19 Repurchase Commission' },
-    { level: 20, percentage: 0.05, description: 'Level 20 Repurchase Commission' },
+    {
+        level: 10,
+        percentage: 0.15,
+        description: 'Level 10 Repurchase Commission',
+    },
+    {
+        level: 11,
+        percentage: 0.15,
+        description: 'Level 11 Repurchase Commission',
+    },
+    {
+        level: 12,
+        percentage: 0.15,
+        description: 'Level 12 Repurchase Commission',
+    },
+    {
+        level: 13,
+        percentage: 0.15,
+        description: 'Level 13 Repurchase Commission',
+    },
+    {
+        level: 14,
+        percentage: 0.15,
+        description: 'Level 14 Repurchase Commission',
+    },
+    {
+        level: 15,
+        percentage: 0.15,
+        description: 'Level 15 Repurchase Commission',
+    },
+    {
+        level: 16,
+        percentage: 0.07,
+        description: 'Level 16 Repurchase Commission',
+    },
+    {
+        level: 17,
+        percentage: 0.06,
+        description: 'Level 17 Repurchase Commission',
+    },
+    {
+        level: 18,
+        percentage: 0.06,
+        description: 'Level 18 Repurchase Commission',
+    },
+    {
+        level: 19,
+        percentage: 0.06,
+        description: 'Level 19 Repurchase Commission',
+    },
+    {
+        level: 20,
+        percentage: 0.05,
+        description: 'Level 20 Repurchase Commission',
+    },
 ];
 let RepurchaseCommissionService = RepurchaseCommissionService_1 = class RepurchaseCommissionService {
     prisma;
@@ -52,7 +96,7 @@ let RepurchaseCommissionService = RepurchaseCommissionService_1 = class Repurcha
         const config = await this.getActiveConfig();
         const totalSum = config.reduce((acc, c) => acc + Number(c.percentage), 0);
         const roundedSum = Math.round(totalSum * 10000) / 10000;
-        if (config.length !== 20 || Math.abs(roundedSum - 5.00) > 0.0001) {
+        if (config.length !== 20 || Math.abs(roundedSum - 5.0) > 0.0001) {
             const errorMsg = `CRITICAL CONFIGURATION ERROR: Active Repurchase Commission Config has ${config.length} configured levels summing to ${roundedSum}%, but must sum to EXACTLY 5.00% across 20 levels!`;
             this.logger.error(errorMsg);
             throw new Error(errorMsg);
@@ -176,7 +220,12 @@ let RepurchaseCommissionService = RepurchaseCommissionService_1 = class Repurcha
                 visited.add(currentRefId);
                 const parent = await db.member.findUnique({
                     where: { id: currentRefId },
-                    select: { id: true, referrerId: true, memberCode: true, status: true },
+                    select: {
+                        id: true,
+                        referrerId: true,
+                        memberCode: true,
+                        status: true,
+                    },
                 });
                 if (!parent)
                     break;
@@ -230,7 +279,7 @@ let RepurchaseCommissionService = RepurchaseCommissionService_1 = class Repurcha
         }
         const total = rates.reduce((acc, r) => acc + Number(r.percentage), 0);
         const roundedTotal = Math.round(total * 10000) / 10000;
-        if (Math.abs(roundedTotal - 5.00) > 0.0001) {
+        if (Math.abs(roundedTotal - 5.0) > 0.0001) {
             throw new common_1.BadRequestException(`Configured repurchase commission percentages sum to ${roundedTotal}%, but must sum to EXACTLY 5.00%`);
         }
     }
@@ -292,7 +341,9 @@ let RepurchaseCommissionService = RepurchaseCommissionService_1 = class Repurcha
         if (status)
             where.status = status;
         const validSortFields = ['createdAt', 'amount', 'level', 'status'];
-        const orderByField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+        const orderByField = validSortFields.includes(sortBy)
+            ? sortBy
+            : 'createdAt';
         const [total, ledgers] = await Promise.all([
             this.prisma.repurchaseCommissionLedger.count({ where }),
             this.prisma.repurchaseCommissionLedger.findMany({
@@ -302,7 +353,12 @@ let RepurchaseCommissionService = RepurchaseCommissionService_1 = class Repurcha
                 orderBy: { [orderByField]: sortOrder },
                 include: {
                     repurchaseEntry: {
-                        select: { id: true, transactionRef: true, amount: true, transactionDate: true },
+                        select: {
+                            id: true,
+                            transactionRef: true,
+                            amount: true,
+                            transactionDate: true,
+                        },
                     },
                     sourceMember: {
                         select: { id: true, memberCode: true, name: true, mobile: true },
@@ -334,7 +390,12 @@ let RepurchaseCommissionService = RepurchaseCommissionService_1 = class Repurcha
             where: { id },
             include: {
                 repurchaseEntry: {
-                    select: { id: true, transactionRef: true, amount: true, transactionDate: true },
+                    select: {
+                        id: true,
+                        transactionRef: true,
+                        amount: true,
+                        transactionDate: true,
+                    },
                 },
                 sourceMember: {
                     select: { id: true, memberCode: true, name: true, mobile: true },

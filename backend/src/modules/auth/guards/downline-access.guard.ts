@@ -49,7 +49,10 @@ export class DownlineAccessGuard implements CanActivate {
     }
 
     // Verify if target member belongs to user's downline tree
-    const isDownline = await this.hierarchyService.isInDownlineOf(user.id, targetId);
+    const isDownline = await this.hierarchyService.isInDownlineOf(
+      user.id,
+      targetId,
+    );
 
     if (!isDownline) {
       throw new ForbiddenException(

@@ -16,6 +16,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
+    const isProduction = process.env.NODE_ENV === 'production';
 
     const status =
       exception instanceof HttpException
@@ -37,11 +38,16 @@ export class HttpExceptionFilter implements ExceptionFilter {
         error = resObj.error || exception.name.replace('Exception', '');
       }
     } else if (exception instanceof Error) {
-      message = exception.message;
       this.logger.error(
         `Unhandled exception: ${exception.message}`,
         exception.stack,
       );
+      message = isProduction
+        ? 'An unexpected internal error occurred'
+        : exception.message;
+    } else {
+      this.logger.error('Unhandled unknown exception thrown', exception);
+      message = 'An unexpected internal error occurred';
     }
 
     if (status === HttpStatus.UNAUTHORIZED || status === HttpStatus.FORBIDDEN) {

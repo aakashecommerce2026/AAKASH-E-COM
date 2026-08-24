@@ -21,7 +21,8 @@ describe('AuthService', () => {
     mobile: '+919876543210',
     role: MemberRole.MEMBER,
     status: MemberStatus.ACTIVE,
-    passwordHash: '$2b$12$eImiTXuWVxfM37uY4JANjO5E/805.O07Gf5D.w8Xl3f.F1iQ7uSgK', // hash for 'Password123!'
+    passwordHash:
+      '$2b$12$eImiTXuWVxfM37uY4JANjO5E/805.O07Gf5D.w8Xl3f.F1iQ7uSgK', // hash for 'Password123!'
   };
 
   beforeEach(async () => {
@@ -131,7 +132,9 @@ describe('AuthService', () => {
           password: 'Password123!',
           portalType: 'Admin',
         }),
-      ).rejects.toThrow('Access denied. Only admin credentials can log in to the Admin Portal.');
+      ).rejects.toThrow(
+        'Access denied. Only admin credentials can log in to the Admin Portal.',
+      );
     });
 
     it('should throw UnauthorizedException when an ADMIN attempts login to Member portal', async () => {
@@ -145,7 +148,9 @@ describe('AuthService', () => {
           password: 'Password123!',
           portalType: 'Member',
         }),
-      ).rejects.toThrow('Access denied. Admin credentials must be used on the Admin Login portal.');
+      ).rejects.toThrow(
+        'Access denied. Admin credentials must be used on the Admin Login portal.',
+      );
     });
 
     it('should allow ADMIN login to Admin portal', async () => {
@@ -186,7 +191,10 @@ describe('AuthService', () => {
       prismaService.member.findFirst.mockResolvedValue(mockMember);
       jest.spyOn(service, 'comparePassword').mockResolvedValue(true);
 
-      const member = await service.validateMemberUser('AK10001', 'Password123!');
+      const member = await service.validateMemberUser(
+        'AK10001',
+        'Password123!',
+      );
       expect(member.role).toEqual(MemberRole.MEMBER);
       expect(prismaService.member.findFirst).toHaveBeenCalledWith({
         where: {
@@ -248,8 +256,13 @@ describe('AuthService', () => {
     it('should change password successfully when current password is correct', async () => {
       prismaService.member.findUnique.mockResolvedValue(mockMember);
       jest.spyOn(service, 'comparePassword').mockResolvedValue(true);
-      jest.spyOn(service, 'hashPassword').mockResolvedValue('new-hashed-password');
-      prismaService.member.update.mockResolvedValue({ ...mockMember, passwordHash: 'new-hashed-password' });
+      jest
+        .spyOn(service, 'hashPassword')
+        .mockResolvedValue('new-hashed-password');
+      prismaService.member.update.mockResolvedValue({
+        ...mockMember,
+        passwordHash: 'new-hashed-password',
+      });
 
       const result = await service.changePassword(mockMember.id, {
         currentPassword: 'Password123!',

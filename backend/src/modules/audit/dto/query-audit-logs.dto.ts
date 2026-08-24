@@ -1,4 +1,12 @@
-import { IsOptional, IsString, IsInt, IsEnum, IsDateString, Min, Max } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsInt,
+  IsEnum,
+  IsDateString,
+  Min,
+  Max,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { MemberRole } from '@prisma/client';
@@ -9,17 +17,24 @@ export class QueryAuditLogsDto {
   @IsString()
   actorId?: string;
 
-  @ApiPropertyOptional({ enum: MemberRole, description: 'Filter by actor role' })
+  @ApiPropertyOptional({
+    enum: MemberRole,
+    description: 'Filter by actor role',
+  })
   @IsOptional()
   @IsEnum(MemberRole)
   actorRole?: MemberRole;
 
-  @ApiPropertyOptional({ description: 'Filter by action type (e.g. CREATE_MEMBER, MEMBER_LOGIN)' })
+  @ApiPropertyOptional({
+    description: 'Filter by action type (e.g. CREATE_MEMBER, MEMBER_LOGIN)',
+  })
   @IsOptional()
   @IsString()
   actionType?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by entity type (e.g. Member, RepurchaseEntry)' })
+  @ApiPropertyOptional({
+    description: 'Filter by entity type (e.g. Member, RepurchaseEntry)',
+  })
   @IsOptional()
   @IsString()
   entityType?: string;
@@ -39,7 +54,9 @@ export class QueryAuditLogsDto {
   @IsDateString()
   endDate?: string;
 
-  @ApiPropertyOptional({ description: 'Search query across actionType or entityType' })
+  @ApiPropertyOptional({
+    description: 'Search query across actionType or entityType',
+  })
   @IsOptional()
   @IsString()
   search?: string;
@@ -64,7 +81,11 @@ export class QueryAuditLogsDto {
   @IsString()
   sortBy?: string = 'createdAt';
 
-  @ApiPropertyOptional({ description: 'Sort order', enum: ['asc', 'desc'], default: 'desc' })
+  @ApiPropertyOptional({
+    description: 'Sort order',
+    enum: ['asc', 'desc'],
+    default: 'desc',
+  })
   @IsOptional()
   @IsString()
   sortOrder?: 'asc' | 'desc' = 'desc';

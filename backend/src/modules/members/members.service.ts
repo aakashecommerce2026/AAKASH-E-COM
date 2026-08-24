@@ -43,11 +43,15 @@ export class MembersService {
     let nextNum = 10001 + count;
     let code = `AK${nextNum}`;
 
-    let exists = await this.prisma.member.findUnique({ where: { memberCode: code } });
+    let exists = await this.prisma.member.findUnique({
+      where: { memberCode: code },
+    });
     while (exists) {
       nextNum++;
       code = `AK${nextNum}`;
-      exists = await this.prisma.member.findUnique({ where: { memberCode: code } });
+      exists = await this.prisma.member.findUnique({
+        where: { memberCode: code },
+      });
     }
 
     return code;
@@ -64,7 +68,11 @@ export class MembersService {
   /**
    * Public / General Member Creation.
    */
-  async create(createMemberDto: CreateMemberDto, actorId?: string, actorRole?: MemberRole): Promise<MemberResponseDto> {
+  async create(
+    createMemberDto: CreateMemberDto,
+    actorId?: string,
+    actorRole?: MemberRole,
+  ): Promise<MemberResponseDto> {
     return this.createMemberInternal(createMemberDto, actorId, actorRole);
   }
 
@@ -95,7 +103,11 @@ export class MembersService {
       password: tempPassword,
     };
 
-    const created = await this.createMemberInternal(fullCreateDto, actorId, actorRole);
+    const created = await this.createMemberInternal(
+      fullCreateDto,
+      actorId,
+      actorRole,
+    );
 
     return {
       ...created,
@@ -108,7 +120,8 @@ export class MembersService {
     actorId?: string,
     actorRole?: MemberRole,
   ): Promise<MemberResponseDto> {
-    const { password, bankDetails, referrerId, role, status, otp, ...rest } = createMemberDto;
+    const { password, bankDetails, referrerId, role, status, otp, ...rest } =
+      createMemberDto;
 
     // Verify Email OTP if provided
     if (this.otpService && otp && rest.email) {
@@ -133,16 +146,24 @@ export class MembersService {
 
     if (existing) {
       if (existing.memberCode === rest.memberCode) {
-        throw new ConflictException(`Member code '${rest.memberCode}' already exists`);
+        throw new ConflictException(
+          `Member code '${rest.memberCode}' already exists`,
+        );
       }
       if (existing.mobile === rest.mobile) {
-        throw new ConflictException(`Mobile number '${rest.mobile}' already exists`);
+        throw new ConflictException(
+          `Mobile number '${rest.mobile}' already exists`,
+        );
       }
       if (rest.email && existing.email === rest.email) {
-        throw new ConflictException(`Email address '${rest.email}' already exists`);
+        throw new ConflictException(
+          `Email address '${rest.email}' already exists`,
+        );
       }
       if (rest.username && existing.username === rest.username) {
-        throw new ConflictException(`Username '${rest.username}' already exists`);
+        throw new ConflictException(
+          `Username '${rest.username}' already exists`,
+        );
       }
     }
 
@@ -152,7 +173,9 @@ export class MembersService {
         where: { id: referrerId },
       });
       if (!referrer) {
-        throw new BadRequestException(`Referrer with ID '${referrerId}' does not exist`);
+        throw new BadRequestException(
+          `Referrer with ID '${referrerId}' does not exist`,
+        );
       }
       if (referrer.status !== MemberStatus.ACTIVE) {
         throw new BadRequestException(
@@ -173,16 +196,19 @@ export class MembersService {
           referrerId: referrerId || null,
           role: role || MemberRole.MEMBER,
           status: status || MemberStatus.ACTIVE,
-          bankDetails: bankDetails ? JSON.parse(JSON.stringify(bankDetails)) : undefined,
+          bankDetails: bankDetails
+            ? JSON.parse(JSON.stringify(bankDetails))
+            : undefined,
         },
       });
 
       // 2. Trigger-on-registration 20-level commission engine atomically inside the same transaction
-      const generatedCommissions = await this.membershipCommissionService.calculateForNewMember(
-        createdMember.id,
-        1000,
-        tx,
-      );
+      const generatedCommissions =
+        await this.membershipCommissionService.calculateForNewMember(
+          createdMember.id,
+          1000,
+          tx,
+        );
 
       // 3. Log member creation to activity_logs
       await this.auditService.logAction(
@@ -230,18 +256,22 @@ export class MembersService {
 
       // 5. Evaluate and auto-promote sponsor if milestone is hit
       if (this.promotionsService && referrerId) {
-        await this.promotionsService.evaluateAndPromoteMember(referrerId, tx).catch(() => {});
+        await this.promotionsService
+          .evaluateAndPromoteMember(referrerId, tx)
+          .catch(() => {});
       }
 
       const result = this.mapToResponseDto(createdMember);
 
       // Send welcome email asynchronously if email address is present
       if (this.emailService && createdMember.email) {
-        this.emailService.sendWelcomeEmail(
-          createdMember.email,
-          createdMember.name,
-          createdMember.memberCode,
-        ).catch(() => {});
+        this.emailService
+          .sendWelcomeEmail(
+            createdMember.email,
+            createdMember.name,
+            createdMember.memberCode,
+          )
+          .catch(() => {});
       }
 
       return result;
@@ -283,13 +313,19 @@ export class MembersService {
 
       if (existing) {
         if (rest.memberCode && existing.memberCode === rest.memberCode) {
-          throw new ConflictException(`Member code '${rest.memberCode}' is already taken`);
+          throw new ConflictException(
+            `Member code '${rest.memberCode}' is already taken`,
+          );
         }
         if (rest.mobile && existing.mobile === rest.mobile) {
-          throw new ConflictException(`Mobile number '${rest.mobile}' is already taken`);
+          throw new ConflictException(
+            `Mobile number '${rest.mobile}' is already taken`,
+          );
         }
         if (rest.email && existing.email === rest.email) {
-          throw new ConflictException(`Email address '${rest.email}' is already taken`);
+          throw new ConflictException(
+            `Email address '${rest.email}' is already taken`,
+          );
         }
       }
     }
@@ -304,13 +340,19 @@ export class MembersService {
       }
 
       if (referrerId === id) {
-        throw new BadRequestException('A member cannot be set as their own referrer');
+        throw new BadRequestException(
+          'A member cannot be set as their own referrer',
+        );
       }
 
       if (referrerId !== null) {
-        const referrer = await this.prisma.member.findUnique({ where: { id: referrerId } });
+        const referrer = await this.prisma.member.findUnique({
+          where: { id: referrerId },
+        });
         if (!referrer) {
-          throw new BadRequestException(`Referrer with ID '${referrerId}' does not exist`);
+          throw new BadRequestException(
+            `Referrer with ID '${referrerId}' does not exist`,
+          );
         }
         if (referrer.status !== MemberStatus.ACTIVE) {
           throw new BadRequestException(
@@ -333,7 +375,11 @@ export class MembersService {
         ...(passwordHash ? { passwordHash } : {}),
         ...(referrerId !== undefined ? { referrerId } : {}),
         ...(bankDetails !== undefined
-          ? { bankDetails: bankDetails ? JSON.parse(JSON.stringify(bankDetails)) : null }
+          ? {
+              bankDetails: bankDetails
+                ? JSON.parse(JSON.stringify(bankDetails))
+                : null,
+            }
           : {}),
       },
     });
@@ -371,12 +417,18 @@ export class MembersService {
     const { newReferrerId, reason } = dto;
 
     if (newReferrerId === id) {
-      throw new BadRequestException('A member cannot be set as their own referrer');
+      throw new BadRequestException(
+        'A member cannot be set as their own referrer',
+      );
     }
 
-    const newReferrer = await this.prisma.member.findUnique({ where: { id: newReferrerId } });
+    const newReferrer = await this.prisma.member.findUnique({
+      where: { id: newReferrerId },
+    });
     if (!newReferrer) {
-      throw new BadRequestException(`New referrer with ID '${newReferrerId}' does not exist`);
+      throw new BadRequestException(
+        `New referrer with ID '${newReferrerId}' does not exist`,
+      );
     }
 
     if (newReferrer.status !== MemberStatus.ACTIVE) {
@@ -420,7 +472,10 @@ export class MembersService {
   /**
    * Helper to check if member 'targetId' is present in upline hierarchy of 'startMemberId'.
    */
-  private async isMemberInUplineChain(startMemberId: string, targetId: string): Promise<boolean> {
+  private async isMemberInUplineChain(
+    startMemberId: string,
+    targetId: string,
+  ): Promise<boolean> {
     let currentId: string | null = startMemberId;
     const visited = new Set<string>();
 
@@ -430,10 +485,11 @@ export class MembersService {
       }
       visited.add(currentId);
 
-      const parent: { referrerId: string | null } | null = await this.prisma.member.findUnique({
-        where: { id: currentId },
-        select: { referrerId: true },
-      });
+      const parent: { referrerId: string | null } | null =
+        await this.prisma.member.findUnique({
+          where: { id: currentId },
+          select: { referrerId: true },
+        });
 
       if (!parent || !parent.referrerId || visited.has(parent.referrerId)) {
         break;
@@ -447,7 +503,9 @@ export class MembersService {
   /**
    * Checks if commissions exist in membership or repurchase ledgers against a member.
    */
-  private async hasCommissionsAgainstMember(memberId: string): Promise<boolean> {
+  private async hasCommissionsAgainstMember(
+    memberId: string,
+  ): Promise<boolean> {
     const [membershipCount, repurchaseCount] = await Promise.all([
       this.prisma.membershipCommissionLedger.count({
         where: {
@@ -503,7 +561,15 @@ export class MembersService {
   }
 
   async findAll(query: QueryMembersDto) {
-    const { page = 1, limit = 10, search, status, role, sortBy = 'createdAt', sortOrder = 'desc' } = query;
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      status,
+      role,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+    } = query;
     const skip = (page - 1) * limit;
 
     const where: Prisma.MemberWhereInput = {};
@@ -526,8 +592,16 @@ export class MembersService {
       ];
     }
 
-    const validSortFields = ['createdAt', 'joiningDate', 'name', 'memberCode', 'status'];
-    const orderByField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const validSortFields = [
+      'createdAt',
+      'joiningDate',
+      'name',
+      'memberCode',
+      'status',
+    ];
+    const orderByField = validSortFields.includes(sortBy)
+      ? sortBy
+      : 'createdAt';
 
     const [total, members] = await Promise.all([
       this.prisma.member.count({ where }),
@@ -620,7 +694,9 @@ export class MembersService {
       orderBy: { joiningDate: 'desc' },
     });
 
-    const activeCount = directReferrals.filter((r) => r.status === MemberStatus.ACTIVE).length;
+    const activeCount = directReferrals.filter(
+      (r) => r.status === MemberStatus.ACTIVE,
+    ).length;
 
     return {
       memberId: member.id,

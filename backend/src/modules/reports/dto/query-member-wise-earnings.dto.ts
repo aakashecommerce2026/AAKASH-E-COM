@@ -1,4 +1,12 @@
-import { IsOptional, IsString, IsInt, IsEnum, IsDateString, Min, Max } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsInt,
+  IsEnum,
+  IsDateString,
+  Min,
+  Max,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { CommissionStatus } from '@prisma/client';
@@ -14,12 +22,17 @@ export class QueryMemberWiseEarningsDto {
   @IsDateString()
   endDate?: string;
 
-  @ApiPropertyOptional({ enum: CommissionStatus, description: 'Filter by commission status' })
+  @ApiPropertyOptional({
+    enum: CommissionStatus,
+    description: 'Filter by commission status',
+  })
   @IsOptional()
   @IsEnum(CommissionStatus)
   status?: CommissionStatus;
 
-  @ApiPropertyOptional({ description: 'Search member by name, code, mobile, or email' })
+  @ApiPropertyOptional({
+    description: 'Search member by name, code, mobile, or email',
+  })
   @IsOptional()
   @IsString()
   search?: string;

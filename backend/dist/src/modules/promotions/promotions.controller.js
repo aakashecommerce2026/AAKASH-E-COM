@@ -32,7 +32,9 @@ let PromotionsController = class PromotionsController {
     async getMemberProgress(memberId, req) {
         const actorId = req.user.sub || req.user.id;
         const actorRole = req.user.role;
-        if (actorRole !== client_1.MemberRole.ADMIN && actorRole !== client_1.MemberRole.SUB_ADMIN && actorId !== memberId) {
+        if (actorRole !== client_1.MemberRole.ADMIN &&
+            actorRole !== client_1.MemberRole.SUB_ADMIN &&
+            actorId !== memberId) {
             throw new common_1.ForbiddenException('Access denied to other member promotion records');
         }
         return this.promotionsService.getPromotionProgress(memberId);
@@ -44,7 +46,9 @@ let PromotionsController = class PromotionsController {
 exports.PromotionsController = PromotionsController;
 __decorate([
     (0, common_1.Get)('my-status'),
-    (0, swagger_1.ApiOperation)({ summary: 'Get logged in member promotion rank status and progress' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Get logged in member promotion rank status and progress',
+    }),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -52,7 +56,9 @@ __decorate([
 ], PromotionsController.prototype, "getMyStatus", null);
 __decorate([
     (0, common_1.Get)('progress/:memberId'),
-    (0, swagger_1.ApiOperation)({ summary: 'Get promotion progress and rank history for a specific member' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Get promotion progress and rank history for a specific member',
+    }),
     __param(0, (0, common_1.Param)('memberId')),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
@@ -62,7 +68,9 @@ __decorate([
 __decorate([
     (0, common_1.Post)('admin/recalculate'),
     (0, roles_decorator_1.Roles)(client_1.MemberRole.ADMIN),
-    (0, swagger_1.ApiOperation)({ summary: 'Bulk recalculate and update ranks for all members (Admin only)' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Bulk recalculate and update ranks for all members (Admin only)',
+    }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)

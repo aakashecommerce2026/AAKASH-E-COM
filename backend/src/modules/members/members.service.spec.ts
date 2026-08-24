@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { MembersService } from './members.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
@@ -49,7 +53,8 @@ describe('MembersService', () => {
         findUnique: jest.fn().mockImplementation(async ({ where }: any) => {
           if (where?.id === mockMember.id) return mockMember;
           if (where?.id === mockActiveReferrer.id) return mockActiveReferrer;
-          if (where?.id === mockInactiveReferrer.id) return mockInactiveReferrer;
+          if (where?.id === mockInactiveReferrer.id)
+            return mockInactiveReferrer;
           return null;
         }),
         findMany: jest.fn().mockResolvedValue([]),
@@ -79,7 +84,10 @@ describe('MembersService', () => {
         MembersService,
         { provide: PrismaService, useValue: prisma },
         { provide: AuditService, useValue: auditService },
-        { provide: MembershipCommissionService, useValue: mockMembershipCommissionService },
+        {
+          provide: MembershipCommissionService,
+          useValue: mockMembershipCommissionService,
+        },
       ],
     }).compile();
 
@@ -248,9 +256,14 @@ describe('MembersService', () => {
   describe('update', () => {
     it('should update member details', async () => {
       prisma.member.findUnique.mockResolvedValue(mockMember);
-      prisma.member.update.mockResolvedValue({ ...mockMember, name: 'Updated Name' });
+      prisma.member.update.mockResolvedValue({
+        ...mockMember,
+        name: 'Updated Name',
+      });
 
-      const result = await service.update(mockMember.id, { name: 'Updated Name' });
+      const result = await service.update(mockMember.id, {
+        name: 'Updated Name',
+      });
       expect(result.name).toEqual('Updated Name');
       expect(auditService.logAction).toHaveBeenCalledWith(
         expect.objectContaining({ actionType: 'UPDATE_MEMBER' }),
@@ -267,7 +280,10 @@ describe('MembersService', () => {
 
     it('should throw ConflictException if updated field collides', async () => {
       prisma.member.findUnique.mockResolvedValue(mockMember);
-      prisma.member.findFirst.mockResolvedValue({ id: 'other-id', mobile: '+917777777777' });
+      prisma.member.findFirst.mockResolvedValue({
+        id: 'other-id',
+        mobile: '+917777777777',
+      });
 
       await expect(
         service.update(mockMember.id, { mobile: '+917777777777' }),
@@ -318,7 +334,10 @@ describe('MembersService', () => {
         .mockResolvedValueOnce(newReferrer) // new referrer lookup
         .mockResolvedValueOnce(newReferrer); // cycle check upline lookup
 
-      prisma.member.update.mockResolvedValue({ ...mockMember, referrerId: newReferrer.id });
+      prisma.member.update.mockResolvedValue({
+        ...mockMember,
+        referrerId: newReferrer.id,
+      });
 
       const result = await service.reassignReferrer(mockMember.id, {
         newReferrerId: newReferrer.id,
@@ -401,7 +420,9 @@ describe('MembersService', () => {
     it('should throw NotFoundException in findById if not found', async () => {
       prisma.member.findUnique.mockResolvedValue(null);
 
-      await expect(service.findById('non-existent-id')).rejects.toThrow(NotFoundException);
+      await expect(service.findById('non-existent-id')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should return member with referrer info in findByIdWithReferrer', async () => {
@@ -418,9 +439,9 @@ describe('MembersService', () => {
     it('should throw NotFoundException in findByIdWithReferrer if not found', async () => {
       prisma.member.findUnique.mockResolvedValue(null);
 
-      await expect(service.findByIdWithReferrer('non-existent-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.findByIdWithReferrer('non-existent-id'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -429,7 +450,11 @@ describe('MembersService', () => {
       prisma.member.count.mockResolvedValue(1);
       prisma.member.findMany.mockResolvedValue([mockMember]);
 
-      const result = await service.findAll({ page: 1, limit: 10, search: 'New' });
+      const result = await service.findAll({
+        page: 1,
+        limit: 10,
+        search: 'New',
+      });
 
       expect(result.data).toHaveLength(1);
       expect(result.meta).toEqual({
@@ -509,10 +534,9 @@ describe('MembersService', () => {
     it('should throw NotFoundException in getDownlinePreview if member not found', async () => {
       prisma.member.findUnique.mockResolvedValue(null);
 
-      await expect(service.getDownlinePreview('non-existent-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.getDownlinePreview('non-existent-id'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });
-

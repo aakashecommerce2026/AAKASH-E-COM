@@ -26,7 +26,12 @@ export class ExcelExportService {
     worksheet.mergeCells('A1:F1');
     const titleCell = worksheet.getCell('A1');
     titleCell.value = `AAKASH E-COM — ${reportType.replace(/_/g, ' ')} (${period.toUpperCase()} REPORT)`;
-    titleCell.font = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+    titleCell.font = {
+      name: 'Calibri',
+      size: 14,
+      bold: true,
+      color: { argb: 'FFFFFFFF' },
+    };
     titleCell.fill = {
       type: 'pattern',
       pattern: 'solid',
@@ -51,13 +56,19 @@ export class ExcelExportService {
     // Summary Cards Section
     if (reportData.summary) {
       worksheet.getCell(`A${currentRow}`).value = 'SUMMARY METRICS';
-      worksheet.getCell(`A${currentRow}`).font = { bold: true, size: 11, color: { argb: 'FF1F497D' } };
+      worksheet.getCell(`A${currentRow}`).font = {
+        bold: true,
+        size: 11,
+        color: { argb: 'FF1F497D' },
+      };
       currentRow++;
 
       const summaryKeys = Object.keys(reportData.summary);
       for (const key of summaryKeys) {
         if (typeof reportData.summary[key] === 'object') continue;
-        const formattedKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
+        const formattedKey = key
+          .replace(/([A-Z])/g, ' $1')
+          .replace(/^./, (str) => str.toUpperCase());
         const row = worksheet.getRow(currentRow);
         row.getCell(1).value = formattedKey;
         row.getCell(1).font = { bold: true };
@@ -69,12 +80,23 @@ export class ExcelExportService {
     }
 
     // Main Table Section (Trend or Detailed Data)
-    const hasTrend = Array.isArray(reportData.trend) && reportData.trend.length > 0;
-    const tableItems = hasTrend ? reportData.trend : Array.isArray(reportData.data) ? reportData.data : [];
+    const hasTrend =
+      Array.isArray(reportData.trend) && reportData.trend.length > 0;
+    const tableItems = hasTrend
+      ? reportData.trend
+      : Array.isArray(reportData.data)
+        ? reportData.data
+        : [];
 
     if (tableItems.length > 0) {
-      worksheet.getCell(`A${currentRow}`).value = hasTrend ? 'TREND ANALYSIS' : 'DETAILED RECORDS';
-      worksheet.getCell(`A${currentRow}`).font = { bold: true, size: 11, color: { argb: 'FF1F497D' } };
+      worksheet.getCell(`A${currentRow}`).value = hasTrend
+        ? 'TREND ANALYSIS'
+        : 'DETAILED RECORDS';
+      worksheet.getCell(`A${currentRow}`).font = {
+        bold: true,
+        size: 11,
+        color: { argb: 'FF1F497D' },
+      };
       currentRow++;
 
       const firstItem = tableItems[0];
@@ -85,7 +107,9 @@ export class ExcelExportService {
       headerRow.height = 24;
       keys.forEach((key, idx) => {
         const colCell = headerRow.getCell(idx + 1);
-        colCell.value = key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
+        colCell.value = key
+          .replace(/([A-Z])/g, ' $1')
+          .replace(/^./, (str) => str.toUpperCase());
         colCell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
         colCell.fill = {
           type: 'pattern',

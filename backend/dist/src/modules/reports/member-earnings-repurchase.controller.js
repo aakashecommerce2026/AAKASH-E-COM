@@ -35,7 +35,10 @@ __decorate([
         summary: 'GET /member/earnings/repurchase?range=daily|weekly|monthly — Repurchase earnings breakdown',
         description: 'Grouped aggregation queries on repurchase_commission_ledger scoped strictly to beneficiary_member_id = self derived from JWT payload.',
     }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Authenticated member repurchase earnings breakdown returned successfully' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Authenticated member repurchase earnings breakdown returned successfully',
+    }),
     (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized' }),
     __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
     __param(1, (0, common_1.Query)()),

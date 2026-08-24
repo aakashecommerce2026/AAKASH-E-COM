@@ -11,8 +11,18 @@ import { EmailModule } from '../email/email.module';
 import { PromotionsModule } from '../promotions/promotions.module';
 
 @Module({
-  imports: [PrismaModule, AuditModule, MembershipCommissionModule, EmailModule, PromotionsModule],
-  controllers: [MembersController, AdminMembersController, MemberProfileController],
+  imports: [
+    PrismaModule,
+    AuditModule,
+    MembershipCommissionModule,
+    EmailModule,
+    PromotionsModule,
+  ],
+  controllers: [
+    MembersController,
+    AdminMembersController,
+    MemberProfileController,
+  ],
   providers: [MembersService, MemberProfileService],
   exports: [MembersService, MemberProfileService],
 })

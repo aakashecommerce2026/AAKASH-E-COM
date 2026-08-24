@@ -16,7 +16,6 @@ import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableViewIcon from "@mui/icons-material/TableView";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 
 const QueryFilterExportBar = ({
   searchQuery,

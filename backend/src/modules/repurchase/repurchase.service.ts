@@ -23,7 +23,9 @@ export class RepurchaseService {
   /**
    * Helper to check if repurchase commission ledgers exist for an entry.
    */
-  private async hasCommissionsGenerated(repurchaseEntryId: string): Promise<boolean> {
+  private async hasCommissionsGenerated(
+    repurchaseEntryId: string,
+  ): Promise<boolean> {
     const count = await this.prisma.repurchaseCommissionLedger.count({
       where: { repurchaseEntryId },
     });
@@ -38,8 +40,19 @@ export class RepurchaseService {
    * 3. Calculates 20-level repurchase commissions atomically in DB transaction.
    * 4. Logs CREATE_REPURCHASE_ENTRY action to activity_logs.
    */
-  async create(dto: CreateRepurchaseEntryDto, actorId?: string, actorRole?: MemberRole) {
-    const { transactionRef, memberId, amount, transactionDate, remarks, createdBy } = dto;
+  async create(
+    dto: CreateRepurchaseEntryDto,
+    actorId?: string,
+    actorRole?: MemberRole,
+  ) {
+    const {
+      transactionRef,
+      memberId,
+      amount,
+      transactionDate,
+      remarks,
+      createdBy,
+    } = dto;
 
     return this.prisma.$transaction(async (tx: any) => {
       // 1. Transaction reference uniqueness check
@@ -48,16 +61,15 @@ export class RepurchaseService {
       });
 
       if (existingRef) {
-        throw new ConflictException(`Transaction reference '${transactionRef}' already exists`);
+        throw new ConflictException(
+          `Transaction reference '${transactionRef}' already exists`,
+        );
       }
 
       // 2. Member existence & ACTIVE status check (supports UUID or memberCode lookup)
       const member = await tx.member.findFirst({
         where: {
-          OR: [
-            { id: memberId },
-            { memberCode: memberId },
-          ],
+          OR: [{ id: memberId }, { memberCode: memberId }],
         },
       });
 
@@ -81,19 +93,32 @@ export class RepurchaseService {
             transactionRef,
             memberId: member.id,
             amount: new Prisma.Decimal(amount),
-            transactionDate: transactionDate ? new Date(transactionDate) : new Date(),
+            transactionDate: transactionDate
+              ? new Date(transactionDate)
+              : new Date(),
             remarks: remarks || null,
             createdBy: creatorId,
           },
           include: {
             member: {
-              select: { id: true, memberCode: true, name: true, mobile: true, status: true },
+              select: {
+                id: true,
+                memberCode: true,
+                name: true,
+                mobile: true,
+                status: true,
+              },
             },
           },
         });
       } catch (error: any) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-          throw new ConflictException(`Transaction reference '${transactionRef}' already exists`);
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2002'
+        ) {
+          throw new ConflictException(
+            `Transaction reference '${transactionRef}' already exists`,
+          );
         }
         throw error;
       }
@@ -123,7 +148,16 @@ export class RepurchaseService {
    * Retrieves paginated list of repurchase entries with search & filters (excluding soft-deleted).
    */
   async findAll(query: QueryRepurchaseEntryDto) {
-    const { page = 1, limit = 10, memberId, search, startDate, endDate, sortBy = 'transactionDate', sortOrder = 'desc' } = query;
+    const {
+      page = 1,
+      limit = 10,
+      memberId,
+      search,
+      startDate,
+      endDate,
+      sortBy = 'transactionDate',
+      sortOrder = 'desc',
+    } = query;
     const skip = (page - 1) * limit;
 
     const where: any = {
@@ -131,10 +165,7 @@ export class RepurchaseService {
     };
 
     if (memberId) {
-      where.OR = [
-        { memberId },
-        { member: { memberCode: memberId } },
-      ];
+      where.OR = [{ memberId }, { member: { memberCode: memberId } }];
     }
 
     if (startDate || endDate) {
@@ -159,18 +190,22 @@ export class RepurchaseService {
       };
 
       if (where.OR) {
-        where.AND = [
-          { OR: where.OR },
-          searchWhere,
-        ];
+        where.AND = [{ OR: where.OR }, searchWhere];
         delete where.OR;
       } else {
         where.OR = searchWhere.OR;
       }
     }
 
-    const validSortFields = ['transactionDate', 'createdAt', 'amount', 'transactionRef'];
-    const orderByField = validSortFields.includes(sortBy) ? sortBy : 'transactionDate';
+    const validSortFields = [
+      'transactionDate',
+      'createdAt',
+      'amount',
+      'transactionRef',
+    ];
+    const orderByField = validSortFields.includes(sortBy)
+      ? sortBy
+      : 'transactionDate';
 
     const [total, entries] = await Promise.all([
       (this.prisma as any).repurchaseEntry.count({ where }),
@@ -181,7 +216,13 @@ export class RepurchaseService {
         orderBy: { [orderByField]: sortOrder },
         include: {
           member: {
-            select: { id: true, memberCode: true, name: true, mobile: true, status: true },
+            select: {
+              id: true,
+              memberCode: true,
+              name: true,
+              mobile: true,
+              status: true,
+            },
           },
         },
       }),
@@ -208,7 +249,13 @@ export class RepurchaseService {
       where: { id, deletedAt: null },
       include: {
         member: {
-          select: { id: true, memberCode: true, name: true, mobile: true, status: true },
+          select: {
+            id: true,
+            memberCode: true,
+            name: true,
+            mobile: true,
+            status: true,
+          },
         },
       },
     });
@@ -225,7 +272,12 @@ export class RepurchaseService {
    * Lock safeguard: Editing is blocked if commission ledgers have already been generated.
    * Logs UPDATE_REPURCHASE_ENTRY action to activity_logs.
    */
-  async update(id: string, dto: UpdateRepurchaseEntryDto, actorId?: string, actorRole?: MemberRole) {
+  async update(
+    id: string,
+    dto: UpdateRepurchaseEntryDto,
+    actorId?: string,
+    actorRole?: MemberRole,
+  ) {
     const existing = await (this.prisma as any).repurchaseEntry.findFirst({
       where: { id, deletedAt: null },
     });
@@ -250,7 +302,9 @@ export class RepurchaseService {
         where: { transactionRef, deletedAt: null },
       });
       if (collision) {
-        throw new ConflictException(`Transaction reference '${transactionRef}' is already taken`);
+        throw new ConflictException(
+          `Transaction reference '${transactionRef}' is already taken`,
+        );
       }
     }
 
@@ -279,18 +333,31 @@ export class RepurchaseService {
           ...(transactionRef ? { transactionRef } : {}),
           memberId: updatedMemberId,
           ...(amount ? { amount: new Prisma.Decimal(amount) } : {}),
-          ...(transactionDate ? { transactionDate: new Date(transactionDate) } : {}),
+          ...(transactionDate
+            ? { transactionDate: new Date(transactionDate) }
+            : {}),
           ...(remarks !== undefined ? { remarks } : {}),
         },
         include: {
           member: {
-            select: { id: true, memberCode: true, name: true, mobile: true, status: true },
+            select: {
+              id: true,
+              memberCode: true,
+              name: true,
+              mobile: true,
+              status: true,
+            },
           },
         },
       });
     } catch (error: any) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        throw new ConflictException(`Transaction reference '${transactionRef}' is already taken`);
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException(
+          `Transaction reference '${transactionRef}' is already taken`,
+        );
       }
       throw error;
     }
@@ -351,7 +418,9 @@ export class RepurchaseService {
       },
     });
 
-    return { message: `Repurchase entry '${existing.transactionRef}' soft-deleted successfully` };
+    return {
+      message: `Repurchase entry '${existing.transactionRef}' soft-deleted successfully`,
+    };
   }
 
   private mapToResponseDto(entry: any) {

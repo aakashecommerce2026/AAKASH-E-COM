@@ -25,7 +25,9 @@ describe('AuthController', () => {
     authService = {
       login: jest.fn().mockResolvedValue(mockAuthResponse),
       refreshToken: jest.fn().mockResolvedValue(mockAuthResponse),
-      changePassword: jest.fn().mockResolvedValue({ message: 'Password changed successfully' }),
+      changePassword: jest
+        .fn()
+        .mockResolvedValue({ message: 'Password changed successfully' }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -54,9 +56,13 @@ describe('AuthController', () => {
   });
 
   it('refresh should return rotated tokens', async () => {
-    const result = await controller.refresh({ refreshToken: 'mock-refresh-token' });
+    const result = await controller.refresh({
+      refreshToken: 'mock-refresh-token',
+    });
 
-    expect(authService.refreshToken).toHaveBeenCalledWith({ refreshToken: 'mock-refresh-token' });
+    expect(authService.refreshToken).toHaveBeenCalledWith({
+      refreshToken: 'mock-refresh-token',
+    });
     expect(result).toEqual(mockAuthResponse);
   });
 

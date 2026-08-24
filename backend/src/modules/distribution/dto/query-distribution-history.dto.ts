@@ -1,4 +1,12 @@
-import { IsOptional, IsString, IsInt, IsDateString, Min, Max, IsEnum } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsInt,
+  IsDateString,
+  Min,
+  Max,
+  IsEnum,
+} from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { DistributionBatchStatus } from '@prisma/client';
@@ -16,7 +24,10 @@ export class QueryDistributionHistoryDto {
   @IsDateString()
   endDate?: string;
 
-  @ApiPropertyOptional({ enum: DistributionBatchStatus, description: 'Filter by batch status' })
+  @ApiPropertyOptional({
+    enum: DistributionBatchStatus,
+    description: 'Filter by batch status',
+  })
   @IsOptional()
   @IsEnum(DistributionBatchStatus)
   status?: DistributionBatchStatus;

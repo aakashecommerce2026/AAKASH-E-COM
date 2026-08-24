@@ -32,21 +32,27 @@ __decorate([
     __metadata("design:type", String)
 ], QueryRepurchaseEntryDto.prototype, "memberId", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Search term for transactionRef, member code, or member name' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Search term for transactionRef, member code, or member name',
+    }),
     (0, class_transformer_1.Transform)(({ obj, value }) => value || obj?.transaction_ref || obj?.search),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], QueryRepurchaseEntryDto.prototype, "search", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Filter by start date (ISO string e.g. 2026-01-01)' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Filter by start date (ISO string e.g. 2026-01-01)',
+    }),
     (0, class_transformer_1.Transform)(({ obj, value }) => value || obj?.start_date || obj?.startDate),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], QueryRepurchaseEntryDto.prototype, "startDate", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Filter by end date (ISO string e.g. 2026-12-31)' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Filter by end date (ISO string e.g. 2026-12-31)',
+    }),
     (0, class_transformer_1.Transform)(({ obj, value }) => value || obj?.end_date || obj?.endDate),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsDateString)(),
@@ -70,13 +76,20 @@ __decorate([
     __metadata("design:type", Number)
 ], QueryRepurchaseEntryDto.prototype, "limit", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Sort field', default: 'transactionDate' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Sort field',
+        default: 'transactionDate',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], QueryRepurchaseEntryDto.prototype, "sortBy", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Sort direction', enum: ['asc', 'desc'], default: 'desc' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Sort direction',
+        enum: ['asc', 'desc'],
+        default: 'desc',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)

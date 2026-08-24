@@ -17,7 +17,11 @@ const audit_service_1 = require("../audit/audit.service");
 const client_1 = require("@prisma/client");
 exports.DEFAULT_20_LEVEL_RATES = [
     { level: 1, percentage: 10.0, description: 'Level 1 Sponsor Commission' },
-    { level: 2, percentage: 5.0, description: 'Level 2 Direct Upline Commission' },
+    {
+        level: 2,
+        percentage: 5.0,
+        description: 'Level 2 Direct Upline Commission',
+    },
     { level: 3, percentage: 2.5, description: 'Level 3 Upline Commission' },
     { level: 4, percentage: 1.5, description: 'Level 4 Upline Commission' },
     { level: 5, percentage: 1.0, description: 'Level 5 Upline Commission' },
@@ -219,7 +223,12 @@ let MembershipCommissionService = MembershipCommissionService_1 = class Membersh
                 visited.add(currentRefId);
                 const parent = await db.member.findUnique({
                     where: { id: currentRefId },
-                    select: { id: true, referrerId: true, memberCode: true, status: true },
+                    select: {
+                        id: true,
+                        referrerId: true,
+                        memberCode: true,
+                        status: true,
+                    },
                 });
                 if (!parent)
                     break;
@@ -280,7 +289,9 @@ let MembershipCommissionService = MembershipCommissionService_1 = class Membersh
             where.status = status;
         }
         const validSortFields = ['createdAt', 'amount', 'level', 'status'];
-        const orderByField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+        const orderByField = validSortFields.includes(sortBy)
+            ? sortBy
+            : 'createdAt';
         const [total, ledgers] = await Promise.all([
             this.prisma.membershipCommissionLedger.count({ where }),
             this.prisma.membershipCommissionLedger.findMany({

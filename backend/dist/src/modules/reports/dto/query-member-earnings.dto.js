@@ -24,19 +24,27 @@ class QueryMemberEarningsDto {
 }
 exports.QueryMemberEarningsDto = QueryMemberEarningsDto;
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Filter by start date (ISO string e.g. 2026-01-01)' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Filter by start date (ISO string e.g. 2026-01-01)',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], QueryMemberEarningsDto.prototype, "startDate", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Filter by end date (ISO string e.g. 2026-12-31)' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Filter by end date (ISO string e.g. 2026-12-31)',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], QueryMemberEarningsDto.prototype, "endDate", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Filter by level (1 to 20)', minimum: 1, maximum: 20 }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Filter by level (1 to 20)',
+        minimum: 1,
+        maximum: 20,
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_transformer_1.Type)(() => Number),
     (0, class_validator_1.IsInt)(),
@@ -45,7 +53,10 @@ __decorate([
     __metadata("design:type", Number)
 ], QueryMemberEarningsDto.prototype, "level", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ enum: client_1.CommissionStatus, description: 'Filter by commission status' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        enum: client_1.CommissionStatus,
+        description: 'Filter by commission status',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(client_1.CommissionStatus),
     __metadata("design:type", String)

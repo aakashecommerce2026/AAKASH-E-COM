@@ -41,7 +41,10 @@ __decorate([
         type: Boolean,
         description: 'Bypass cache and force real-time calculation',
     }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Member personal dashboard returned successfully' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Member personal dashboard returned successfully',
+    }),
     (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized' }),
     __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
     __param(1, (0, common_1.Query)('refresh')),

@@ -14,9 +14,17 @@ import {
 import { QueryMembershipCommissionDto } from './dto/query-membership-commission.dto';
 import { MembershipCommissionResponseDto } from './dto/membership-commission-response.dto';
 
-export const DEFAULT_20_LEVEL_RATES: { level: number; percentage: number; description: string }[] = [
+export const DEFAULT_20_LEVEL_RATES: {
+  level: number;
+  percentage: number;
+  description: string;
+}[] = [
   { level: 1, percentage: 10.0, description: 'Level 1 Sponsor Commission' },
-  { level: 2, percentage: 5.0, description: 'Level 2 Direct Upline Commission' },
+  {
+    level: 2,
+    percentage: 5.0,
+    description: 'Level 2 Direct Upline Commission',
+  },
   { level: 3, percentage: 2.5, description: 'Level 3 Upline Commission' },
   { level: 4, percentage: 1.5, description: 'Level 4 Upline Commission' },
   { level: 5, percentage: 1.0, description: 'Level 5 Upline Commission' },
@@ -96,16 +104,22 @@ export class MembershipCommissionService {
     const { version, rates, isActive = true } = dto;
 
     if (!rates || rates.length === 0) {
-      throw new BadRequestException('Commission rate schedule must contain at least one level');
+      throw new BadRequestException(
+        'Commission rate schedule must contain at least one level',
+      );
     }
 
     const levelSet = new Set<number>();
     for (const r of rates) {
       if (r.level < 1 || r.level > 20) {
-        throw new BadRequestException(`Invalid level ${r.level}. Levels must be between 1 and 20.`);
+        throw new BadRequestException(
+          `Invalid level ${r.level}. Levels must be between 1 and 20.`,
+        );
       }
       if (levelSet.has(r.level)) {
-        throw new BadRequestException(`Duplicate level entry found for level ${r.level}`);
+        throw new BadRequestException(
+          `Duplicate level entry found for level ${r.level}`,
+        );
       }
       levelSet.add(r.level);
     }
@@ -113,7 +127,7 @@ export class MembershipCommissionService {
     return this.prisma.$transaction(async (tx: any) => {
       if (isActive) {
         // Deactivate existing versions
-        await (tx as any).membershipCommissionConfig.updateMany({
+        await tx.membershipCommissionConfig.updateMany({
           where: { isActive: true },
           data: { isActive: false },
         });
@@ -122,7 +136,7 @@ export class MembershipCommissionService {
       // Upsert rates for the specified version
       const createdConfigs = [];
       for (const r of rates) {
-        const config = await (tx as any).membershipCommissionConfig.upsert({
+        const config = await tx.membershipCommissionConfig.upsert({
           where: {
             version_level: {
               version,
@@ -218,7 +232,13 @@ export class MembershipCommissionService {
     });
 
     // 4. Walk the upline up to 20 levels via Recursive CTE (with fallback for unit-test/mock environments)
-    let uplineNodes: { id: string; memberCode?: string; referrerId?: string | null; status?: string; level: number }[] = [];
+    let uplineNodes: {
+      id: string;
+      memberCode?: string;
+      referrerId?: string | null;
+      status?: string;
+      level: number;
+    }[] = [];
 
     try {
       if (typeof db.$queryRaw === 'function') {
@@ -281,7 +301,12 @@ export class MembershipCommissionService {
 
         const parent = await db.member.findUnique({
           where: { id: currentRefId },
-          select: { id: true, referrerId: true, memberCode: true, status: true },
+          select: {
+            id: true,
+            referrerId: true,
+            memberCode: true,
+            status: true,
+          },
         });
 
         if (!parent) break;
@@ -381,7 +406,9 @@ export class MembershipCommissionService {
     }
 
     const validSortFields = ['createdAt', 'amount', 'level', 'status'];
-    const orderByField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const orderByField = validSortFields.includes(sortBy)
+      ? sortBy
+      : 'createdAt';
 
     const [total, ledgers] = await Promise.all([
       this.prisma.membershipCommissionLedger.count({ where }),
@@ -435,7 +462,9 @@ export class MembershipCommissionService {
     });
 
     if (!ledger) {
-      throw new NotFoundException(`Membership commission ledger with ID '${id}' not found`);
+      throw new NotFoundException(
+        `Membership commission ledger with ID '${id}' not found`,
+      );
     }
 
     return {

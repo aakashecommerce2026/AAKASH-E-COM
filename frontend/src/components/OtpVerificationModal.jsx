@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -28,15 +28,7 @@ const OtpVerificationModal = ({
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [cooldown, setCooldown] = useState(0);
-
-  const inputRefs = [
-    useRef(null),
-    useRef(null),
-    useRef(null),
-    useRef(null),
-    useRef(null),
-    useRef(null),
-  ];
+  const inputRefs = useRef([]);
 
   // Cooldown countdown timer effect
   useEffect(() => {
@@ -49,24 +41,7 @@ const OtpVerificationModal = ({
     return () => clearInterval(timer);
   }, [cooldown]);
 
-  // Request OTP automatically when modal opens if needed
-  useEffect(() => {
-    if (open && email) {
-      handleSendOtp();
-    } else {
-      resetForm();
-    }
-  }, [open, email, purpose]);
-
-  const resetForm = () => {
-    setOtpDigits(['', '', '', '', '', '']);
-    setError('');
-    setSuccessMsg('');
-    setLoading(false);
-    setVerifying(false);
-  };
-
-  const handleSendOtp = async () => {
+  const handleSendOtp = useCallback(async () => {
     if (!email) return;
     setLoading(true);
     setError('');
@@ -76,12 +51,29 @@ const OtpVerificationModal = ({
       const res = await otpApi.sendOtp({ email, purpose });
       setSuccessMsg(res.message || `OTP sent to ${email}`);
       setCooldown(res.cooldownSeconds || 60);
-      setTimeout(() => inputRefs[0].current?.focus(), 200);
+      setTimeout(() => inputRefs.current[0]?.focus(), 200);
     } catch (err) {
       setError(err.message || 'Failed to send OTP code. Please try again.');
     } finally {
       setLoading(false);
     }
+  }, [email, purpose]);
+
+  // Request OTP automatically when modal opens if needed
+  useEffect(() => {
+    if (open && email) {
+      handleSendOtp();
+    } else {
+      resetForm();
+    }
+  }, [open, email, purpose, handleSendOtp]);
+
+  const resetForm = () => {
+    setOtpDigits(['', '', '', '', '', '']);
+    setError('');
+    setSuccessMsg('');
+    setLoading(false);
+    setVerifying(false);
   };
 
   const handleChange = (index, value) => {
@@ -94,14 +86,14 @@ const OtpVerificationModal = ({
 
     // Auto-advance to next input
     if (digit && index < 5) {
-      inputRefs[index + 1].current?.focus();
+      inputRefs.current[index + 1]?.focus();
     }
   };
 
   const handleKeyDown = (index, e) => {
     // Move to previous box on Backspace if current box is empty
     if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
-      inputRefs[index - 1].current?.focus();
+      inputRefs.current[index - 1]?.focus();
     }
   };
 
@@ -116,9 +108,9 @@ const OtpVerificationModal = ({
     }
     setOtpDigits(updated);
     if (pasted.length === 6) {
-      inputRefs[5].current?.focus();
+      inputRefs.current[5]?.focus();
     } else if (pasted.length > 0) {
-      inputRefs[pasted.length - 1].current?.focus();
+      inputRefs.current[pasted.length - 1]?.focus();
     }
   };
 
@@ -191,7 +183,7 @@ const OtpVerificationModal = ({
           {otpDigits.map((digit, idx) => (
             <input
               key={idx}
-              ref={inputRefs[idx]}
+              ref={(el) => (inputRefs.current[idx] = el)}
               type="text"
               inputMode="numeric"
               maxLength={1}

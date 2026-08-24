@@ -34,7 +34,8 @@ export class CreateMemberDto {
   @IsString()
   @IsNotEmpty({ message: 'Mobile number is required' })
   @Matches(/^\+?[0-9]{10,15}$/, {
-    message: 'Mobile number must be 10 to 15 digits, optionally prefixed with +',
+    message:
+      'Mobile number must be 10 to 15 digits, optionally prefixed with +',
   })
   mobile!: string;
 
@@ -95,7 +96,10 @@ export class CreateMemberDto {
   @IsEnum(MemberRole, { message: 'Invalid member role' })
   role?: MemberRole;
 
-  @ApiPropertyOptional({ example: '123456', description: '6-digit email OTP verification code' })
+  @ApiPropertyOptional({
+    example: '123456',
+    description: '6-digit email OTP verification code',
+  })
   @IsOptional()
   @IsString()
   otp?: string;

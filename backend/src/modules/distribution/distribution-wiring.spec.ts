@@ -3,7 +3,11 @@ import { DistributionService } from './distribution.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { CommissionStatus, DistributionBatchStatus, DistributionRecordStatus } from '@prisma/client';
+import {
+  CommissionStatus,
+  DistributionBatchStatus,
+  DistributionRecordStatus,
+} from '@prisma/client';
 
 describe('Distribution Data Model Wiring Test Suite', () => {
   let service: DistributionService;
