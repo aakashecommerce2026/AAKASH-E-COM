@@ -29,6 +29,7 @@ export declare class AuthService {
         mobile: string;
         email: string | null;
         address: string | null;
+        profilePhoto: string | null;
         referrerId: string | null;
         joiningDate: Date;
         upiId: string | null;
@@ -46,6 +47,7 @@ export declare class AuthService {
         mobile: string;
         email: string | null;
         address: string | null;
+        profilePhoto: string | null;
         referrerId: string | null;
         joiningDate: Date;
         upiId: string | null;
@@ -63,6 +65,7 @@ export declare class AuthService {
         mobile: string;
         email: string | null;
         address: string | null;
+        profilePhoto: string | null;
         referrerId: string | null;
         joiningDate: Date;
         upiId: string | null;

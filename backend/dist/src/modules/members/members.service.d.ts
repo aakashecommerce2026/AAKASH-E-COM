@@ -32,28 +32,29 @@ export declare class MembersService {
     findById(id: string): Promise<MemberResponseDto>;
     findByIdWithReferrer(id: string): Promise<{
         referrer: {
-            email: string | null;
             id: string;
-            name: string;
             memberCode: string;
+            name: string;
             mobile: string;
+            email: string | null;
             status: import("@prisma/client").$Enums.MemberStatus;
             role: import("@prisma/client").$Enums.MemberRole;
         } | null;
-        email: string | null;
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        name: string;
         memberCode: string;
+        name: string;
         mobile: string;
+        email: string | null;
         address: string | null;
+        profilePhoto: string | null;
         referrerId: string | null;
         joiningDate: Date;
         upiId: string | null;
         bankDetails: Prisma.JsonValue | null;
         status: import("@prisma/client").$Enums.MemberStatus;
         role: import("@prisma/client").$Enums.MemberRole;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     findAll(query: QueryMembersDto): Promise<{
         data: MemberResponseDto[];
@@ -69,11 +70,11 @@ export declare class MembersService {
         memberCode: string;
         memberName: string;
         referrer: {
-            email: string | null;
             id: string;
-            name: string;
             memberCode: string;
+            name: string;
             mobile: string;
+            email: string | null;
             joiningDate: Date;
             status: import("@prisma/client").$Enums.MemberStatus;
             role: import("@prisma/client").$Enums.MemberRole;
@@ -86,11 +87,11 @@ export declare class MembersService {
         totalDirectReferrals: number;
         activeDirectReferrals: number;
         directReferrals: {
-            email: string | null;
             id: string;
-            name: string;
             memberCode: string;
+            name: string;
             mobile: string;
+            email: string | null;
             joiningDate: Date;
             status: import("@prisma/client").$Enums.MemberStatus;
             role: import("@prisma/client").$Enums.MemberRole;

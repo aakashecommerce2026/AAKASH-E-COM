@@ -71,6 +71,7 @@ model Member {
   mobile                       String                       @unique
   email                        String?                      @unique
   address                      String?                      @db.Text
+  profilePhoto                 String?                      @map("profile_photo") @db.Text
 
   // Self-referential relationship for Sponsor / Referrer downline tree
   referrerId                   String?                      @map("referrer_id")

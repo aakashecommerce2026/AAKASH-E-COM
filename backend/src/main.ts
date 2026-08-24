@@ -4,6 +4,10 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 
+import * as express from 'express';
+import * as fs from 'fs';
+import { join } from 'path';
+
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
@@ -12,6 +16,15 @@ async function bootstrap() {
 
   const port = configService.get<number>('port') || 3000;
   const apiPrefix = configService.get<string>('apiPrefix') || 'api/v1';
+
+  // Ensure uploads directory exists
+  const uploadsDir = join(process.cwd(), 'uploads', 'profile-photos');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
+  // Serve static uploaded profile photos
+  app.use('/uploads', express.static(join(process.cwd(), 'uploads')));
 
   app.setGlobalPrefix(apiPrefix);
 
@@ -26,7 +39,7 @@ async function bootstrap() {
     new ValidationPipe({
       whitelist: true,
       transform: true,
-      forbidNonWhitelisted: true,
+      forbidNonWhitelisted: false,
     }),
   );
 

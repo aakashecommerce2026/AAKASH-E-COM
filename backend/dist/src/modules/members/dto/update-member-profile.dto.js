@@ -17,6 +17,8 @@ class UpdateMemberProfileDto {
     email;
     mobile;
     address;
+    profilePhoto;
+    upiId;
     bankDetails;
 }
 exports.UpdateMemberProfileDto = UpdateMemberProfileDto;
@@ -33,12 +35,9 @@ __decorate([
     __metadata("design:type", String)
 ], UpdateMemberProfileDto.prototype, "email", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Mobile Number (+91 format)' }),
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Mobile Number' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.Matches)(/^\+?[1-9]\d{1,14}$/, {
-        message: 'Mobile number must be a valid E.164 phone number string',
-    }),
     __metadata("design:type", String)
 ], UpdateMemberProfileDto.prototype, "mobile", void 0);
 __decorate([
@@ -46,6 +45,18 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Object)
 ], UpdateMemberProfileDto.prototype, "address", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Profile Photo URL' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateMemberProfileDto.prototype, "profilePhoto", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'UPI Handle ID' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateMemberProfileDto.prototype, "upiId", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ description: 'Bank Details Object' }),
     (0, class_validator_1.IsOptional)(),

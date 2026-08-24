@@ -14,6 +14,7 @@ export declare class MemberProfileService {
     constructor(prisma: PrismaService, auditService: AuditService, dashboardCacheService?: DashboardCacheService | undefined);
     getProfile(memberId: string): Promise<MemberResponseDto>;
     updateProfile(memberId: string, updateDto: UpdateMemberProfileDto, actorId?: string, actorRole?: MemberRole): Promise<MemberResponseDto>;
+    updateProfilePhoto(memberId: string, photoUrl: string): Promise<MemberResponseDto>;
     updateUpi(memberId: string, dto: UpdateUpiDto, actorId?: string, actorRole?: MemberRole): Promise<MemberResponseDto>;
     changeMemberPassword(memberId: string, dto: MemberChangePasswordDto, actorId?: string, actorRole?: MemberRole): Promise<{
         message: string;

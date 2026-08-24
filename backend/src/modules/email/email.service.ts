@@ -18,7 +18,8 @@ export class EmailService {
     const host = this.configService.get<string>('SMTP_HOST');
     const port = parseInt(this.configService.get<string>('SMTP_PORT') || '587', 10);
     const user = this.configService.get<string>('SMTP_USER');
-    const pass = this.configService.get<string>('SMTP_PASS');
+    const rawPass = this.configService.get<string>('SMTP_PASS') || '';
+    const pass = rawPass.replace(/\s+/g, '');
     const service = this.configService.get<string>('SMTP_SERVICE'); // e.g. 'gmail'
     const secure = this.configService.get<string>('SMTP_SECURE') === 'true';
     const fromName = this.configService.get<string>('EMAIL_FROM_NAME') || 'AAKASH E-COM Notifications';
@@ -88,7 +89,27 @@ ${text || html}
       }
       return true;
     } catch (error: any) {
-      this.logger.error(`Failed to send email to ${to}: ${error.message}`, error.stack);
+      this.logger.error(`Failed to send live email to ${to}: ${error.message}`);
+
+      // In Development mode, if live email dispatch fails (e.g. Resend unverified domain restriction),
+      // gracefully fall back to printing the email & OTP in console so development is not blocked.
+      const isDev = this.configService.get<string>('NODE_ENV') !== 'production';
+      if (isDev) {
+        this.logger.warn(
+          `⚠️ [DEV FALLBACK] Live SMTP send failed. Falling back to console preview so testing is not blocked:`,
+        );
+        this.logger.log(`
+==================================================
+📧 [DEV EMAIL DISPATCH SIMULATION]
+To:      ${to}
+Subject: ${subject}
+--------------------------------------------------
+${text || html}
+==================================================
+`);
+        return true;
+      }
+
       return false;
     }
   }

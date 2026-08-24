@@ -111,7 +111,8 @@ const Dashboard = () => {
   const [memberSummary, setMemberSummary] = useState(null);
 
   useEffect(() => {
-    if (!isAdmin && user?.id) {
+    const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
+    if (!isAdmin && user?.id && token) {
       hierarchyApi
         .getMemberSummary()
         .then((res) => {

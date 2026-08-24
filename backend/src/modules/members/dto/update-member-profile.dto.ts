@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsEmail, Matches } from 'class-validator';
+import { IsOptional, IsString, IsEmail } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateMemberProfileDto {
@@ -12,17 +12,24 @@ export class UpdateMemberProfileDto {
   @IsEmail()
   email?: string;
 
-  @ApiPropertyOptional({ description: 'Mobile Number (+91 format)' })
+  @ApiPropertyOptional({ description: 'Mobile Number' })
   @IsOptional()
   @IsString()
-  @Matches(/^\+?[1-9]\d{1,14}$/, {
-    message: 'Mobile number must be a valid E.164 phone number string',
-  })
   mobile?: string;
 
   @ApiPropertyOptional({ description: 'Contact Address (String or Object)' })
   @IsOptional()
   address?: any;
+
+  @ApiPropertyOptional({ description: 'Profile Photo URL' })
+  @IsOptional()
+  @IsString()
+  profilePhoto?: string;
+
+  @ApiPropertyOptional({ description: 'UPI Handle ID' })
+  @IsOptional()
+  @IsString()
+  upiId?: string;
 
   @ApiPropertyOptional({ description: 'Bank Details Object' })
   @IsOptional()

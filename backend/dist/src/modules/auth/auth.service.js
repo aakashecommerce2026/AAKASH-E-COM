@@ -241,13 +241,14 @@ let AuthService = AuthService_1 = class AuthService {
             role: member.role,
             type: 'refresh',
         };
+        const expiresIn = this.configService.get('JWT_EXPIRES_IN') || '7d';
         const accessToken = await this.jwtService.signAsync(accessPayload, {
             secret,
-            expiresIn: '15m',
+            expiresIn,
         });
         const refreshToken = await this.jwtService.signAsync(refreshPayload, {
             secret,
-            expiresIn: '7d',
+            expiresIn: '30d',
         });
         return {
             accessToken,

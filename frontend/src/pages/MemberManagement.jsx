@@ -57,6 +57,7 @@ const generateUniqueReferralCode = (memberName, existingMembers = []) => {
 };
 
 import OtpVerificationModal from '../components/OtpVerificationModal';
+import RegisterModal from '../components/RegisterModal';
 
 const MemberManagement = () => {
   const dispatch = useDispatch();
@@ -97,6 +98,7 @@ const MemberManagement = () => {
   const [membershipAmount, setMembershipAmount] = useState(10000);
   const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(true);
   const [registrationNotice, setRegistrationNotice] = useState('');
+  const [serverDownlines, setServerDownlines] = useState([]);
 
   useEffect(() => {
     dispatch(fetchMembersRequest());
@@ -104,25 +106,77 @@ const MemberManagement = () => {
 
   const isAdmin = user?.role === 'Admin';
 
-  // Identify current member in the membership store
+  // Identify current member in the membership store or fallback to logged-in user
   const currentMember = useMemo(() => {
-    if (!members || members.length === 0) return null;
-    return members.find(
-      (m) => m.id === user?.id || (user?.email && m.email?.toLowerCase() === user.email.toLowerCase())
-    );
-  }, [members, user]);
+    const list = [...members, ...serverDownlines];
+    if (list.length > 0) {
+      const found = list.find(
+        (m) =>
+          m.id === user?.id ||
+          (user?.email && m.email?.toLowerCase() === user.email.toLowerCase()) ||
+          (user?.referralCode && m.referralCode === user.referralCode)
+      );
+      if (found) return found;
+    }
+    if (user) {
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email || '',
+        mobile: user.mobile || '',
+        role: user.role === 'Admin' ? 'Admin' : 'Associate',
+        referralCode: user.referralCode || user.memberCode || String(user.id),
+        status: user.status || 'Active',
+        joinedDate: new Date().toISOString().split('T')[0],
+        sponsorId: null,
+      };
+    }
+    return null;
+  }, [members, serverDownlines, user]);
 
   // Real-time Sponsor Lookup by Sponsor Referral Code
   const matchedSponsor = useMemo(() => {
     if (!sponsorReferralCode || !sponsorReferralCode.trim()) return null;
     const q = sponsorReferralCode.trim().toUpperCase();
-    return members.find(
+
+    // 1. Check logged-in currentMember
+    if (
+      currentMember &&
+      ((currentMember.referralCode && currentMember.referralCode.toUpperCase() === q) ||
+        String(currentMember.id) === q ||
+        (currentMember.email && currentMember.email.toUpperCase() === q))
+    ) {
+      return currentMember;
+    }
+
+    // 2. Check logged-in auth user
+    if (
+      user &&
+      ((user.referralCode && user.referralCode.toUpperCase() === q) ||
+        (user.memberCode && user.memberCode.toUpperCase() === q) ||
+        String(user.id) === q ||
+        (user.email && user.email.toUpperCase() === q))
+    ) {
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email || '',
+        mobile: user.mobile || '',
+        role: user.role === 'Admin' ? 'Admin' : 'Associate',
+        referralCode: user.referralCode || user.memberCode || String(user.id),
+        status: user.status || 'Active',
+      };
+    }
+
+    // 3. Search in loaded members and serverDownlines
+    const searchList = [...members, ...serverDownlines];
+    return searchList.find(
       (m) =>
         (m.referralCode && m.referralCode.toUpperCase() === q) ||
         String(m.id) === q ||
         (m.email && m.email.toUpperCase() === q)
     );
-  }, [members, sponsorReferralCode]);
+  }, [members, serverDownlines, sponsorReferralCode, currentMember, user]);
 
   // Sync Sponsor ID when Matched Sponsor changes
   useEffect(() => {
@@ -143,8 +197,6 @@ const MemberManagement = () => {
     if (!existing) return true;
     return editingMember ? existing.id === editingMember.id : false;
   }, [members, referralCode, editingMember]);
-
-  const [serverDownlines, setServerDownlines] = useState([]);
 
   useEffect(() => {
     if (!isAdmin && currentMember) {

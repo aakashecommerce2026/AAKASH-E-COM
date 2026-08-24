@@ -5,9 +5,6 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 // Request interceptor to automatically attach JWT token
@@ -26,7 +23,13 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response.data,
   (error) => {
+    const status = error.response?.status;
     const message = error.response?.data?.message || error.message || 'API request failed';
+
+    if (status === 401) {
+      console.warn('Authentication session token expired or invalid:', message);
+    }
+
     return Promise.reject(new Error(message));
   },
 );
@@ -44,8 +47,10 @@ export const authApi = {
 
 // OTP API Endpoints
 export const otpApi = {
-  sendOtp: (data) => apiClient.post('/otp/send', data),
-  verifyOtp: (data) => apiClient.post('/otp/verify', data),
+  sendRegistrationOtp: (email) => apiClient.post('/otp/send-registration-otp', { email }),
+  verifyRegistrationOtp: (email, code) => apiClient.post('/otp/verify-registration-otp', { email, code }),
+  sendPasswordResetOtp: (email) => apiClient.post('/otp/send-password-reset-otp', { email }),
+  verifyPasswordResetOtp: (email, code) => apiClient.post('/otp/verify-password-reset-otp', { email, code }),
 };
 
 // Members API Endpoints
@@ -59,6 +64,12 @@ export const membersApi = {
   reassignReferrer: (id, data) => apiClient.post(`/admin/members/${id}/reassign-referrer`, data),
   getProfile: () => apiClient.get('/member/profile'),
   updateProfile: (data) => apiClient.put('/member/profile', data),
+  uploadProfilePhoto: (formData) =>
+    apiClient.post('/member/profile/photo', formData, {
+      headers: {
+        'Content-Type': undefined,
+      },
+    }),
 };
 
 // Repurchase API Endpoints
@@ -116,8 +127,8 @@ export const hierarchyApi = {
   getDownline: (memberId, params) => apiClient.get(`/admin/hierarchy/${memberId}/downline`, { params }),
   getSummary: (memberId, params) => apiClient.get(`/admin/hierarchy/${memberId}/summary`, { params }),
   getDirectReferrals: (memberId) => apiClient.get(`/admin/hierarchy/${memberId}/direct-referrals`),
-  getMemberDownline: (params) => apiClient.get('/members/network/downline', { params }),
-  getMemberSummary: () => apiClient.get('/members/network/summary'),
-  getMemberReferrals: () => apiClient.get('/members/network/referrals'),
+  getMemberDownline: (params) => apiClient.get('/member/network/downline', { params }),
+  getMemberSummary: () => apiClient.get('/member/network/summary'),
+  getMemberReferrals: () => apiClient.get('/member/network/referrals'),
 };
 

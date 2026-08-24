@@ -5,8 +5,15 @@ import { distributionApi } from '../../services/api';
 
 function* fetchPayouts() {
   try {
-    const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
-    if (!token) {
+    const storedAuth = localStorage.getItem('auth');
+    if (!storedAuth) {
+      yield put(actions.fetchPayoutsSuccess([]));
+      return;
+    }
+
+    const authData = JSON.parse(storedAuth);
+    const userRole = authData?.user?.memberRole || authData?.user?.role;
+    if (userRole === 'MEMBER' || userRole === 'Member') {
       yield put(actions.fetchPayoutsSuccess([]));
       return;
     }

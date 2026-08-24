@@ -13,6 +13,7 @@ import Login from './pages/Login.jsx';
 import AdminLogin from './pages/AdminLogin.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 
+import LandingPage from './pages/LandingPage.jsx';
 import ResetPassword from './pages/ResetPassword.jsx';
 
 // Dispatch checkAuthSession to restore session token from local storage on boot
@@ -25,6 +26,7 @@ createRoot(document.getElementById('root')).render(
         <CssBaseline />
         <BrowserRouter>
           <Routes>
+            <Route path="/landing" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route path="/reset-password" element={<ResetPassword />} />

@@ -80,6 +80,31 @@ async function main() {
         console.log(`   - Password:    ${rawPassword}`);
         console.log(`   - Role:        ${admin.role}`);
     }
+    const demoMembers = [
+        { memberCode: 'AK10001', name: 'Rajesh Kumar', email: 'rajesh.kumar@aakashecom.com', mobile: '+919811122233' },
+        { memberCode: 'AK10002', name: 'Priya Sharma', email: 'priya.sharma@aakashecom.com', mobile: '+919822233344' },
+        { memberCode: 'AK10003', name: 'Amit Patel', email: 'amit.patel@aakashecom.com', mobile: '+919833344455' },
+        { memberCode: 'AK10004', name: 'Sanjay V', email: 'sanjay.v@aakashecom.com', mobile: '+919844455566' },
+        { memberCode: 'AK10005', name: 'Deepa Nair', email: 'deepa.nair@aakashecom.com', mobile: '+919855566677' },
+    ];
+    for (const m of demoMembers) {
+        const exists = await prisma.member.findUnique({ where: { memberCode: m.memberCode } });
+        if (!exists) {
+            await prisma.member.create({
+                data: {
+                    memberCode: m.memberCode,
+                    name: m.name,
+                    email: m.email,
+                    mobile: m.mobile,
+                    passwordHash: hashedPassword,
+                    role: client_1.MemberRole.MEMBER,
+                    status: client_1.MemberStatus.ACTIVE,
+                    referrerId: admin.id,
+                },
+            });
+            console.log(`✅ Seeded demo member: ${m.memberCode} (${m.name})`);
+        }
+    }
     await seedMembershipCommissionConfig(prisma);
     await seedRepurchaseCommissionConfig(prisma);
 }

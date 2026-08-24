@@ -5,16 +5,36 @@ import { membersApi } from '../../services/api';
 
 function* updateProfileWorker(action) {
   try {
-    const response = yield call(membersApi.updateProfile, action.payload);
+    const { name, email, mobile, address, profilePhoto, bankDetails, upiId, secondaryUpiId, upiProvider } = action.payload;
+
+    // Sanitize payload to strictly include valid UpdateMemberProfileDto properties
+    const apiPayload = {
+      ...(name ? { name: name.trim() } : {}),
+      ...(email ? { email: email.trim() } : {}),
+      ...(mobile ? { mobile: mobile.trim() } : {}),
+      ...(address ? { address } : {}),
+      ...(profilePhoto ? { profilePhoto } : {}),
+      ...(upiId ? { upiId: upiId.trim() } : {}),
+      bankDetails: {
+        ...(bankDetails || {}),
+        ...(upiId !== undefined ? { upiId: upiId.trim() } : {}),
+        ...(secondaryUpiId !== undefined ? { secondaryUpiId: secondaryUpiId.trim() } : {}),
+        ...(upiProvider !== undefined ? { upiProvider } : {}),
+      },
+    };
+
+    const response = yield call(membersApi.updateProfile, apiPayload);
 
     const updatedUser = {
-      id: response.id,
-      name: response.name,
-      email: response.email,
-      mobile: response.mobile,
-      role: response.role === 'ADMIN' ? 'Admin' : 'Member',
-      referralCode: response.memberCode,
-      status: response.status,
+      ...action.payload,
+      id: response.id || action.payload.id,
+      name: response.name || action.payload.name,
+      email: response.email || action.payload.email,
+      mobile: response.mobile || action.payload.mobile,
+      role: response.role === 'ADMIN' ? 'Admin' : (action.payload.role || 'Member'),
+      referralCode: response.memberCode || action.payload.referralCode,
+      status: response.status || action.payload.status,
+      bankDetails: apiPayload.bankDetails,
     };
 
     // Save to localStorage session

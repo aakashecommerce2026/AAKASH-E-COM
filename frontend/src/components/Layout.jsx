@@ -15,7 +15,8 @@ import {
   ListItemText,
   Chip,
   Button,
-  Tooltip
+  Tooltip,
+  Avatar,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -121,9 +122,26 @@ const Layout = ({ children }) => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, overflow: 'hidden' }}>
-          <Box sx={{ bgcolor: 'secondary.main', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'white', flexShrink: 0 }}>
-            {user?.name?.charAt(0)}
-          </Box>
+          <Avatar
+            src={
+              user?.profilePhoto
+                ? user.profilePhoto.startsWith('http')
+                  ? user.profilePhoto
+                  : `http://localhost:3000${user.profilePhoto}`
+                : undefined
+            }
+            sx={{
+              bgcolor: 'secondary.main',
+              width: 38,
+              height: 38,
+              fontWeight: 700,
+              color: 'white',
+              flexShrink: 0,
+              border: user?.profilePhoto ? '1.5px solid #FBBF24' : 'none',
+            }}
+          >
+            {user?.name?.charAt(0).toUpperCase()}
+          </Avatar>
           <Box sx={{ overflow: 'hidden' }}>
             <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
               {user?.name}

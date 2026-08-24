@@ -80,7 +80,7 @@ let MemberProfileService = class MemberProfileService {
         if (!member) {
             throw new common_1.NotFoundException(`Member with ID '${memberId}' not found`);
         }
-        const { email, mobile, name, address, bankDetails } = updateDto;
+        const { email, mobile, name, address, profilePhoto, upiId, bankDetails } = updateDto;
         if (mobile || email) {
             const existing = await this.prisma.member.findFirst({
                 where: {
@@ -111,6 +111,8 @@ let MemberProfileService = class MemberProfileService {
                 ...(email !== undefined ? { email } : {}),
                 ...(mobile !== undefined ? { mobile } : {}),
                 ...(address !== undefined ? { address } : {}),
+                ...(profilePhoto !== undefined ? { profilePhoto } : {}),
+                ...(upiId !== undefined ? { upiId } : {}),
                 ...(bankDetails !== undefined
                     ? { bankDetails: bankDetails ? JSON.parse(JSON.stringify(bankDetails)) : null }
                     : {}),
@@ -126,6 +128,30 @@ let MemberProfileService = class MemberProfileService {
                 updatedFields: Object.keys(updateDto),
             },
         });
+        await this.dashboardCacheService?.invalidateMemberCache();
+        return this.mapToResponseDto(updatedMember);
+    }
+    async updateProfilePhoto(memberId, photoUrl) {
+        const member = await this.prisma.member.findUnique({ where: { id: memberId } });
+        if (!member) {
+            throw new common_1.NotFoundException(`Member with ID '${memberId}' not found`);
+        }
+        const updatedMember = await this.prisma.member.update({
+            where: { id: memberId },
+            data: {
+                profilePhoto: photoUrl,
+            },
+        });
+        if (this.auditService) {
+            await this.auditService.logAction({
+                actorId: memberId,
+                actorRole: updatedMember.role,
+                actionType: 'UPDATE_PROFILE_PHOTO',
+                entityType: 'Member',
+                entityId: updatedMember.id,
+                metadata: { profilePhoto: photoUrl },
+            });
+        }
         await this.dashboardCacheService?.invalidateMemberCache();
         return this.mapToResponseDto(updatedMember);
     }

@@ -14,6 +14,9 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MemberProfileController = void 0;
 const common_1 = require("@nestjs/common");
+const platform_express_1 = require("@nestjs/platform-express");
+const multer_1 = require("multer");
+const path_1 = require("path");
 const swagger_1 = require("@nestjs/swagger");
 const client_1 = require("@prisma/client");
 const member_profile_service_1 = require("./member-profile.service");
@@ -22,8 +25,18 @@ const update_upi_dto_1 = require("./dto/update-upi.dto");
 const member_change_password_dto_1 = require("./dto/member-change-password.dto");
 const member_response_dto_1 = require("./dto/member-response.dto");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
-const ownership_guard_1 = require("../auth/guards/ownership.guard");
 const current_user_decorator_1 = require("../auth/decorators/current-user.decorator");
+const profilePhotoStorage = (0, multer_1.diskStorage)({
+    destination: (req, file, cb) => {
+        const dest = (0, path_1.join)(process.cwd(), 'uploads', 'profile-photos');
+        cb(null, dest);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        const ext = (0, path_1.extname)(file.originalname) || '.jpg';
+        cb(null, `avatar-${uniqueSuffix}${ext}`);
+    },
+});
 let MemberProfileController = class MemberProfileController {
     memberProfileService;
     constructor(memberProfileService) {
@@ -31,6 +44,13 @@ let MemberProfileController = class MemberProfileController {
     }
     async getProfile(memberId) {
         return this.memberProfileService.getProfile(memberId);
+    }
+    async uploadProfilePhoto(memberId, file) {
+        if (!file) {
+            throw new common_1.BadRequestException('Please select an image file (jpg, png, webp) to upload');
+        }
+        const photoUrl = `/uploads/profile-photos/${file.filename}`;
+        return this.memberProfileService.updateProfilePhoto(memberId, photoUrl);
     }
     async updateProfile(memberId, role, updateDto) {
         return this.memberProfileService.updateProfile(memberId, updateDto, memberId, role);
@@ -56,6 +76,31 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], MemberProfileController.prototype, "getProfile", null);
+__decorate([
+    (0, common_1.Post)('profile/photo'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'POST /member/profile/photo — Upload member profile photo',
+        description: 'Accepts image files (jpg, jpeg, png, webp up to 5MB), saves to local disk, and updates profilePhoto column.',
+    }),
+    (0, swagger_1.ApiConsumes)('multipart/form-data'),
+    (0, swagger_1.ApiResponse)({ status: 200, type: member_response_dto_1.MemberResponseDto, description: 'Profile photo uploaded successfully' }),
+    (0, swagger_1.ApiResponse)({ status: 400, description: 'File validation error' }),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', {
+        storage: profilePhotoStorage,
+        limits: { fileSize: 5 * 1024 * 1024 },
+        fileFilter: (req, file, cb) => {
+            if (!file.mimetype || !file.mimetype.startsWith('image/')) {
+                return cb(new common_1.BadRequestException('Only image files (jpg, jpeg, png, webp, gif) are allowed!'), false);
+            }
+            cb(null, true);
+        },
+    })),
+    __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
+    __param(1, (0, common_1.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], MemberProfileController.prototype, "uploadProfilePhoto", null);
 __decorate([
     (0, common_1.Put)('profile'),
     (0, swagger_1.ApiOperation)({
@@ -109,7 +154,7 @@ __decorate([
 exports.MemberProfileController = MemberProfileController = __decorate([
     (0, swagger_1.ApiTags)('Member Profile Management'),
     (0, common_1.Controller)('member'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, ownership_guard_1.OwnershipGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),
     __metadata("design:paramtypes", [member_profile_service_1.MemberProfileService])
 ], MemberProfileController);

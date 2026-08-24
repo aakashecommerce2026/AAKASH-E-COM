@@ -2,16 +2,24 @@ import {
   Controller,
   Get,
   Put,
+  Post,
   Body,
   UseGuards,
   HttpCode,
   HttpStatus,
+  UploadedFile,
+  UseInterceptors,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname, join } from 'path';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { MemberRole } from '@prisma/client';
 import { MemberProfileService } from './member-profile.service';
@@ -23,9 +31,21 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OwnershipGuard } from '../auth/guards/ownership.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
+const profilePhotoStorage = diskStorage({
+  destination: (req, file, cb) => {
+    const dest = join(process.cwd(), 'uploads', 'profile-photos');
+    cb(null, dest);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = extname(file.originalname) || '.jpg';
+    cb(null, `avatar-${uniqueSuffix}${ext}`);
+  },
+});
+
 @ApiTags('Member Profile Management')
 @Controller('member')
-@UseGuards(JwtAuthGuard, OwnershipGuard)
+@UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class MemberProfileController {
   constructor(private readonly memberProfileService: MemberProfileService) {}
@@ -39,6 +59,37 @@ export class MemberProfileController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getProfile(@CurrentUser('id') memberId: string): Promise<MemberResponseDto> {
     return this.memberProfileService.getProfile(memberId);
+  }
+
+  @Post('profile/photo')
+  @ApiOperation({
+    summary: 'POST /member/profile/photo — Upload member profile photo',
+    description: 'Accepts image files (jpg, jpeg, png, webp up to 5MB), saves to local disk, and updates profilePhoto column.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiResponse({ status: 200, type: MemberResponseDto, description: 'Profile photo uploaded successfully' })
+  @ApiResponse({ status: 400, description: 'File validation error' })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: profilePhotoStorage,
+      limits: { fileSize: 5 * 1024 * 1024 },
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype || !file.mimetype.startsWith('image/')) {
+          return cb(new BadRequestException('Only image files (jpg, jpeg, png, webp, gif) are allowed!'), false);
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  async uploadProfilePhoto(
+    @CurrentUser('id') memberId: string,
+    @UploadedFile() file: any,
+  ): Promise<MemberResponseDto> {
+    if (!file) {
+      throw new BadRequestException('Please select an image file (jpg, png, webp) to upload');
+    }
+    const photoUrl = `/uploads/profile-photos/${file.filename}`;
+    return this.memberProfileService.updateProfilePhoto(memberId, photoUrl);
   }
 
   @Put('profile')

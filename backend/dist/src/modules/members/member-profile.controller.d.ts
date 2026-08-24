@@ -8,6 +8,7 @@ export declare class MemberProfileController {
     private readonly memberProfileService;
     constructor(memberProfileService: MemberProfileService);
     getProfile(memberId: string): Promise<MemberResponseDto>;
+    uploadProfilePhoto(memberId: string, file: any): Promise<MemberResponseDto>;
     updateProfile(memberId: string, role: MemberRole, updateDto: UpdateMemberProfileDto): Promise<MemberResponseDto>;
     updateUpi(memberId: string, role: MemberRole, updateUpiDto: UpdateUpiDto): Promise<MemberResponseDto>;
     changePassword(memberId: string, role: MemberRole, changePasswordDto: MemberChangePasswordDto): Promise<{

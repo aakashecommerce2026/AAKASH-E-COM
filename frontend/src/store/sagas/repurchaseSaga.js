@@ -7,8 +7,15 @@ import { RepurchaseCommissionStrategy } from '../../services/commissionEngine/Re
 
 function* fetchRepurchases() {
   try {
-    const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
-    if (!token) {
+    const storedAuth = localStorage.getItem('auth');
+    if (!storedAuth) {
+      yield put(actions.fetchRepurchasesSuccess([]));
+      return;
+    }
+
+    const authData = JSON.parse(storedAuth);
+    const userRole = authData?.user?.memberRole || authData?.user?.role;
+    if (userRole === 'MEMBER' || userRole === 'Member') {
       yield put(actions.fetchRepurchasesSuccess([]));
       return;
     }

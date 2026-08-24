@@ -3,5 +3,7 @@ export declare class UpdateMemberProfileDto {
     email?: string;
     mobile?: string;
     address?: any;
+    profilePhoto?: string;
+    upiId?: string;
     bankDetails?: Record<string, any>;
 }

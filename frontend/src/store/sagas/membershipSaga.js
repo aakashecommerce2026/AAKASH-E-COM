@@ -7,6 +7,19 @@ import { membersApi } from '../../services/api';
 
 function* fetchMembers() {
   try {
+    const storedAuth = localStorage.getItem('auth');
+    if (!storedAuth) {
+      yield put(actions.fetchMembersSuccess([]));
+      return;
+    }
+
+    const authData = JSON.parse(storedAuth);
+    const userRole = authData?.user?.memberRole || authData?.user?.role;
+    if (userRole === 'MEMBER' || userRole === 'Member') {
+      yield put(actions.fetchMembersSuccess([]));
+      return;
+    }
+
     const response = yield call(membersApi.getAll, { limit: 100 });
     const rawList = Array.isArray(response) ? response : response?.data || response?.items || [];
 

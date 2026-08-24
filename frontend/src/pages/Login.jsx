@@ -21,6 +21,7 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { loginRequest } from '../store/actions';
 
 import ForgotPasswordModal from '../components/ForgotPasswordModal';
+import RegisterModal from '../components/RegisterModal';
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -32,6 +33,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [forgotModalOpen, setForgotModalOpen] = useState(false);
+  const [registerModalOpen, setRegisterModalOpen] = useState(false);
 
   // Field validation states
   const [emailError, setEmailError] = useState('');
@@ -219,12 +221,25 @@ const Login = () => {
                 >
                   {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In as Member'}
                 </Button>
+
+                <Box sx={{ textAlign: 'center', mt: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    New to AAKASH E-COM?{' '}
+                    <Button
+                      onClick={() => setRegisterModalOpen(true)}
+                      sx={{ textTransform: 'none', fontWeight: 800, color: 'secondary.main', p: 0, minWidth: 'auto' }}
+                    >
+                      Join Network / Register
+                    </Button>
+                  </Typography>
+                </Box>
               </Box>
             </form>
           </CardContent>
         </Card>
       </Container>
       <ForgotPasswordModal open={forgotModalOpen} onClose={() => setForgotModalOpen(false)} />
+      <RegisterModal open={registerModalOpen} onClose={() => setRegisterModalOpen(false)} />
     </Box>
   );
 };

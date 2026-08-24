@@ -59,7 +59,7 @@ export class MemberProfileService {
       throw new NotFoundException(`Member with ID '${memberId}' not found`);
     }
 
-    const { email, mobile, name, address, bankDetails } = updateDto;
+    const { email, mobile, name, address, profilePhoto, upiId, bankDetails } = updateDto as any;
 
     // Unique field collision checks for mobile or email
     if (mobile || email) {
@@ -94,6 +94,8 @@ export class MemberProfileService {
         ...(email !== undefined ? { email } : {}),
         ...(mobile !== undefined ? { mobile } : {}),
         ...(address !== undefined ? { address } : {}),
+        ...(profilePhoto !== undefined ? { profilePhoto } : {}),
+        ...(upiId !== undefined ? { upiId } : {}),
         ...(bankDetails !== undefined
           ? { bankDetails: bankDetails ? JSON.parse(JSON.stringify(bankDetails)) : null }
           : {}),
@@ -111,6 +113,40 @@ export class MemberProfileService {
         updatedFields: Object.keys(updateDto),
       },
     });
+
+    await this.dashboardCacheService?.invalidateMemberCache();
+    return this.mapToResponseDto(updatedMember);
+  }
+
+  /**
+   * Updates profile photo URL and recalculates completion status.
+   */
+  async updateProfilePhoto(
+    memberId: string,
+    photoUrl: string,
+  ): Promise<MemberResponseDto> {
+    const member = await this.prisma.member.findUnique({ where: { id: memberId } });
+    if (!member) {
+      throw new NotFoundException(`Member with ID '${memberId}' not found`);
+    }
+
+    const updatedMember = await this.prisma.member.update({
+      where: { id: memberId },
+      data: {
+        profilePhoto: photoUrl,
+      },
+    });
+
+    if (this.auditService) {
+      await this.auditService.logAction({
+        actorId: memberId,
+        actorRole: updatedMember.role,
+        actionType: 'UPDATE_PROFILE_PHOTO',
+        entityType: 'Member',
+        entityId: updatedMember.id,
+        metadata: { profilePhoto: photoUrl },
+      });
+    }
 
     await this.dashboardCacheService?.invalidateMemberCache();
     return this.mapToResponseDto(updatedMember);
