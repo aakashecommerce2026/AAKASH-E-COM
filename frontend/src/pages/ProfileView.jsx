@@ -277,6 +277,11 @@ const ProfileView = () => {
         </Alert>
       )}
 
+      {/* Promotion Rank Progress Card */}
+      <Box sx={{ mb: 3.5 }}>
+        <PromotionProgressCard />
+      </Box>
+
       <form onSubmit={handleSave}>
         <Grid container spacing={3}>
           {/* GRID 1: PERSONAL PROFILE GRID */}
@@ -293,11 +298,6 @@ const ProfileView = () => {
                   {!isEditing && <LockIcon sx={{ fontSize: 18, color: 'text.secondary' }} />}
                 </Box>
                 <Divider sx={{ mb: 3 }} />
-
-                {/* Promotion Rank Progress Card */}
-                <Box sx={{ mb: 4 }}>
-                  <PromotionProgressCard />
-                </Box>
 
                 {/* Completion Banner */}
                 <Paper

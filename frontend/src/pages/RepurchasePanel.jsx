@@ -86,10 +86,8 @@ const RepurchasePanel = () => {
 
   useEffect(() => {
     dispatch(fetchRepurchasesRequest());
-    if (!members || members.length === 0) {
-      dispatch(fetchMembersRequest());
-    }
-  }, [dispatch, members]);
+    dispatch(fetchMembersRequest());
+  }, [dispatch]);
 
   // Form Input Handler with Auto-Calculation of BV Points from Amount of Purchase (2.5%)
   const handleInputChange = (field, value) => {
@@ -452,14 +450,12 @@ const RepurchasePanel = () => {
                   onChange={(e) => handleInputChange('memberId', e.target.value)}
                   error={Boolean(errors.memberId)}
                   helperText={errors.memberId}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <PersonIcon color="action" fontSize="small" />
-                        </InputAdornment>
-                      ),
-                    }
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <PersonIcon color="action" fontSize="small" />
+                      </InputAdornment>
+                    ),
                   }}
                 >
                   <MenuItem value="">-- Select Beneficiary Member --</MenuItem>
@@ -478,19 +474,16 @@ const RepurchasePanel = () => {
                   type="number"
                   size="small"
                   label="Amount of Purchase (₹) *"
-                  placeholder="e.g. 5000"
                   value={formData.purchaseAmount}
                   onChange={(e) => handleInputChange('purchaseAmount', e.target.value)}
                   error={Boolean(errors.purchaseAmount)}
                   helperText={errors.purchaseAmount || 'Auto-computes 2.5% BV Points'}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <CurrencyRupeeIcon color="primary" fontSize="small" />
-                        </InputAdornment>
-                      ),
-                    }
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <CurrencyRupeeIcon color="primary" fontSize="small" />
+                      </InputAdornment>
+                    ),
                   }}
                 />
               </Grid>
@@ -504,15 +497,12 @@ const RepurchasePanel = () => {
                   label="Product Category"
                   value="Groceries/Household"
                   helperText="Category locked to Groceries/Household"
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <CategoryIcon color="success" fontSize="small" sx={{ mr: 0.5 }} />
-                          <Chip label="Groceries/Household" size="small" color="success" sx={{ height: 20, fontWeight: 800, fontSize: '0.7rem' }} />
-                        </InputAdornment>
-                      ),
-                    }
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <CategoryIcon color="success" fontSize="small" />
+                      </InputAdornment>
+                    ),
                   }}
                 />
               </Grid>
@@ -526,14 +516,12 @@ const RepurchasePanel = () => {
                   label="BV Points (Calculated Automatically)"
                   value={`${autoBVPoints} BV`}
                   helperText="Auto-computed: 2.5% of purchase value"
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <StarsIcon color="secondary" fontSize="small" />
-                        </InputAdornment>
-                      ),
-                    }
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <StarsIcon color="secondary" fontSize="small" />
+                      </InputAdornment>
+                    ),
                   }}
                   sx={{
                     '& .MuiInputBase-input': { fontWeight: 800, color: 'secondary.dark' }
@@ -550,14 +538,12 @@ const RepurchasePanel = () => {
                   label="Payment Method"
                   value={formData.paymentMethod}
                   onChange={(e) => handleInputChange('paymentMethod', e.target.value)}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <PaymentIcon color="action" fontSize="small" />
-                        </InputAdornment>
-                      ),
-                    }
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <PaymentIcon color="action" fontSize="small" />
+                      </InputAdornment>
+                    ),
                   }}
                 >
                   {PAYMENT_METHODS.map((pm) => (
@@ -574,57 +560,47 @@ const RepurchasePanel = () => {
                   fullWidth
                   size="small"
                   label="Order Remark / Ref"
-                  placeholder="e.g. REF-20260728 or invoice notes"
                   value={formData.orderRef}
                   onChange={(e) => handleInputChange('orderRef', e.target.value)}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <NotesIcon color="action" fontSize="small" />
-                        </InputAdornment>
-                      ),
-                    }
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <NotesIcon color="action" fontSize="small" />
+                      </InputAdornment>
+                    ),
                   }}
                 />
               </Grid>
 
               {/* Purchase Date */}
               <Grid item xs={12} sm={6} md={3}>
-                <TextField
-                  fullWidth
-                  type="date"
-                  size="small"
-                  label="Purchase Date *"
-                  value={formData.purchaseDate}
-                  onChange={(e) => handleInputChange('purchaseDate', e.target.value)}
-                  error={Boolean(errors.purchaseDate)}
-                  helperText={errors.purchaseDate}
-                  slotProps={{
-                    inputLabel: { shrink: true },
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <CalendarTodayIcon color="action" fontSize="small" />
-                        </InputAdornment>
-                      ),
-                    }
-                  }}
-                  sx={{
-                    '& .MuiInputBase-root': { 
-                      bgcolor: '#FAF9F6', 
-                      borderRadius: 2,
-                      height: 40,
-                    },
-                    '& .MuiInputBase-input': { 
-                      py: 1, 
-                      px: 1, 
-                      fontSize: '0.875rem', 
-                      fontWeight: 500,
-                      color: '#0F172A',
-                    },
-                  }}
-                />
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                  <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem' }}>
+                    Purchase Date *
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    type="date"
+                    size="small"
+                    value={formData.purchaseDate}
+                    onChange={(e) => handleInputChange('purchaseDate', e.target.value)}
+                    error={Boolean(errors.purchaseDate)}
+                    helperText={errors.purchaseDate}
+                    sx={{
+                      '& .MuiOutlinedInput-root': { 
+                        bgcolor: '#FAF9F6', 
+                        borderRadius: 2,
+                      },
+                      '& .MuiInputBase-input': { 
+                        py: '6px', 
+                        px: 1.5, 
+                        fontSize: '0.875rem', 
+                        fontWeight: 500,
+                        color: '#0F172A',
+                      },
+                    }}
+                  />
+                </Box>
               </Grid>
             </Grid>
 

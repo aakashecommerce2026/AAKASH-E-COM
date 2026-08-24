@@ -123,7 +123,7 @@ const Dashboard = () => {
         })
         .catch(() => {});
     }
-  }, [isAdmin, user]);
+  }, [isAdmin, user?.id]);
 
   // Downline members calculation
   const downlineMembers = useMemo(() => {

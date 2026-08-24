@@ -28,6 +28,16 @@ apiClient.interceptors.response.use(
 
     if (status === 401) {
       console.warn('Authentication session token expired or invalid:', message);
+      if (
+        typeof window !== 'undefined' &&
+        !window.location.pathname.includes('/login') &&
+        !window.location.pathname.includes('/admin-login')
+      ) {
+        localStorage.removeItem('auth');
+        localStorage.removeItem('token');
+        localStorage.removeItem('accessToken');
+        window.location.href = '/login';
+      }
     }
 
     return Promise.reject(new Error(message));
@@ -70,6 +80,8 @@ export const membersApi = {
         'Content-Type': undefined,
       },
     }),
+};
+
 // Promotions API Endpoints
 export const promotionsApi = {
   getMyStatus: () => apiClient.get('/promotions/my-status'),

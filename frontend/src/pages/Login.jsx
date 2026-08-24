@@ -204,9 +204,9 @@ const Login = () => {
                   <Button
                     size="small"
                     onClick={() => setForgotModalOpen(true)}
-                    sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.8rem' }}
+                    sx={{ textTransform: 'none', fontWeight: 700, fontSize: '0.82rem', color: 'primary.main' }}
                   >
-                    Forgot Password?
+                    Forgot / Change Password?
                   </Button>
                 </Box>
 
@@ -222,7 +222,17 @@ const Login = () => {
                   {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In as Member'}
                 </Button>
 
-                <Box sx={{ textAlign: 'center', mt: 1 }}>
+                <Box sx={{ textAlign: 'center', mt: 1.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Need to change or reset your password?{' '}
+                    <Button
+                      onClick={() => setForgotModalOpen(true)}
+                      sx={{ textTransform: 'none', fontWeight: 800, color: 'primary.main', p: 0, minWidth: 'auto' }}
+                    >
+                      Request Password Change Link
+                    </Button>
+                  </Typography>
+
                   <Typography variant="body2" color="text.secondary">
                     New to AAKASH E-COM?{' '}
                     <Button

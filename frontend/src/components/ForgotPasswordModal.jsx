@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogTitle,
@@ -17,6 +18,7 @@ import LockResetIcon from '@mui/icons-material/LockReset';
 import { authApi } from '../services/api';
 
 const ForgotPasswordModal = ({ open, onClose }) => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -28,6 +30,11 @@ const ForgotPasswordModal = ({ open, onClose }) => {
     setSuccessMsg('');
     setLoading(false);
     onClose();
+  };
+
+  const handleNavigateToReset = () => {
+    handleClose();
+    navigate(`/reset-password${email ? `?email=${encodeURIComponent(email)}` : ''}`);
   };
 
   const handleSubmit = async (e) => {
@@ -57,7 +64,7 @@ const ForgotPasswordModal = ({ open, onClose }) => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <LockResetIcon color="primary" />
           <Typography variant="h6" sx={{ fontWeight: 700 }}>
-            Forgot Password?
+            Change / Reset Password
           </Typography>
         </Box>
         <IconButton onClick={handleClose} size="small">
@@ -68,7 +75,7 @@ const ForgotPasswordModal = ({ open, onClose }) => {
       <form onSubmit={handleSubmit}>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-            Enter your registered email address below. We will send you an email with a link and code to reset your password.
+            Enter your registered email address below. We will send you an email with a password change link & OTP code.
           </Typography>
 
           {error && (
@@ -94,13 +101,32 @@ const ForgotPasswordModal = ({ open, onClose }) => {
             disabled={loading || Boolean(successMsg)}
             placeholder="member@example.com"
           />
+
+          <Box sx={{ mt: 2, textAlign: 'center' }}>
+            <Button
+              size="small"
+              onClick={handleNavigateToReset}
+              sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.8rem' }}
+            >
+              Already have a reset code / link? Click here to set new password
+            </Button>
+          </Box>
         </DialogContent>
 
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={handleClose} color="inherit">
             {successMsg ? 'Close' : 'Cancel'}
           </Button>
-          {!successMsg && (
+          {successMsg ? (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleNavigateToReset}
+              sx={{ px: 2.5, fontWeight: 700 }}
+            >
+              Open Password Change Page
+            </Button>
+          ) : (
             <Button
               type="submit"
               variant="contained"
@@ -108,7 +134,7 @@ const ForgotPasswordModal = ({ open, onClose }) => {
               disabled={loading || !email}
               sx={{ px: 3, fontWeight: 700 }}
             >
-              {loading ? <CircularProgress size={22} color="inherit" /> : 'Send Reset Link'}
+              {loading ? <CircularProgress size={22} color="inherit" /> : 'Send Change Link'}
             </Button>
           )}
         </DialogActions>
