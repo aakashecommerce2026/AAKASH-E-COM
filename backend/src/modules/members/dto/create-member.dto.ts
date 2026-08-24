@@ -25,6 +25,11 @@ export class CreateMemberDto {
   @IsNotEmpty({ message: 'Member name is required' })
   name!: string;
 
+  @ApiPropertyOptional({ example: 'johndoe', description: 'Unique Username' })
+  @IsOptional()
+  @IsString()
+  username?: string;
+
   @ApiProperty({ example: '+919876543210', description: 'Mobile phone number' })
   @IsString()
   @IsNotEmpty({ message: 'Mobile number is required' })

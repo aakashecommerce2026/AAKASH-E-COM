@@ -38,6 +38,7 @@ import {
 } from '../store/actions';
 import { AdminPerformanceChart, MemberPerformanceChart } from '../components/DashboardCharts';
 import { ProfileModal } from '../components/ProfileModal';
+import { PromotionProgressCard } from '../components/PromotionProgressCard';
 import { DashboardCard } from '../components/DashboardCard';
 import { SystemAuditLogConsole } from '../components/SystemAuditLogConsole';
 import { hierarchyApi } from '../services/api';
@@ -483,6 +484,13 @@ const Dashboard = () => {
             </Button>
           </Tooltip>
         </Paper>
+      )}
+
+      {/* Member Promotion Rank & Milestone Progress */}
+      {!isAdmin && (
+        <Box sx={{ mb: 4 }}>
+          <PromotionProgressCard />
+        </Box>
       )}
 
       {/* Performance Trend Chart */}

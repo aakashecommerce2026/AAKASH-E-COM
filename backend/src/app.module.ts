@@ -20,6 +20,7 @@ import { AuditModule } from './modules/audit/audit.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { EmailModule } from './modules/email/email.module';
 import { OtpModule } from './modules/otp/otp.module';
+import { PromotionsModule } from './modules/promotions/promotions.module';
 
 const envFile = process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env';
 
@@ -54,6 +55,7 @@ const envFile = process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env';
     NotificationsModule,
     EmailModule,
     OtpModule,
+    PromotionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

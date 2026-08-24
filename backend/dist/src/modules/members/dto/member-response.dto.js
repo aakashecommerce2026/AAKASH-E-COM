@@ -12,11 +12,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MemberResponseDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
 const client_1 = require("@prisma/client");
+const promotions_service_1 = require("../../promotions/promotions.service");
 const bank_details_dto_1 = require("./bank-details.dto");
 class MemberResponseDto {
     id;
     memberCode;
     name;
+    username;
     mobile;
     email;
     address;
@@ -26,6 +28,7 @@ class MemberResponseDto {
     bankDetails;
     status;
     role;
+    rank;
     createdAt;
     updatedAt;
 }
@@ -42,6 +45,10 @@ __decorate([
     (0, swagger_1.ApiProperty)({ example: 'John Doe' }),
     __metadata("design:type", String)
 ], MemberResponseDto.prototype, "name", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'johndoe' }),
+    __metadata("design:type", Object)
+], MemberResponseDto.prototype, "username", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: '+919876543210' }),
     __metadata("design:type", String)
@@ -78,6 +85,10 @@ __decorate([
     (0, swagger_1.ApiProperty)({ enum: client_1.MemberRole }),
     __metadata("design:type", String)
 ], MemberResponseDto.prototype, "role", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ enum: promotions_service_1.MemberRank, example: 'BRONZE' }),
+    __metadata("design:type", String)
+], MemberResponseDto.prototype, "rank", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)(),
     __metadata("design:type", Date)

@@ -3,6 +3,7 @@ import { BankDetailsDto } from './bank-details.dto';
 export declare class CreateMemberDto {
     memberCode: string;
     name: string;
+    username?: string;
     mobile: string;
     email?: string;
     address?: string;

@@ -169,6 +169,15 @@ describe('Member Profile Security & Ownership Guard Test Suite', () => {
       ).rejects.toThrow(ConflictException);
     });
 
+    it('PUT /member/profile — throw ConflictException on username collision', async () => {
+      mockPrismaService.member.findUnique.mockResolvedValueOnce(mockMemberA);
+      mockPrismaService.member.findFirst.mockResolvedValueOnce({ ...mockMemberB, username: 'taken_user' });
+
+      await expect(
+        controller.updateProfile('member-uuid-A', MemberRole.MEMBER, { username: 'taken_user' }),
+      ).rejects.toThrow(ConflictException);
+    });
+
     it('PUT /member/profile/upi — update UPI details and log UPDATE_MEMBER_UPI action to activity_logs', async () => {
       mockPrismaService.member.findUnique.mockResolvedValueOnce(mockMemberA);
       mockPrismaService.member.update.mockResolvedValueOnce({

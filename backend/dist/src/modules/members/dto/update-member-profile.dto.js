@@ -13,6 +13,7 @@ exports.UpdateMemberProfileDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
 class UpdateMemberProfileDto {
+    username;
     name;
     email;
     mobile;
@@ -22,6 +23,12 @@ class UpdateMemberProfileDto {
     bankDetails;
 }
 exports.UpdateMemberProfileDto = UpdateMemberProfileDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Unique Username' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateMemberProfileDto.prototype, "username", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ description: 'Full Name' }),
     (0, class_validator_1.IsOptional)(),

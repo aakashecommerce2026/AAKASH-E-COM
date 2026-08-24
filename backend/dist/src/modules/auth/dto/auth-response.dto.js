@@ -15,10 +15,12 @@ class AuthUserDto {
     id;
     memberCode;
     name;
+    username;
     email;
     mobile;
     role;
     status;
+    rank;
 }
 exports.AuthUserDto = AuthUserDto;
 __decorate([
@@ -33,6 +35,10 @@ __decorate([
     (0, swagger_1.ApiProperty)({ example: 'John Doe' }),
     __metadata("design:type", String)
 ], AuthUserDto.prototype, "name", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 'johndoe', nullable: true }),
+    __metadata("design:type", Object)
+], AuthUserDto.prototype, "username", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: 'john@example.com', nullable: true }),
     __metadata("design:type", Object)
@@ -49,6 +55,10 @@ __decorate([
     (0, swagger_1.ApiProperty)({ example: 'ACTIVE' }),
     __metadata("design:type", String)
 ], AuthUserDto.prototype, "status", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 'BRONZE' }),
+    __metadata("design:type", String)
+], AuthUserDto.prototype, "rank", void 0);
 class AuthResponseDto {
     accessToken;
     refreshToken;

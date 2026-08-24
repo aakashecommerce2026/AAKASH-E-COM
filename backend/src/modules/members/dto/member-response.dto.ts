@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { MemberRole, MemberStatus } from '@prisma/client';
+import { MemberRank } from '../../promotions/promotions.service';
 import { BankDetailsDto } from './bank-details.dto';
 
 export class MemberResponseDto {
@@ -11,6 +12,9 @@ export class MemberResponseDto {
 
   @ApiProperty({ example: 'John Doe' })
   name!: string;
+
+  @ApiPropertyOptional({ example: 'johndoe' })
+  username?: string | null;
 
   @ApiProperty({ example: '+919876543210' })
   mobile!: string;
@@ -38,6 +42,9 @@ export class MemberResponseDto {
 
   @ApiProperty({ enum: MemberRole })
   role!: MemberRole;
+
+  @ApiProperty({ enum: MemberRank, example: 'BRONZE' })
+  rank!: MemberRank;
 
   @ApiProperty()
   createdAt!: Date;

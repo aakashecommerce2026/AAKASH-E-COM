@@ -5,11 +5,12 @@ import { membersApi } from '../../services/api';
 
 function* updateProfileWorker(action) {
   try {
-    const { name, email, mobile, address, profilePhoto, bankDetails, upiId, secondaryUpiId, upiProvider } = action.payload;
+    const { name, username, email, mobile, address, profilePhoto, bankDetails, upiId, secondaryUpiId, upiProvider } = action.payload;
 
     // Sanitize payload to strictly include valid UpdateMemberProfileDto properties
     const apiPayload = {
       ...(name ? { name: name.trim() } : {}),
+      ...(username ? { username: username.trim() } : {}),
       ...(email ? { email: email.trim() } : {}),
       ...(mobile ? { mobile: mobile.trim() } : {}),
       ...(address ? { address } : {}),
@@ -29,6 +30,7 @@ function* updateProfileWorker(action) {
       ...action.payload,
       id: response.id || action.payload.id,
       name: response.name || action.payload.name,
+      username: response.username || action.payload.username,
       email: response.email || action.payload.email,
       mobile: response.mobile || action.payload.mobile,
       role: response.role === 'ADMIN' ? 'Admin' : (action.payload.role || 'Member'),

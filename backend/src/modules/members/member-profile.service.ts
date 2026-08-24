@@ -59,10 +59,10 @@ export class MemberProfileService {
       throw new NotFoundException(`Member with ID '${memberId}' not found`);
     }
 
-    const { email, mobile, name, address, profilePhoto, upiId, bankDetails } = updateDto as any;
+    const { email, mobile, name, username, address, profilePhoto, upiId, bankDetails } = updateDto as any;
 
-    // Unique field collision checks for mobile or email
-    if (mobile || email) {
+    // Unique field collision checks for mobile, email, or username
+    if (mobile || email || username) {
       const existing = await this.prisma.member.findFirst({
         where: {
           AND: [
@@ -71,6 +71,7 @@ export class MemberProfileService {
               OR: [
                 ...(mobile ? [{ mobile }] : []),
                 ...(email ? [{ email }] : []),
+                ...(username ? [{ username }] : []),
               ],
             },
           ],
@@ -84,6 +85,9 @@ export class MemberProfileService {
         if (email && existing.email === email) {
           throw new ConflictException(`Email address '${email}' is already taken`);
         }
+        if (username && existing.username === username) {
+          throw new ConflictException(`Username '${username}' is already taken`);
+        }
       }
     }
 
@@ -91,6 +95,7 @@ export class MemberProfileService {
       where: { id: memberId },
       data: {
         ...(name !== undefined ? { name } : {}),
+        ...(username !== undefined ? { username } : {}),
         ...(email !== undefined ? { email } : {}),
         ...(mobile !== undefined ? { mobile } : {}),
         ...(address !== undefined ? { address } : {}),

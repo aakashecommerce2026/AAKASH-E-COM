@@ -32,6 +32,7 @@ import VerifiedIcon from '@mui/icons-material/Verified';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { updateProfileRequest, updateProfileSuccess, clearProfileStatus } from '../store/actions';
 import { ProfileModal } from '../components/ProfileModal';
+import { PromotionProgressCard } from '../components/PromotionProgressCard';
 import ForgotPasswordModal from '../components/ForgotPasswordModal';
 import { membersApi } from '../services/api';
 
@@ -56,6 +57,7 @@ const ProfileView = () => {
 
   // Personal Info State
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
 
@@ -129,6 +131,7 @@ const ProfileView = () => {
   const populateUserData = useCallback(() => {
     if (user) {
       setName(user.name || '');
+      setUsername(user.username || '');
       setEmail(user.email || '');
       setAddress(user.address || '');
       setUpiId(user.upiId || (user.id === 2 ? 'priya@okicici' : 'arun@upi'));
@@ -176,6 +179,7 @@ const ProfileView = () => {
     const updatedUser = {
       ...user,
       name: name.trim(),
+      username: username.trim(),
       email: email.trim(),
       address: address.trim(),
       upiId: upiId.trim(),
@@ -290,7 +294,12 @@ const ProfileView = () => {
                 </Box>
                 <Divider sx={{ mb: 3 }} />
 
-                {/* Profile Completion Meter */}
+                {/* Promotion Rank Progress Card */}
+                <Box sx={{ mb: 4 }}>
+                  <PromotionProgressCard />
+                </Box>
+
+                {/* Completion Banner */}
                 <Paper
                   variant="outlined"
                   sx={{
@@ -397,6 +406,18 @@ const ProfileView = () => {
                     disabled={!isEditing || saving}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                  />
+
+                  <TextField
+                    label="Username (Unique)"
+                    variant="outlined"
+                    fullWidth
+                    size="small"
+                    disabled={!isEditing || saving}
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="e.g. johndoe123"
+                    helperText="👤 Unique handle for your profile across the network."
                   />
 
                   <TextField

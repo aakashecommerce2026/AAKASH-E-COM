@@ -84,6 +84,7 @@ let AuthService = AuthService_1 = class AuthService {
             where: {
                 OR: [
                     { memberCode: identifier },
+                    { username: identifier },
                     { email: identifier },
                     { mobile: identifier },
                 ],
@@ -107,6 +108,7 @@ let AuthService = AuthService_1 = class AuthService {
             where: {
                 OR: [
                     { memberCode: identifier },
+                    { username: identifier },
                     { email: identifier },
                     { mobile: identifier },
                 ],
@@ -130,6 +132,7 @@ let AuthService = AuthService_1 = class AuthService {
             where: {
                 OR: [
                     { memberCode: identifier },
+                    { username: identifier },
                     { email: identifier },
                     { mobile: identifier },
                 ],
@@ -244,7 +247,7 @@ let AuthService = AuthService_1 = class AuthService {
         const expiresIn = this.configService.get('JWT_EXPIRES_IN') || '7d';
         const accessToken = await this.jwtService.signAsync(accessPayload, {
             secret,
-            expiresIn,
+            expiresIn: expiresIn,
         });
         const refreshToken = await this.jwtService.signAsync(refreshPayload, {
             secret,
@@ -256,11 +259,13 @@ let AuthService = AuthService_1 = class AuthService {
             user: {
                 id: member.id,
                 memberCode: member.memberCode,
+                username: member.username || null,
                 name: member.name,
                 email: member.email,
                 mobile: member.mobile,
                 role: member.role,
                 status: member.status,
+                rank: member.rank || 'NONE',
             },
         };
     }

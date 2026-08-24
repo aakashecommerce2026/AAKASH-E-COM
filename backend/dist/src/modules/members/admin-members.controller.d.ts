@@ -34,6 +34,7 @@ export declare class AdminMembersController {
         } | null;
         id: string;
         memberCode: string;
+        username: string | null;
         name: string;
         mobile: string;
         email: string | null;
@@ -45,6 +46,7 @@ export declare class AdminMembersController {
         bankDetails: import("@prisma/client/runtime/library").JsonValue | null;
         status: import("@prisma/client").$Enums.MemberStatus;
         role: import("@prisma/client").$Enums.MemberRole;
+        rank: import("@prisma/client").$Enums.MemberRank;
         createdAt: Date;
         updatedAt: Date;
     }>;

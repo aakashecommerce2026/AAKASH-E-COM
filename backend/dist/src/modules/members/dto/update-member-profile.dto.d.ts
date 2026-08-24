@@ -1,4 +1,5 @@
 export declare class UpdateMemberProfileDto {
+    username?: string;
     name?: string;
     email?: string;
     mobile?: string;

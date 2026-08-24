@@ -25,6 +25,7 @@ export declare class AuthService {
     validateAdminUser(identifier: string, password: string): Promise<{
         id: string;
         memberCode: string;
+        username: string | null;
         name: string;
         mobile: string;
         email: string | null;
@@ -37,12 +38,14 @@ export declare class AuthService {
         status: import("@prisma/client").$Enums.MemberStatus;
         passwordHash: string;
         role: import("@prisma/client").$Enums.MemberRole;
+        rank: import("@prisma/client").$Enums.MemberRank;
         createdAt: Date;
         updatedAt: Date;
     }>;
     validateMemberUser(identifier: string, password: string): Promise<{
         id: string;
         memberCode: string;
+        username: string | null;
         name: string;
         mobile: string;
         email: string | null;
@@ -55,12 +58,14 @@ export declare class AuthService {
         status: import("@prisma/client").$Enums.MemberStatus;
         passwordHash: string;
         role: import("@prisma/client").$Enums.MemberRole;
+        rank: import("@prisma/client").$Enums.MemberRank;
         createdAt: Date;
         updatedAt: Date;
     }>;
     validateUser(identifier: string, password: string, portalType?: string): Promise<{
         id: string;
         memberCode: string;
+        username: string | null;
         name: string;
         mobile: string;
         email: string | null;
@@ -73,6 +78,7 @@ export declare class AuthService {
         status: import("@prisma/client").$Enums.MemberStatus;
         passwordHash: string;
         role: import("@prisma/client").$Enums.MemberRole;
+        rank: import("@prisma/client").$Enums.MemberRank;
         createdAt: Date;
         updatedAt: Date;
     }>;

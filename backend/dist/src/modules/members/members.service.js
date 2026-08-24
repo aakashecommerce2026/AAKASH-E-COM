@@ -56,19 +56,22 @@ const common_2 = require("@nestjs/common");
 const email_service_1 = require("../email/email.service");
 const otp_service_1 = require("../otp/otp.service");
 const otp_purpose_enum_1 = require("../otp/enums/otp-purpose.enum");
+const promotions_service_1 = require("../promotions/promotions.service");
 let MembersService = class MembersService {
     prisma;
     auditService;
     membershipCommissionService;
     emailService;
     otpService;
+    promotionsService;
     BCRYPT_SALT_ROUNDS = 12;
-    constructor(prisma, auditService, membershipCommissionService, emailService, otpService) {
+    constructor(prisma, auditService, membershipCommissionService, emailService, otpService, promotionsService) {
         this.prisma = prisma;
         this.auditService = auditService;
         this.membershipCommissionService = membershipCommissionService;
         this.emailService = emailService;
         this.otpService = otpService;
+        this.promotionsService = promotionsService;
     }
     async generateMemberCode() {
         const count = await this.prisma.member.count();
@@ -126,6 +129,7 @@ let MembersService = class MembersService {
                     { memberCode: rest.memberCode },
                     { mobile: rest.mobile },
                     ...(rest.email ? [{ email: rest.email }] : []),
+                    ...(rest.username ? [{ username: rest.username }] : []),
                 ],
             },
         });
@@ -138,6 +142,9 @@ let MembersService = class MembersService {
             }
             if (rest.email && existing.email === rest.email) {
                 throw new common_1.ConflictException(`Email address '${rest.email}' already exists`);
+            }
+            if (rest.username && existing.username === rest.username) {
+                throw new common_1.ConflictException(`Username '${rest.username}' already exists`);
             }
         }
         if (referrerId) {
@@ -193,6 +200,9 @@ let MembersService = class MembersService {
                         beneficiaryCount: generatedCommissions.length,
                     },
                 }, tx);
+            }
+            if (this.promotionsService && referrerId) {
+                await this.promotionsService.evaluateAndPromoteMember(referrerId, tx).catch(() => { });
             }
             const result = this.mapToResponseDto(createdMember);
             if (this.emailService && createdMember.email) {
@@ -508,10 +518,12 @@ exports.MembersService = MembersService = __decorate([
     (0, common_1.Injectable)(),
     __param(3, (0, common_2.Optional)()),
     __param(4, (0, common_2.Optional)()),
+    __param(5, (0, common_2.Optional)()),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         audit_service_1.AuditService,
         membership_commission_service_1.MembershipCommissionService,
         email_service_1.EmailService,
-        otp_service_1.OtpService])
+        otp_service_1.OtpService,
+        promotions_service_1.PromotionsService])
 ], MembersService);
 //# sourceMappingURL=members.service.js.map

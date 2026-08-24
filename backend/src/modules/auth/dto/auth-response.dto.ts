@@ -10,6 +10,9 @@ export class AuthUserDto {
   @ApiProperty({ example: 'John Doe' })
   name!: string;
 
+  @ApiProperty({ example: 'johndoe', nullable: true })
+  username?: string | null;
+
   @ApiProperty({ example: 'john@example.com', nullable: true })
   email!: string | null;
 
@@ -21,6 +24,9 @@ export class AuthUserDto {
 
   @ApiProperty({ example: 'ACTIVE' })
   status!: string;
+
+  @ApiProperty({ example: 'BRONZE' })
+  rank?: string;
 }
 
 export class AuthResponseDto {

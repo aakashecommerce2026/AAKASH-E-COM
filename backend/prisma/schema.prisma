@@ -17,6 +17,15 @@ enum MemberRole {
   SUPPORT
 }
 
+/// Member Promotion Ranks
+enum MemberRank {
+  NONE
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+}
+
 /// Member Account Lifecycle Status
 enum MemberStatus {
   PENDING
@@ -67,6 +76,7 @@ enum PaymentMode {
 model Member {
   id                           String                       @id @default(uuid())
   memberCode                   String                       @unique @map("member_code")
+  username                     String?                      @unique
   name                         String
   mobile                       String                       @unique
   email                        String?                      @unique
@@ -84,6 +94,7 @@ model Member {
   status                       MemberStatus                 @default(ACTIVE)
   passwordHash                 String                       @map("password_hash")
   role                         MemberRole                   @default(MEMBER)
+  rank                         MemberRank                   @default(NONE)
 
   // Reverse relations for RepurchaseEntry
   repurchases                  RepurchaseEntry[]            @relation("MemberRepurchases")
@@ -103,6 +114,7 @@ model Member {
 
   // Reverse relation for ActivityLog
   activityLogs                 ActivityLog[]                @relation("ActivityLogsByActor")
+  promotions                   PromotionHistory[]           @relation("MemberPromotions")
 
   createdAt                    DateTime                     @default(now()) @map("created_at")
   updatedAt                    DateTime                     @updatedAt @map("updated_at")
@@ -371,6 +383,20 @@ model EmailOtp {
   @@index([email, purpose, isUsed])
   @@index([expiresAt])
   @@map("email_otps")
+}
+
+/// Audit Trail for Member Rank Promotions
+model PromotionHistory {
+  id                   String     @id @default(uuid())
+  memberId             String     @map("member_id")
+  member               Member     @relation("MemberPromotions", fields: [memberId], references: [id], onDelete: Cascade)
+  previousRank         MemberRank @map("previous_rank")
+  newRank              MemberRank @map("new_rank")
+  directReferralsCount Int        @map("direct_referrals_count")
+  promotedAt           DateTime   @default(now()) @map("promoted_at")
+
+  @@index([memberId])
+  @@map("promotion_history")
 }
 
 

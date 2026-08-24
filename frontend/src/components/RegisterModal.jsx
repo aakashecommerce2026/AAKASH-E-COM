@@ -50,6 +50,7 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '' }) => {
   const [sponsorError, setSponsorError] = useState('');
 
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [mobile, setMobile] = useState('');
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
@@ -75,6 +76,7 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '' }) => {
       const initialCode = defaultSponsorCode || authUser?.referralCode || authUser?.memberCode || 'AK10001';
       setSponsorCode(initialCode);
       setMemberCode(generateMemberCode(name));
+      setUsername('');
       setActiveStep(0);
       setRegisteredUser(null);
       setGeneralError('');
@@ -220,6 +222,7 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '' }) => {
       const payload = {
         memberCode: memberCode || generateMemberCode(name),
         name,
+        ...(username ? { username: username.trim() } : {}),
         mobile,
         email,
         address: address.trim(),
@@ -426,6 +429,16 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '' }) => {
                   setMemberCode(generateMemberCode(e.target.value));
                 }}
                 placeholder="Enter full legal name"
+              />
+
+              <TextField
+                label="Username (Unique)"
+                variant="outlined"
+                fullWidth
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Choose a unique username (e.g. johndoe123)"
+                helperText="Optional handle. Name can be duplicated, but username must be strictly unique."
               />
 
               <Box sx={{ display: 'flex', gap: 1.5 }}>

@@ -70,6 +70,11 @@ export const membersApi = {
         'Content-Type': undefined,
       },
     }),
+// Promotions API Endpoints
+export const promotionsApi = {
+  getMyStatus: () => apiClient.get('/promotions/my-status'),
+  getMemberProgress: (memberId) => apiClient.get(`/promotions/progress/${memberId}`),
+  recalculateAll: () => apiClient.post('/promotions/admin/recalculate'),
 };
 
 // Repurchase API Endpoints

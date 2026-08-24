@@ -8,9 +8,10 @@ import { PrismaModule } from '../../prisma/prisma.module';
 import { AuditModule } from '../audit/audit.module';
 import { MembershipCommissionModule } from '../membership-commission/membership-commission.module';
 import { EmailModule } from '../email/email.module';
+import { PromotionsModule } from '../promotions/promotions.module';
 
 @Module({
-  imports: [PrismaModule, AuditModule, MembershipCommissionModule, EmailModule],
+  imports: [PrismaModule, AuditModule, MembershipCommissionModule, EmailModule, PromotionsModule],
   controllers: [MembersController, AdminMembersController, MemberProfileController],
   providers: [MembersService, MemberProfileService],
   exports: [MembersService, MemberProfileService],

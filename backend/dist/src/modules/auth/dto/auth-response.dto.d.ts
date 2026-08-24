@@ -2,10 +2,12 @@ export declare class AuthUserDto {
     id: string;
     memberCode: string;
     name: string;
+    username?: string | null;
     email: string | null;
     mobile: string;
     role: string;
     status: string;
+    rank?: string;
 }
 export declare class AuthResponseDto {
     accessToken: string;

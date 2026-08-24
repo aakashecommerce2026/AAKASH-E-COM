@@ -18,6 +18,7 @@ const bank_details_dto_1 = require("./bank-details.dto");
 class CreateMemberDto {
     memberCode;
     name;
+    username;
     mobile;
     email;
     address;
@@ -42,6 +43,12 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)({ message: 'Member name is required' }),
     __metadata("design:type", String)
 ], CreateMemberDto.prototype, "name", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'johndoe', description: 'Unique Username' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateMemberDto.prototype, "username", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: '+919876543210', description: 'Mobile phone number' }),
     (0, class_validator_1.IsString)(),

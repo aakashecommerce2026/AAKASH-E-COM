@@ -58,6 +58,7 @@ export class AuthService {
       where: {
         OR: [
           { memberCode: identifier },
+          { username: identifier } as any,
           { email: identifier },
           { mobile: identifier },
         ],
@@ -89,6 +90,7 @@ export class AuthService {
       where: {
         OR: [
           { memberCode: identifier },
+          { username: identifier } as any,
           { email: identifier },
           { mobile: identifier },
         ],
@@ -120,6 +122,7 @@ export class AuthService {
       where: {
         OR: [
           { memberCode: identifier },
+          { username: identifier } as any,
           { email: identifier },
           { mobile: identifier },
         ],
@@ -270,6 +273,7 @@ export class AuthService {
   private async generateAuthTokens(member: {
     id: string;
     memberCode: string;
+    username?: string | null;
     name: string;
     email: string | null;
     mobile: string;
@@ -310,11 +314,13 @@ export class AuthService {
       user: {
         id: member.id,
         memberCode: member.memberCode,
+        username: member.username || null,
         name: member.name,
         email: member.email,
         mobile: member.mobile,
         role: member.role,
         status: member.status,
+        rank: (member as any).rank || 'NONE',
       },
     };
   }

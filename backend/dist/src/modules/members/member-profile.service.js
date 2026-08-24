@@ -80,8 +80,8 @@ let MemberProfileService = class MemberProfileService {
         if (!member) {
             throw new common_1.NotFoundException(`Member with ID '${memberId}' not found`);
         }
-        const { email, mobile, name, address, profilePhoto, upiId, bankDetails } = updateDto;
-        if (mobile || email) {
+        const { email, mobile, name, username, address, profilePhoto, upiId, bankDetails } = updateDto;
+        if (mobile || email || username) {
             const existing = await this.prisma.member.findFirst({
                 where: {
                     AND: [
@@ -90,6 +90,7 @@ let MemberProfileService = class MemberProfileService {
                             OR: [
                                 ...(mobile ? [{ mobile }] : []),
                                 ...(email ? [{ email }] : []),
+                                ...(username ? [{ username }] : []),
                             ],
                         },
                     ],
@@ -102,12 +103,16 @@ let MemberProfileService = class MemberProfileService {
                 if (email && existing.email === email) {
                     throw new common_1.ConflictException(`Email address '${email}' is already taken`);
                 }
+                if (username && existing.username === username) {
+                    throw new common_1.ConflictException(`Username '${username}' is already taken`);
+                }
             }
         }
         const updatedMember = await this.prisma.member.update({
             where: { id: memberId },
             data: {
                 ...(name !== undefined ? { name } : {}),
+                ...(username !== undefined ? { username } : {}),
                 ...(email !== undefined ? { email } : {}),
                 ...(mobile !== undefined ? { mobile } : {}),
                 ...(address !== undefined ? { address } : {}),

@@ -20,6 +20,7 @@ import { Optional } from '@nestjs/common';
 import { EmailService } from '../email/email.service';
 import { OtpService } from '../otp/otp.service';
 import { OtpPurpose } from '../otp/enums/otp-purpose.enum';
+import { PromotionsService } from '../promotions/promotions.service';
 
 @Injectable()
 export class MembersService {
@@ -31,6 +32,7 @@ export class MembersService {
     private readonly membershipCommissionService: MembershipCommissionService,
     @Optional() private readonly emailService?: EmailService,
     @Optional() private readonly otpService?: OtpService,
+    @Optional() private readonly promotionsService?: PromotionsService,
   ) {}
 
   /**
@@ -117,13 +119,14 @@ export class MembersService {
       });
     }
 
-    // Check uniqueness of memberCode, mobile, email
+    // Check uniqueness of memberCode, mobile, email, username
     const existing = await this.prisma.member.findFirst({
       where: {
         OR: [
           { memberCode: rest.memberCode },
           { mobile: rest.mobile },
           ...(rest.email ? [{ email: rest.email }] : []),
+          ...(rest.username ? [{ username: rest.username }] : []),
         ],
       },
     });
@@ -137,6 +140,9 @@ export class MembersService {
       }
       if (rest.email && existing.email === rest.email) {
         throw new ConflictException(`Email address '${rest.email}' already exists`);
+      }
+      if (rest.username && existing.username === rest.username) {
+        throw new ConflictException(`Username '${rest.username}' already exists`);
       }
     }
 
@@ -220,6 +226,11 @@ export class MembersService {
           },
           tx,
         );
+      }
+
+      // 5. Evaluate and auto-promote sponsor if milestone is hit
+      if (this.promotionsService && referrerId) {
+        await this.promotionsService.evaluateAndPromoteMember(referrerId, tx).catch(() => {});
       }
 
       const result = this.mapToResponseDto(createdMember);

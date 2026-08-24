@@ -72,6 +72,7 @@ describe('AuthService', () => {
         where: {
           OR: [
             { memberCode: 'AK10001' },
+            { username: 'AK10001' },
             { email: 'AK10001' },
             { mobile: 'AK10001' },
           ],
@@ -172,6 +173,7 @@ describe('AuthService', () => {
         where: {
           OR: [
             { memberCode: 'AK100000' },
+            { username: 'AK100000' },
             { email: 'AK100000' },
             { mobile: 'AK100000' },
           ],
@@ -190,6 +192,7 @@ describe('AuthService', () => {
         where: {
           OR: [
             { memberCode: 'AK10001' },
+            { username: 'AK10001' },
             { email: 'AK10001' },
             { mobile: 'AK10001' },
           ],

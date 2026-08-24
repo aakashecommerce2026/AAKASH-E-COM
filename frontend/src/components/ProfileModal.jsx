@@ -53,6 +53,7 @@ export const ProfileModal = ({ open, onClose }) => {
 
   // Personal Info State
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
 
@@ -131,6 +132,7 @@ export const ProfileModal = ({ open, onClose }) => {
   const populateUserData = useCallback(() => {
     if (user) {
       setName(user.name || '');
+      setUsername(user.username || '');
       setEmail(user.email || '');
       setAddress(user.address || '');
 
@@ -181,6 +183,7 @@ export const ProfileModal = ({ open, onClose }) => {
     const updatedUser = {
       ...user,
       name: name.trim(),
+      username: username.trim(),
       email: email.trim(),
       address: address.trim(),
       upiId: upiId.trim(),
@@ -402,6 +405,18 @@ export const ProfileModal = ({ open, onClose }) => {
                     disabled={!isEditing}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                  />
+
+                  <TextField
+                    label="Username (Unique)"
+                    variant="outlined"
+                    fullWidth
+                    size="small"
+                    disabled={!isEditing}
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="e.g. johndoe123"
+                    helperText="👤 Unique handle for your profile across the network."
                   />
 
                   <TextField
