@@ -18,6 +18,8 @@ class AuthUserDto {
     username;
     email;
     mobile;
+    address;
+    profilePhoto;
     role;
     status;
     rank;
@@ -47,6 +49,14 @@ __decorate([
     (0, swagger_1.ApiProperty)({ example: '+919876543210' }),
     __metadata("design:type", String)
 ], AuthUserDto.prototype, "mobile", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: '123 Main Street, City', nullable: true }),
+    __metadata("design:type", Object)
+], AuthUserDto.prototype, "address", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: '/uploads/profile-photos/avatar.jpg', nullable: true }),
+    __metadata("design:type", Object)
+], AuthUserDto.prototype, "profilePhoto", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: 'MEMBER' }),
     __metadata("design:type", String)

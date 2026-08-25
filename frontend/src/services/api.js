@@ -165,3 +165,12 @@ export const hierarchyApi = {
   getMemberReferrals: () => apiClient.get('/member/network/referrals'),
 };
 
+// Executive Dashboard Aggregation API Endpoints
+export const dashboardApi = {
+  getMemberStats: (params) => apiClient.get('/admin/dashboard/members', { params }),
+  getEarningsStats: (params) => apiClient.get('/admin/dashboard/earnings', { params }),
+  getBusinessStats: (params) => apiClient.get('/admin/dashboard/business', { params }),
+  getActivityFeed: (params) => apiClient.get('/admin/dashboard/activity', { params }),
+  getMemberDashboard: () => apiClient.get('/member/dashboard'),
+};
+

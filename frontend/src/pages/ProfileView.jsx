@@ -145,6 +145,23 @@ const ProfileView = () => {
     populateUserData();
   }, [populateUserData]);
 
+  // Fetch fresh profile from DB on component mount
+  useEffect(() => {
+    let isMounted = true;
+    membersApi
+      .getProfile()
+      .then((profileData) => {
+        if (!isMounted) return;
+        if (profileData) {
+          dispatch(updateProfileSuccess(profileData));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, [dispatch]);
+
   useEffect(() => {
     if (saveSuccess) {
       setIsEditing(false); // Lock fields after successful Saga save

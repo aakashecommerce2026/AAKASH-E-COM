@@ -267,6 +267,8 @@ let AuthService = AuthService_1 = class AuthService {
                 name: member.name,
                 email: member.email,
                 mobile: member.mobile,
+                address: member.address || null,
+                profilePhoto: member.profilePhoto || null,
                 role: member.role,
                 status: member.status,
                 rank: member.rank || 'NONE',

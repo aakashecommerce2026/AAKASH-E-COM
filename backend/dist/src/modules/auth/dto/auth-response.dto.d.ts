@@ -5,6 +5,8 @@ export declare class AuthUserDto {
     username?: string | null;
     email: string | null;
     mobile: string;
+    address?: string | null;
+    profilePhoto?: string | null;
     role: string;
     status: string;
     rank?: string;

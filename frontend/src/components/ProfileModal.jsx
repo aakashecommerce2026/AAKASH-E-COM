@@ -146,7 +146,17 @@ export const ProfileModal = ({ open, onClose }) => {
   useEffect(() => {
     populateUserData();
     setIsEditing(false); // Reset to read-only when opening
-  }, [populateUserData, open]);
+    if (open) {
+      membersApi
+        .getProfile()
+        .then((profileData) => {
+          if (profileData) {
+            dispatch(updateProfileSuccess(profileData));
+          }
+        })
+        .catch(() => {});
+    }
+  }, [populateUserData, open, dispatch]);
 
   useEffect(() => {
     if (saveSuccess && open) {

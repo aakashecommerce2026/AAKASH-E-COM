@@ -303,6 +303,8 @@ export class AuthService {
     name: string;
     email: string | null;
     mobile: string;
+    address?: string | null;
+    profilePhoto?: string | null;
     role: string;
     status: string;
   }): Promise<AuthResponseDto> {
@@ -346,6 +348,8 @@ export class AuthService {
         name: member.name,
         email: member.email,
         mobile: member.mobile,
+        address: (member as any).address || null,
+        profilePhoto: (member as any).profilePhoto || null,
         role: member.role,
         status: member.status,
         rank: (member as any).rank || 'NONE',

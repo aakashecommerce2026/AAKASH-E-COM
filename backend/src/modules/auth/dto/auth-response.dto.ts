@@ -19,6 +19,12 @@ export class AuthUserDto {
   @ApiProperty({ example: '+919876543210' })
   mobile!: string;
 
+  @ApiProperty({ example: '123 Main Street, City', nullable: true })
+  address?: string | null;
+
+  @ApiProperty({ example: '/uploads/profile-photos/avatar.jpg', nullable: true })
+  profilePhoto?: string | null;
+
   @ApiProperty({ example: 'MEMBER' })
   role!: string;
 

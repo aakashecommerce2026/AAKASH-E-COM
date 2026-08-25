@@ -37,7 +37,7 @@ const generateMemberCode = (name = '') => {
   return `${prefix}${num}`;
 };
 
-const RegisterModal = ({ open, onClose, defaultSponsorCode = '' }) => {
+const RegisterModal = ({ open, onClose, defaultSponsorCode = '', onSuccess }) => {
   const dispatch = useDispatch();
   const { user: authUser } = useSelector((state) => state.auth);
 
@@ -242,8 +242,14 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '' }) => {
         sponsorName: sponsorDetails.name,
       });
 
-      // Auto login newly registered member
-      dispatch(loginRequest(created.email || created.memberCode, password, 'Member'));
+      if (onSuccess) {
+        onSuccess(created);
+      }
+
+      // Auto login newly registered member only if guest self-registration
+      if (!authUser) {
+        dispatch(loginRequest(created.email || created.memberCode, password, 'Member'));
+      }
     } catch (err) {
       const msg = err.response?.data?.message || err.message || 'Registration failed.';
       if (typeof msg === 'string' && msg.toLowerCase().includes('otp')) {

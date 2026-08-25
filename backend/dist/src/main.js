@@ -62,7 +62,9 @@ async function bootstrap() {
             throw new Error('Insecure JWT_SECRET configured for production. Refusing to start server.');
         }
     }
-    app.use((0, helmet_1.default)());
+    app.use((0, helmet_1.default)({
+        crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }));
     const uploadsDir = (0, path_1.join)(process.cwd(), 'uploads', 'profile-photos');
     if (!fs.existsSync(uploadsDir)) {
         fs.mkdirSync(uploadsDir, { recursive: true });

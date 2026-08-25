@@ -35,6 +35,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import { useLocation } from 'react-router-dom';
 import { fetchMembersRequest, addMemberRequest, updateMemberRequest } from '../store/actions';
 import { UnilevelTree } from '../components/UnilevelTree';
+import RegisterModal from '../components/RegisterModal';
 import { hierarchyApi } from '../services/api';
 
 // Helper function to generate unique referral code
@@ -597,10 +598,25 @@ const MemberManagement = () => {
         </Box>
       )}
 
-      {/* Add / Edit Profile Dialog Modal */}
-      <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth="sm">
+      {/* Full 3-Step Registration Modal for Registering New Member (with Username, Mobile, Password, Address, and 6-Digit Email OTP Verification) */}
+      <RegisterModal
+        open={Boolean(openModal && !editingMember)}
+        onClose={handleCloseModal}
+        defaultSponsorCode={user?.referralCode || user?.memberCode || ''}
+        onSuccess={(created) => {
+          dispatch(fetchMembersRequest());
+          setRegistrationNotice(
+            `✓ Member ${created.name} (${created.memberCode}) successfully registered and placed in your Unilevel Tree line!`
+          );
+          setTimeout(() => setRegistrationNotice(''), 6000);
+          handleCloseModal();
+        }}
+      />
+
+      {/* Edit Profile Dialog Modal for Existing Member Modifications */}
+      <Dialog open={Boolean(openModal && editingMember)} onClose={handleCloseModal} fullWidth maxWidth="sm">
         <DialogTitle sx={{ fontWeight: 800, color: 'primary.main', borderBottom: '1px solid #E2E8F0', pb: 2 }}>
-          {editingMember ? 'Edit Member Profile' : 'Register New Referral (Sponsor Referral Code Lookup)'}
+          Edit Member Profile
         </DialogTitle>
         <form onSubmit={handleSaveMember}>
           <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 3 }}>

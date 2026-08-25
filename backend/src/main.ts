@@ -38,7 +38,11 @@ async function bootstrap() {
   }
 
   // Enforce HTTP Security Headers (CSP, HSTS, X-Frame-Options, X-Content-Type-Options)
-  app.use(helmet());
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
 
   // Ensure uploads directory exists
   const uploadsDir = join(process.cwd(), 'uploads', 'profile-photos');
