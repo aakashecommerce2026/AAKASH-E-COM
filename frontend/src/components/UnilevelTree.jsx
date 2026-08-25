@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -13,7 +13,9 @@ import {
   DialogContent,
   DialogActions,
   Alert,
-  InputAdornment
+  InputAdornment,
+  Tooltip,
+  ButtonGroup,
 } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
@@ -24,24 +26,43 @@ import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import SecurityIcon from '@mui/icons-material/Security';
 import BlockIcon from '@mui/icons-material/Block';
 import SearchIcon from '@mui/icons-material/Search';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import ZoomOutIcon from '@mui/icons-material/ZoomOut';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
+import UnfoldLessIcon from '@mui/icons-material/UnfoldLess';
+import GroupsIcon from '@mui/icons-material/Groups';
+import AlternateEmailIcon from '@mui/icons-material/AlternateEmail';
 
-export const UnilevelTree = ({ members }) => {
+// Helper to normalize string IDs across String vs Number mismatches
+const getNormId = (val) => (val !== undefined && val !== null && val !== '' ? String(val) : null);
+
+export const UnilevelTree = ({ members = [] }) => {
   const [expandedNodes, setExpandedNodes] = useState(() => {
     const initialMap = {};
     if (members) {
-      members.forEach((m) => { initialMap[m.id] = true; });
+      members.forEach((m) => {
+        const idStr = getNormId(m.id);
+        if (idStr) initialMap[idStr] = true;
+      });
     }
     return initialMap;
   });
 
-  // Sync expanded state when new members join
-  React.useEffect(() => {
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [highlightedId, setHighlightedId] = useState(null);
+  const [blockadeAlert, setBlockadeAlert] = useState({ open: false, targetId: '', reason: '' });
+
+  // Sync expanded state when members change
+  useEffect(() => {
     if (members && members.length > 0) {
       setExpandedNodes((prev) => {
         const updated = { ...prev };
         members.forEach((m) => {
-          if (updated[m.id] === undefined) {
-            updated[m.id] = true;
+          const idStr = getNormId(m.id);
+          if (idStr && updated[idStr] === undefined) {
+            updated[idStr] = true;
           }
         });
         return updated;
@@ -49,59 +70,113 @@ export const UnilevelTree = ({ members }) => {
     }
   }, [members]);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [highlightedId, setHighlightedId] = useState(null);
-  const [blockadeAlert, setBlockadeAlert] = useState({ open: false, targetId: '', reason: '' });
-
   const toggleNode = (id) => {
+    const idStr = getNormId(id);
+    if (!idStr) return;
     setExpandedNodes((prev) => ({
       ...prev,
-      [id]: !prev[id],
+      [idStr]: !prev[idStr],
     }));
   };
 
-  // Find root nodes (members with no sponsors, or sponsors who are not in the list)
-  const memberIds = useMemo(() => members.map((m) => m.id), [members]);
-  const rootMembers = useMemo(() => {
-    return members.filter(
-      (m) => m.sponsorId === null || m.sponsorId === undefined || !memberIds.includes(m.sponsorId)
-    );
-  }, [members, memberIds]);
+  const expandAll = () => {
+    const allExpanded = {};
+    members.forEach((m) => {
+      const idStr = getNormId(m.id);
+      if (idStr) allExpanded[idStr] = true;
+    });
+    setExpandedNodes(allExpanded);
+  };
 
-  // Build children lookup map
+  const collapseAll = () => {
+    const rootIdSet = new Set(rootMembers.map((r) => getNormId(r.id)).filter(Boolean));
+    const collapsed = {};
+    members.forEach((m) => {
+      const idStr = getNormId(m.id);
+      if (idStr) collapsed[idStr] = rootIdSet.has(idStr);
+    });
+    setExpandedNodes(collapsed);
+  };
+
+  // Build member ID set for root lookup
+  const memberIdSet = useMemo(() => {
+    const set = new Set();
+    members.forEach((m) => {
+      const idStr = getNormId(m.id);
+      if (idStr) set.add(idStr);
+    });
+    return set;
+  }, [members]);
+
+  // Find root nodes (no parent sponsor or sponsor not in active downline view)
+  const rootMembers = useMemo(() => {
+    return members.filter((m) => {
+      const parentId =
+        getNormId(m.sponsorId) ||
+        getNormId(m.referrerId) ||
+        getNormId(m.referrer_id) ||
+        getNormId(m.sponsor_id);
+      return !parentId || !memberIdSet.has(parentId);
+    });
+  }, [members, memberIdSet]);
+
+  // Build robust children lookup map supporting string & number IDs + sponsorId & referrerId
   const childrenMap = useMemo(() => {
     const map = {};
     members.forEach((m) => {
-      if (m.sponsorId) {
-        if (!map[m.sponsorId]) map[m.sponsorId] = [];
-        map[m.sponsorId].push(m);
+      const parentId =
+        getNormId(m.sponsorId) ||
+        getNormId(m.referrerId) ||
+        getNormId(m.referrer_id) ||
+        getNormId(m.sponsor_id);
+
+      if (parentId) {
+        if (!map[parentId]) map[parentId] = [];
+        map[parentId].push(m);
       }
     });
     return map;
   }, [members]);
 
-  // Tree Node Search & Security Blockade Verification Engine
+  // Search Node
   const handleSearchNode = (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
-    const queryNum = Number(searchQuery.trim());
+    const query = searchQuery.trim().toLowerCase();
     const matchedMember = members.find(
-      (m) => m.id === queryNum || m.name.toLowerCase().includes(searchQuery.toLowerCase()) || (m.referralCode && m.referralCode.toLowerCase() === searchQuery.toLowerCase())
+      (m) =>
+        getNormId(m.id) === query ||
+        (m.name && m.name.toLowerCase().includes(query)) ||
+        (m.username && m.username.toLowerCase().includes(query)) ||
+        (m.referralCode && m.referralCode.toLowerCase() === query)
     );
 
     if (matchedMember) {
-      // Valid Downline Node Access
-      setHighlightedId(matchedMember.id);
-      // Auto-expand parents
-      setExpandedNodes((prev) => ({ ...prev, [matchedMember.id]: true, [matchedMember.sponsorId]: true }));
+      const targetIdStr = getNormId(matchedMember.id);
+      setHighlightedId(targetIdStr);
+      // Expand path to target node
+      setExpandedNodes((prev) => {
+        const updated = { ...prev };
+        let curr = matchedMember;
+        while (curr) {
+          const currIdStr = getNormId(curr.id);
+          if (currIdStr) updated[currIdStr] = true;
+          const pId =
+            getNormId(curr.sponsorId) ||
+            getNormId(curr.referrerId) ||
+            getNormId(curr.referrer_id) ||
+            getNormId(curr.sponsor_id);
+          curr = members.find((m) => getNormId(m.id) === pId);
+        }
+        return updated;
+      });
     } else {
-      // Access Denied: Query target is outside authorized downline branch (Upline or Cross-Branch)
       setHighlightedId(null);
       setBlockadeAlert({
         open: true,
         targetId: searchQuery,
-        reason: `Node ID/Term "${searchQuery}" is outside your authorized downline branch. Upline sponsors and cross-branch nodes are blocked under strict MLM network isolation policy.`
+        reason: `Node "${searchQuery}" was not found in your authorized downline network branch. Upline sponsors and cross-branch nodes are strictly blockaded.`,
       });
     }
   };
@@ -112,27 +187,32 @@ export const UnilevelTree = ({ members }) => {
 
     const coords = {};
     let leafCount = 0;
+    const CARD_WIDTH = 340;
+    const CARD_HEIGHT = 104;
+    const LEVEL_HEIGHT = 210;
 
     const traverse = (node, level) => {
-      const children = childrenMap[node.id] || [];
-      const isExpanded = expandedNodes[node.id];
+      const nodeIdStr = getNormId(node.id);
+      const children = childrenMap[nodeIdStr] || [];
+      const isExpanded = expandedNodes[nodeIdStr] !== false; // default true
       const visibleChildren = isExpanded ? children : [];
 
       const nodeLayout = {
-        id: node.id,
+        id: nodeIdStr,
         member: node,
         level: level,
-        y: 40 + level * 185,
+        y: 40 + level * LEVEL_HEIGHT,
         x: 0,
         hasChildren: children.length > 0,
+        directCount: children.length,
         isExpanded: isExpanded,
-        children: []
+        children: [],
       };
 
-      coords[node.id] = nodeLayout;
+      coords[nodeIdStr] = nodeLayout;
 
       if (visibleChildren.length === 0) {
-        nodeLayout.x = 40 + leafCount * 350;
+        nodeLayout.x = 40 + leafCount * (CARD_WIDTH + 30);
         leafCount++;
       } else {
         const childLayouts = visibleChildren.map((c) => traverse(c, level + 1));
@@ -155,33 +235,43 @@ export const UnilevelTree = ({ members }) => {
     return {
       roots: treeRoots,
       coords: coords,
-      canvasWidth: Math.max(leafCount * 350 + 60, 800),
-      canvasHeight: (maxLevel + 1) * 185 + 60
+      maxLevel: maxLevel,
+      cardWidth: CARD_WIDTH,
+      cardHeight: CARD_HEIGHT,
+      levelHeight: LEVEL_HEIGHT,
+      canvasWidth: Math.max(leafCount * (CARD_WIDTH + 30) + 80, 900),
+      canvasHeight: (maxLevel + 1) * LEVEL_HEIGHT + 80,
     };
   }, [rootMembers, childrenMap, expandedNodes]);
 
-  // Compute SVG bezier curve connection paths
+  // Compute SVG Bezier connectors between all parents and visible children
   const connectors = useMemo(() => {
     if (!layoutData) return [];
 
     const list = [];
+    const { cardWidth, cardHeight } = layoutData;
+
     Object.values(layoutData.coords).forEach((parentLayout) => {
       const children = parentLayout.children || [];
       children.forEach((childLayout) => {
-        const startX = parentLayout.x + 160;
-        const startY = parentLayout.y + 80;
-        const endX = childLayout.x + 160;
+        const startX = parentLayout.x + cardWidth / 2;
+        const startY = parentLayout.y + cardHeight;
+        const endX = childLayout.x + cardWidth / 2;
         const endY = childLayout.y;
 
         const cp1X = startX;
-        const cp1Y = startY + 50;
+        const cp1Y = startY + 55;
         const cp2X = endX;
-        const cp2Y = endY - 50;
+        const cp2Y = endY - 55;
 
         const pathD = `M ${startX} ${startY} C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${endX} ${endY}`;
         list.push({
           id: `${parentLayout.id}-${childLayout.id}`,
-          d: pathD
+          startX,
+          startY,
+          endX,
+          endY,
+          d: pathD,
         });
       });
     });
@@ -189,104 +279,236 @@ export const UnilevelTree = ({ members }) => {
   }, [layoutData]);
 
   return (
-    <Paper sx={{ p: 4, bgcolor: '#FAF9F6', borderRadius: 3, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
-      {/* Top Header Bar & Tree Search Form */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2, mb: 3.5 }}>
+    <Paper
+      elevation={0}
+      sx={{
+        p: 3.5,
+        bgcolor: '#F8FAFC',
+        borderRadius: 3.5,
+        border: '1px solid #E2E8F0',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Header Bar & Control Panel */}
+      <Box
+        sx={{
+          display: 'flex',
+          justify: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 2,
+          mb: 3,
+          pb: 2.5,
+          borderBottom: '1px solid #E2E8F0',
+        }}
+      >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <AccountTreeIcon color="primary" sx={{ fontSize: 28 }} />
+          <Avatar
+            sx={{
+              bgcolor: 'primary.dark',
+              width: 44,
+              height: 44,
+              boxShadow: '0 4px 10px rgba(6,78,59,0.2)',
+            }}
+          >
+            <AccountTreeIcon sx={{ color: '#6EE7B7' }} />
+          </Avatar>
           <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="h6" fontWeight={700} color="primary.main">
-                Unilevel Network Structure
+              <Typography variant="h6" fontWeight={800} color="#0F172A">
+                Unilevel Network Hierarchy
               </Typography>
-              <Chip 
-                label="Upline & Cross-Branch Blockade Active" 
-                color="success" 
-                size="small" 
+              <Chip
+                label="Downline Isolation Active"
+                color="success"
+                size="small"
                 icon={<SecurityIcon />}
-                sx={{ height: 22, fontSize: '0.68rem', fontWeight: 700 }}
+                sx={{ height: 22, fontSize: '0.68rem', fontWeight: 700, borderRadius: 1.5 }}
               />
             </Box>
             <Typography variant="caption" color="text.secondary">
-              Strict downline hierarchy visualization. Upline sponsors and collateral cross-branches are blockaded.
+              Neatly structured multi-level sponsor hierarchy with active downline connecting lines
             </Typography>
           </Box>
         </Box>
 
-        {/* Tree Node Search Box */}
-        <form onSubmit={handleSearchNode} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <TextField
-            size="small"
-            placeholder="Search Member ID / Name"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
-                  </InputAdornment>
-                ),
-              }
-            }}
-            sx={{ bgcolor: '#FFFFFF', borderRadius: 1.5, width: 220 }}
-          />
-          <Button type="submit" variant="contained" color="secondary" size="small" sx={{ height: 38, fontWeight: 700 }}>
-            Inspect
-          </Button>
-        </form>
+        {/* Toolbar & Search Controls */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+          <ButtonGroup size="small" variant="outlined" sx={{ bgcolor: '#FFFFFF' }}>
+            <Tooltip title="Expand All Nodes">
+              <Button onClick={expandAll} color="secondary">
+                <UnfoldMoreIcon fontSize="small" />
+              </Button>
+            </Tooltip>
+            <Tooltip title="Collapse All Nodes">
+              <Button onClick={collapseAll} color="secondary">
+                <UnfoldLessIcon fontSize="small" />
+              </Button>
+            </Tooltip>
+            <Tooltip title="Zoom Out">
+              <Button
+                onClick={() => setZoomLevel((z) => Math.max(0.6, z - 0.1))}
+                disabled={zoomLevel <= 0.6}
+              >
+                <ZoomOutIcon fontSize="small" />
+              </Button>
+            </Tooltip>
+            <Tooltip title="Zoom In">
+              <Button
+                onClick={() => setZoomLevel((z) => Math.min(1.4, z + 0.1))}
+                disabled={zoomLevel >= 1.4}
+              >
+                <ZoomInIcon fontSize="small" />
+              </Button>
+            </Tooltip>
+            <Tooltip title="Reset View Scale">
+              <Button onClick={() => setZoomLevel(1)}>
+                <RestartAltIcon fontSize="small" />
+              </Button>
+            </Tooltip>
+          </ButtonGroup>
+
+          <form onSubmit={handleSearchNode} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <TextField
+              size="small"
+              placeholder="Search Username / Name / Code"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              sx={{ bgcolor: '#FFFFFF', borderRadius: 1.5, width: 240 }}
+            />
+            <Button
+              type="submit"
+              variant="contained"
+              color="secondary"
+              size="small"
+              sx={{ height: 38, fontWeight: 700, px: 2.5 }}
+            >
+              Locate
+            </Button>
+          </form>
+        </Box>
       </Box>
 
       {rootMembers.length === 0 ? (
-        <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', textAlign: 'center', py: 4 }}>
-          No downline network hierarchy found. Register referrals to build your tree.
-        </Typography>
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 6,
+            textAlign: 'center',
+            bgcolor: '#FFFFFF',
+            borderRadius: 3,
+            borderColor: '#E2E8F0',
+          }}
+        >
+          <AccountTreeIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
+          <Typography variant="subtitle1" fontWeight={700} color="text.secondary">
+            No Downline Members Found
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Register new referrals to build and visualize your Unilevel network tree structure.
+          </Typography>
+        </Paper>
       ) : (
-        /* ================= VERTICAL SVG BEZIER ORG CHART CANVAS ================= */
-        <Box 
-          sx={{ 
-            width: '100%', 
-            overflowX: 'auto', 
-            overflowY: 'auto', 
-            maxHeight: 620, 
-            bgcolor: '#FFFFFF', 
-            border: '1px solid #F1F5F9',
-            borderRadius: 2,
-            position: 'relative'
+        /* ================= ORG CHART CANVAS ================= */
+        <Box
+          sx={{
+            width: '100%',
+            overflowX: 'auto',
+            overflowY: 'auto',
+            maxHeight: 650,
+            bgcolor: '#FFFFFF',
+            border: '1px solid #E2E8F0',
+            borderRadius: 3,
+            position: 'relative',
+            boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.02)',
           }}
         >
           {layoutData && (
-            <Box 
-              sx={{ 
-                width: layoutData.canvasWidth, 
-                height: layoutData.canvasHeight, 
+            <Box
+              sx={{
+                width: layoutData.canvasWidth * zoomLevel,
+                height: layoutData.canvasHeight * zoomLevel,
                 position: 'relative',
-                transition: 'all 0.3s ease-in-out'
+                transformOrigin: '0 0',
+                transform: `scale(${zoomLevel})`,
+                transition: 'transform 0.2s ease-out',
+                p: 2,
               }}
             >
-              {/* SVG Connector Lines Canvas */}
-              <svg 
-                width={layoutData.canvasWidth} 
-                height={layoutData.canvasHeight} 
-                style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}
+              {/* Level Depth Guidance Indicators (Sticky Axis) */}
+              {Array.from({ length: layoutData.maxLevel + 1 }).map((_, levelIdx) => (
+                <Box
+                  key={`level-guide-${levelIdx}`}
+                  sx={{
+                    position: 'absolute',
+                    left: 10,
+                    top: 40 + levelIdx * layoutData.levelHeight + 40,
+                    zIndex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                  }}
+                >
+                  <Chip
+                    label={levelIdx === 0 ? 'Level 0 (Root)' : `Level ${levelIdx}`}
+                    size="small"
+                    sx={{
+                      bgcolor: levelIdx === 0 ? '#064E3B' : '#047857',
+                      color: '#FFFFFF',
+                      fontWeight: 800,
+                      fontSize: '0.65rem',
+                      height: 20,
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    }}
+                  />
+                </Box>
+              ))}
+
+              {/* SVG Connector Lines Canvas for Downline Connections */}
+              <svg
+                width={layoutData.canvasWidth}
+                height={layoutData.canvasHeight}
+                style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', zIndex: 2 }}
               >
                 {connectors.map((c) => (
-                  <path
-                    key={c.id}
-                    d={c.d}
-                    fill="none"
-                    stroke="#CBD5E1"
-                    strokeWidth="2.5"
-                    strokeDasharray="4 4"
-                    style={{ transition: 'all 0.3s ease-in-out' }}
-                  />
+                  <g key={c.id}>
+                    {/* Solid Emerald Downline Connector Line */}
+                    <path
+                      d={c.d}
+                      fill="none"
+                      stroke="#059669"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      style={{ transition: 'all 0.3s ease-in-out' }}
+                    />
+                    {/* Anchor Circle at Parent Bottom */}
+                    <circle cx={c.startX} cy={c.startY} r="4.5" fill="#064E3B" stroke="#FFFFFF" strokeWidth="1.5" />
+                    {/* Anchor Circle at Child Top */}
+                    <circle cx={c.endX} cy={c.endY} r="4.5" fill="#059669" stroke="#FFFFFF" strokeWidth="1.5" />
+                  </g>
                 ))}
               </svg>
 
               {/* Absolute Positioned Member Node Cards */}
               {Object.values(layoutData.coords).map((node) => {
                 const member = node.member;
-                const isHighlighted = highlightedId === member.id;
+                const memberIdStr = getNormId(member.id);
+                const isHighlighted = highlightedId === memberIdStr;
+
+                // Username formatting
+                const rawUsername = member.username || member.user_name;
+                const displayUsername = rawUsername
+                  ? `@${rawUsername.replace(/^@/, '')}`
+                  : `@${(member.referralCode || member.name || 'member').toLowerCase().replace(/\s+/g, '')}`;
 
                 return (
                   <Box
@@ -295,70 +517,171 @@ export const UnilevelTree = ({ members }) => {
                       position: 'absolute',
                       left: node.x,
                       top: node.y,
-                      width: 320,
-                      height: 80,
+                      width: layoutData.cardWidth,
+                      height: layoutData.cardHeight,
                       zIndex: 3,
-                      transition: 'all 0.3s ease-in-out'
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                   >
                     <Paper
-                      variant="outlined"
+                      elevation={isHighlighted ? 6 : 1}
                       sx={{
                         p: 1.5,
                         width: '100%',
                         height: '100%',
                         display: 'flex',
-                        alignItems: 'center',
-                        gap: 1.5,
-                        bgcolor: isHighlighted ? '#FEF3C7' : 'background.paper',
-                        borderColor: isHighlighted ? '#D97706' : (node.hasChildren ? 'primary.light' : '#E2E8F0'),
-                        borderLeft: `4px solid ${isHighlighted ? '#D97706' : (node.hasChildren ? '#064E3B' : '#CA8A04')}`,
-                        boxShadow: isHighlighted ? '0 0 12px rgba(217, 119, 6, 0.4)' : '0 2px 4px rgba(0,0,0,0.02)',
+                        flexDirection: 'column',
+                        justify: 'space-between',
+                        bgcolor: isHighlighted ? '#FEF3C7' : '#FFFFFF',
+                        borderColor: isHighlighted
+                          ? '#D97706'
+                          : node.hasChildren
+                          ? '#059669'
+                          : '#E2E8F0',
+                        borderWidth: isHighlighted ? 2 : 1,
+                        borderStyle: 'solid',
+                        borderLeft: `5px solid ${
+                          isHighlighted
+                            ? '#D97706'
+                            : node.level === 0
+                            ? '#064E3B'
+                            : node.hasChildren
+                            ? '#059669'
+                            : '#D97706'
+                        }`,
+                        borderRadius: 2.5,
                         boxSizing: 'border-box',
-                        transition: 'all 0.2s',
+                        transition: 'all 0.2s ease-in-out',
                         '&:hover': {
-                          boxShadow: '0 6px 12px rgba(6,78,59,0.08)',
-                          transform: 'translateY(-2px)',
-                          borderColor: 'primary.main'
-                        }
+                          boxShadow: '0 8px 20px rgba(6,78,59,0.12)',
+                          transform: 'translateY(-3px)',
+                          borderColor: '#059669',
+                        },
                       }}
                     >
-                      <Avatar sx={{ bgcolor: node.hasChildren ? 'primary.main' : 'secondary.main', width: 36, height: 36, fontSize: '0.9rem', fontWeight: 700 }}>
-                        {member.name ? member.name.charAt(0) : <PersonIcon />}
-                      </Avatar>
-                      
-                      <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.82rem', color: 'text.primary', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {member.name}
-                        </Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
-                          <EmailIcon sx={{ fontSize: 11, color: 'text.disabled' }} />
-                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
-                            {member.email}
+                      {/* Top Header: Avatar + Full Name & @username handle */}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
+                        <Avatar
+                          sx={{
+                            bgcolor: node.level === 0 ? '#064E3B' : node.hasChildren ? '#047857' : '#D97706',
+                            color: '#FFFFFF',
+                            width: 40,
+                            height: 40,
+                            fontWeight: 800,
+                            fontSize: '1rem',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
+                          }}
+                        >
+                          {member.name ? member.name.charAt(0).toUpperCase() : <PersonIcon />}
+                        </Avatar>
+
+                        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                          {/* Full Name Display */}
+                          <Typography
+                            variant="subtitle2"
+                            sx={{
+                              fontWeight: 800,
+                              fontSize: '0.88rem',
+                              color: '#0F172A',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              lineHeight: 1.2,
+                            }}
+                            title={member.name}
+                          >
+                            {member.name}
                           </Typography>
+
+                          {/* Username Handle Display */}
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4, mt: 0.2 }}>
+                            <AlternateEmailIcon sx={{ fontSize: 12, color: '#059669' }} />
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                fontWeight: 700,
+                                fontSize: '0.74rem',
+                                color: '#059669',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                              title={displayUsername}
+                            >
+                              {displayUsername}
+                            </Typography>
+                          </Box>
                         </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
-                          <CalendarTodayIcon sx={{ fontSize: 11, color: 'text.disabled' }} />
-                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem' }}>
-                            Joined: {member.joinedDate}
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.25, flexShrink: 0 }}>
-                        <Chip 
-                          label={`ID: ${member.id}`} 
-                          size="small" 
-                          sx={{ height: 16, fontSize: '0.6rem', fontWeight: 700, bgcolor: '#F1F5F9' }} 
-                        />
-                        {member.referralCode && (
-                          <Chip 
-                            label={member.referralCode} 
-                            size="small" 
-                            variant="outlined"
-                            color="secondary"
-                            sx={{ height: 16, fontSize: '0.6rem', fontWeight: 700 }} 
-                          />
+
+                        {/* Direct Downlines Count Badge */}
+                        {node.hasChildren && (
+                          <Tooltip title={`${node.directCount} Direct Downline Referrals`}>
+                            <Chip
+                              icon={<GroupsIcon sx={{ fontSize: '13px !important' }} />}
+                              label={`${node.directCount}`}
+                              size="small"
+                              sx={{
+                                bgcolor: '#ECFDF5',
+                                color: '#065F46',
+                                fontWeight: 800,
+                                fontSize: '0.68rem',
+                                height: 22,
+                                borderColor: '#A7F3D0',
+                                border: '1px solid #A7F3D0',
+                              }}
+                            />
+                          </Tooltip>
                         )}
+                      </Box>
+
+                      {/* Bottom Footer Metadata: Member Code, Email, Joined Date */}
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justify: 'space-between',
+                          pt: 0.75,
+                          borderTop: '1px solid #F1F5F9',
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+                          <Chip
+                            label={member.referralCode || `ID:${member.id}`}
+                            size="small"
+                            sx={{
+                              height: 18,
+                              fontSize: '0.62rem',
+                              fontWeight: 800,
+                              bgcolor: '#F1F5F9',
+                              color: '#334155',
+                            }}
+                          />
+                          <Tooltip title={member.email || 'No email attached'}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, minWidth: 0 }}>
+                              <EmailIcon sx={{ fontSize: 11, color: '#94A3B8' }} />
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{
+                                  fontSize: '0.66rem',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  maxWidth: 110,
+                                }}
+                              >
+                                {member.email}
+                              </Typography>
+                            </Box>
+                          </Tooltip>
+                        </Box>
+
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, flexShrink: 0 }}>
+                          <CalendarTodayIcon sx={{ fontSize: 10, color: '#94A3B8' }} />
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.64rem' }}>
+                            {member.joinedDate || 'Active'}
+                          </Typography>
+                        </Box>
                       </Box>
                     </Paper>
 
@@ -369,18 +692,24 @@ export const UnilevelTree = ({ members }) => {
                         onClick={() => toggleNode(member.id)}
                         sx={{
                           position: 'absolute',
-                          bottom: -13,
-                          left: 147,
-                          bgcolor: 'background.paper',
-                          border: '1px solid #CBD5E1',
-                          width: 26,
-                          height: 26,
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                          bottom: -14,
+                          left: layoutData.cardWidth / 2 - 14,
+                          bgcolor: '#FFFFFF',
+                          border: '1.5px solid #059669',
+                          color: '#059669',
+                          width: 28,
+                          height: 28,
+                          boxShadow: '0 3px 6px rgba(0,0,0,0.1)',
                           zIndex: 5,
-                          '&:hover': { bgcolor: '#F8FAFC' }
+                          '&:hover': { bgcolor: '#ECFDF5', transform: 'scale(1.1)' },
+                          transition: 'all 0.2s',
                         }}
                       >
-                        {node.isExpanded ? <KeyboardArrowDownIcon sx={{ fontSize: 16 }} /> : <KeyboardArrowRightIcon sx={{ fontSize: 16 }} />}
+                        {node.isExpanded ? (
+                          <KeyboardArrowDownIcon sx={{ fontSize: 18 }} />
+                        ) : (
+                          <KeyboardArrowRightIcon sx={{ fontSize: 18 }} />
+                        )}
                       </IconButton>
                     )}
                   </Box>
@@ -391,24 +720,43 @@ export const UnilevelTree = ({ members }) => {
         </Box>
       )}
 
-      {/* Security Blockade Enforced Alert Dialog */}
-      <Dialog open={blockadeAlert.open} onClose={() => setBlockadeAlert({ open: false, targetId: '', reason: '' })} fullWidth maxWidth="xs">
-        <DialogTitle sx={{ bgcolor: '#FEF2F2', borderBottom: '1px solid #FCA5A5', color: '#991B1B', display: 'flex', alignItems: 'center', gap: 1.5, py: 2 }}>
+      {/* Security Blockade Alert Dialog */}
+      <Dialog
+        open={blockadeAlert.open}
+        onClose={() => setBlockadeAlert({ open: false, targetId: '', reason: '' })}
+        fullWidth
+        maxWidth="xs"
+        PaperProps={{ sx: { borderRadius: 3, p: 1 } }}
+      >
+        <DialogTitle
+          sx={{
+            bgcolor: '#FEF2F2',
+            borderBottom: '1px solid #FCA5A5',
+            color: '#991B1B',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            py: 2,
+          }}
+        >
           <BlockIcon sx={{ fontSize: 26, color: '#DC2626' }} />
           <Typography variant="subtitle1" fontWeight={800}>
-            Access Denied: Tree Blockade
+            Access Blockade Enforced
           </Typography>
         </DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
           <Alert severity="error" icon={<SecurityIcon />} sx={{ mb: 2, borderRadius: 2 }}>
-            <strong>Upline & Cross-Branch Isolation Enforced</strong>
+            <strong>Network Isolation Policy Active</strong>
           </Alert>
           <Typography variant="body2" color="text.secondary" paragraph>
             {blockadeAlert.reason}
           </Typography>
-          <Paper variant="outlined" sx={{ p: 1.5, bgcolor: '#FAF9F6', borderRadius: 2, border: '1px dashed #CBD5E1' }}>
+          <Paper
+            variant="outlined"
+            sx={{ p: 1.5, bgcolor: '#FAF9F6', borderRadius: 2, border: '1px dashed #CBD5E1' }}
+          >
             <Typography variant="caption" color="text.secondary" display="block">
-              Network Security Rule:
+              Security Policy:
             </Typography>
             <Typography variant="caption" fontWeight={700} color="error.main">
               Members can only view downlines originating from their own branch. Upline sponsors and collateral branches are strictly blockaded.
@@ -416,17 +764,19 @@ export const UnilevelTree = ({ members }) => {
           </Paper>
         </DialogContent>
         <DialogActions sx={{ p: 2, borderTop: '1px solid #E2E8F0' }}>
-          <Button 
-            onClick={() => setBlockadeAlert({ open: false, targetId: '', reason: '' })} 
-            variant="contained" 
-            color="error" 
+          <Button
+            onClick={() => setBlockadeAlert({ open: false, targetId: '', reason: '' })}
+            variant="contained"
+            color="error"
             fullWidth
             sx={{ fontWeight: 700 }}
           >
-            Acknowledge Security Policy
+            Acknowledge Policy
           </Button>
         </DialogActions>
       </Dialog>
     </Paper>
   );
 };
+
+export default UnilevelTree;

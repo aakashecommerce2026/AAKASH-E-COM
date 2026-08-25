@@ -207,6 +207,7 @@ const MemberManagement = () => {
             const mapped = list.map((m) => ({
               id: m.id,
               name: m.name,
+              username: m.username || m.user_name || null,
               email: m.email || '',
               mobile: m.mobile || '',
               role: m.role === 'ADMIN' ? 'Admin' : 'Associate',

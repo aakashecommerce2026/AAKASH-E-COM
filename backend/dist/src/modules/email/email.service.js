@@ -27,12 +27,14 @@ let EmailService = EmailService_1 = class EmailService {
         const pass = rawPass.replace(/\s+/g, '');
         const service = this.configService.get('SMTP_SERVICE');
         const secure = this.configService.get('SMTP_SECURE') === 'true';
-        const fromName = this.configService.get('EMAIL_FROM_NAME') ||
+        const rawFromName = this.configService.get('EMAIL_FROM_NAME') ||
             'AAKASH E-COM Notifications';
-        const fromEmail = this.configService.get('EMAIL_FROM_ADDRESS') ||
+        const rawFromEmail = this.configService.get('EMAIL_FROM_ADDRESS') ||
             user ||
             'noreply@aakashecom.com';
-        this.fromAddress = `"${fromName}" <${fromEmail}>`;
+        const cleanFromName = rawFromName.replace(/^["']|["']$/g, '');
+        const cleanFromEmail = rawFromEmail.replace(/^["']|["']$/g, '');
+        this.fromAddress = `"${cleanFromName}" <${cleanFromEmail}>`;
         if ((host || service) && user && pass) {
             try {
                 const nodemailer = require('nodemailer');
@@ -109,7 +111,8 @@ ${text || html}
     }
     async sendOtpEmail(email, otp, purpose) {
         const formattedPurpose = purpose.replace(/_/g, ' ').toLowerCase();
-        const subject = `Your Verification OTP Code: ${otp} - AAKASH E-COM`;
+        const subject = `AAKASH E-COM - Account Verification Code`;
+        const text = `AAKASH E-COM\nAccount Verification Code\n\nYour 6-digit OTP verification code for ${formattedPurpose} is: ${otp}\n\nThis code will expire in 10 minutes. Do not share this code with anyone.\n\n© ${new Date().getFullYear()} AAKASH E-COM. All rights reserved.`;
         const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #ffffff;">
         <div style="text-align: center; padding-bottom: 20px; border-bottom: 2px solid #064e3b;">
@@ -138,7 +141,7 @@ ${text || html}
         </div>
       </div>
     `;
-        return this.sendMail({ to: email, subject, html });
+        return this.sendMail({ to: email, subject, html, text });
     }
     async sendWelcomeEmail(email, name, memberCode) {
         const subject = `Welcome to AAKASH E-COM, ${name}! Your Member Code is ${memberCode}`;

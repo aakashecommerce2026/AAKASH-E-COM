@@ -57,16 +57,32 @@ export const authApi = {
 
 // OTP API Endpoints
 export const otpApi = {
-  sendRegistrationOtp: (email) => apiClient.post('/otp/send-registration-otp', { email }),
-  verifyRegistrationOtp: (email, code) => apiClient.post('/otp/verify-registration-otp', { email, code }),
-  sendPasswordResetOtp: (email) => apiClient.post('/otp/send-password-reset-otp', { email }),
-  verifyPasswordResetOtp: (email, code) => apiClient.post('/otp/verify-password-reset-otp', { email, code }),
+  sendOtp: (data) =>
+    apiClient.post('/otp/send', typeof data === 'string' ? { email: data, purpose: 'EMAIL_VERIFICATION' } : data),
+  verifyOtp: (data, code, purpose) =>
+    apiClient.post(
+      '/otp/verify',
+      typeof data === 'string'
+        ? { email: data, otp: code, purpose: purpose || 'EMAIL_VERIFICATION' }
+        : data,
+    ),
+  sendRegistrationOtp: (email) => apiClient.post('/otp/send', { email, purpose: 'EMAIL_VERIFICATION' }),
+  verifyRegistrationOtp: (email, code) =>
+    apiClient.post('/otp/verify', { email, otp: code, purpose: 'EMAIL_VERIFICATION' }),
+  sendPasswordResetOtp: (email) => apiClient.post('/otp/send', { email, purpose: 'PASSWORD_RESET' }),
+  verifyPasswordResetOtp: (email, code) =>
+    apiClient.post('/otp/verify', { email, otp: code, purpose: 'PASSWORD_RESET' }),
 };
 
 // Members API Endpoints
 export const membersApi = {
-  getAll: (params) =>
-    apiClient.get('/admin/members', { params }).catch(() => apiClient.get('/members', { params })),
+  getAll: (params) => {
+    const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
+    if (token) {
+      return apiClient.get('/admin/members', { params }).catch(() => apiClient.get('/members', { params }));
+    }
+    return apiClient.get('/members', { params });
+  },
   getById: (id) => apiClient.get(`/members/${id}`),
   create: (data) => apiClient.post('/members', data),
   createByAdmin: (data) => apiClient.post('/admin/members', data),

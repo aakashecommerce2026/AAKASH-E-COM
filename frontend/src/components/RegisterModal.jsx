@@ -179,7 +179,8 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '' }) => {
 
   // Dispatch OTP to Email
   const handleSendOtp = async () => {
-    if (!email || !email.includes('@')) {
+    const cleanEmail = (email || '').trim();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
       setOtpError('Please enter a valid email address first.');
       return;
     }
@@ -187,7 +188,7 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '' }) => {
     setSendingOtp(true);
     setOtpError('');
     try {
-      await otpApi.sendOtp({ email, purpose: 'EMAIL_VERIFICATION' });
+      await otpApi.sendOtp({ email: cleanEmail, purpose: 'EMAIL_VERIFICATION' });
       setOtpSent(true);
       setCooldown(60);
       setActiveStep(1);
@@ -224,7 +225,7 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '' }) => {
         name,
         ...(username ? { username: username.trim() } : {}),
         mobile,
-        email,
+        email: email.trim(),
         address: address.trim(),
         password,
         referrerId: sponsorDetails.id,
@@ -256,7 +257,7 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '' }) => {
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth paperProps={{ sx: { borderRadius: 3.5, p: 1 } }}>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3.5, p: 1 } }}>
       {/* Dialog Header */}
       <DialogTitle sx={{ fontWeight: 800, color: 'primary.dark', pb: 1 }}>
         🚀 Join AAKASH E-COM Network

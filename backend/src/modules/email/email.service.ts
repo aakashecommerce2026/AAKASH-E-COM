@@ -25,15 +25,18 @@ export class EmailService {
     const pass = rawPass.replace(/\s+/g, '');
     const service = this.configService.get<string>('SMTP_SERVICE'); // e.g. 'gmail'
     const secure = this.configService.get<string>('SMTP_SECURE') === 'true';
-    const fromName =
+    const rawFromName =
       this.configService.get<string>('EMAIL_FROM_NAME') ||
       'AAKASH E-COM Notifications';
-    const fromEmail =
+    const rawFromEmail =
       this.configService.get<string>('EMAIL_FROM_ADDRESS') ||
       user ||
       'noreply@aakashecom.com';
 
-    this.fromAddress = `"${fromName}" <${fromEmail}>`;
+    const cleanFromName = rawFromName.replace(/^["']|["']$/g, '');
+    const cleanFromEmail = rawFromEmail.replace(/^["']|["']$/g, '');
+
+    this.fromAddress = `"${cleanFromName}" <${cleanFromEmail}>`;
 
     if ((host || service) && user && pass) {
       try {
@@ -135,7 +138,9 @@ ${text || html}
     purpose: string,
   ): Promise<boolean> {
     const formattedPurpose = purpose.replace(/_/g, ' ').toLowerCase();
-    const subject = `Your Verification OTP Code: ${otp} - AAKASH E-COM`;
+    const subject = `AAKASH E-COM - Account Verification Code`;
+
+    const text = `AAKASH E-COM\nAccount Verification Code\n\nYour 6-digit OTP verification code for ${formattedPurpose} is: ${otp}\n\nThis code will expire in 10 minutes. Do not share this code with anyone.\n\n© ${new Date().getFullYear()} AAKASH E-COM. All rights reserved.`;
 
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #ffffff;">
@@ -166,7 +171,7 @@ ${text || html}
       </div>
     `;
 
-    return this.sendMail({ to: email, subject, html });
+    return this.sendMail({ to: email, subject, html, text });
   }
 
   /**
