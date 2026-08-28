@@ -18,6 +18,7 @@ export declare class MembersService {
     private readonly emailService?;
     private readonly otpService?;
     private readonly promotionsService?;
+    private readonly logger;
     private readonly BCRYPT_SALT_ROUNDS;
     constructor(prisma: PrismaService, auditService: AuditService, membershipCommissionService: MembershipCommissionService, emailService?: EmailService | undefined, otpService?: OtpService | undefined, promotionsService?: PromotionsService | undefined);
     generateMemberCode(): Promise<string>;
@@ -36,18 +37,18 @@ export declare class MembersService {
         referrer: {
             id: string;
             memberCode: string;
-            name: string;
             mobile: string;
             email: string | null;
+            name: string;
             status: import("@prisma/client").$Enums.MemberStatus;
             role: import("@prisma/client").$Enums.MemberRole;
         } | null;
         id: string;
         memberCode: string;
         username: string | null;
-        name: string;
         mobile: string;
         email: string | null;
+        name: string;
         address: string | null;
         profilePhoto: string | null;
         referrerId: string | null;
@@ -57,6 +58,8 @@ export declare class MembersService {
         status: import("@prisma/client").$Enums.MemberStatus;
         role: import("@prisma/client").$Enums.MemberRole;
         rank: import("@prisma/client").$Enums.MemberRank;
+        isCommissionFrozen: boolean;
+        commissionFreezeReason: string | null;
         createdAt: Date;
         updatedAt: Date;
     }>;
@@ -76,9 +79,9 @@ export declare class MembersService {
         referrer: {
             id: string;
             memberCode: string;
-            name: string;
             mobile: string;
             email: string | null;
+            name: string;
             joiningDate: Date;
             status: import("@prisma/client").$Enums.MemberStatus;
             role: import("@prisma/client").$Enums.MemberRole;
@@ -93,13 +96,27 @@ export declare class MembersService {
         directReferrals: {
             id: string;
             memberCode: string;
-            name: string;
             mobile: string;
             email: string | null;
+            name: string;
             joiningDate: Date;
             status: import("@prisma/client").$Enums.MemberStatus;
             role: import("@prisma/client").$Enums.MemberRole;
         }[];
+    }>;
+    calculateProfileCompletion(member: any): {
+        completionPercentage: number;
+        isProfileComplete: boolean;
+        missingFields: string[];
+    };
+    toggleCommissionFreeze(id: string, dto: {
+        isFrozen: boolean;
+        reason?: string;
+    }, actorId?: string, actorRole?: MemberRole): Promise<MemberResponseDto>;
+    deleteMember(id: string, actorId?: string, actorRole?: MemberRole): Promise<{
+        message: string;
+        deletedMemberId: string;
+        reattachedDownlinesCount: number;
     }>;
     private mapToResponseDto;
 }

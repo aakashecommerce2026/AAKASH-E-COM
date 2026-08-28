@@ -116,6 +116,12 @@ let MemberProfileService = class MemberProfileService {
                 }
             }
         }
+        const existingBank = member.bankDetails || {};
+        const mergedBankDetails = bankDetails
+            ? { ...existingBank, ...bankDetails, ...(upiId !== undefined ? { upiId } : {}) }
+            : upiId !== undefined
+                ? { ...existingBank, upiId }
+                : undefined;
         const updatedMember = await this.prisma.member.update({
             where: { id: memberId },
             data: {
@@ -126,11 +132,9 @@ let MemberProfileService = class MemberProfileService {
                 ...(address !== undefined ? { address } : {}),
                 ...(profilePhoto !== undefined ? { profilePhoto } : {}),
                 ...(upiId !== undefined ? { upiId } : {}),
-                ...(bankDetails !== undefined
+                ...(mergedBankDetails !== undefined
                     ? {
-                        bankDetails: bankDetails
-                            ? JSON.parse(JSON.stringify(bankDetails))
-                            : null,
+                        bankDetails: JSON.parse(JSON.stringify(mergedBankDetails)),
                     }
                     : {}),
             },

@@ -20,16 +20,19 @@ const prisma_service_1 = require("../../prisma/prisma.service");
 const audit_service_1 = require("../audit/audit.service");
 const notifications_service_1 = require("../notifications/notifications.service");
 const client_1 = require("@prisma/client");
+const system_settings_service_1 = require("../system-settings/system-settings.service");
 let DistributionService = DistributionService_1 = class DistributionService {
     prisma;
     auditService;
     notificationsService;
+    systemSettingsService;
     distributionQueue;
     logger = new common_1.Logger(DistributionService_1.name);
-    constructor(prisma, auditService, notificationsService, distributionQueue) {
+    constructor(prisma, auditService, notificationsService, systemSettingsService, distributionQueue) {
         this.prisma = prisma;
         this.auditService = auditService;
         this.notificationsService = notificationsService;
+        this.systemSettingsService = systemSettingsService;
         this.distributionQueue = distributionQueue;
     }
     buildDateWhere(startDate, endDate) {
@@ -80,12 +83,18 @@ let DistributionService = DistributionService_1 = class DistributionService {
         const memWhere = {
             status: client_1.CommissionStatus.PENDING,
             distributionRecordId: null,
+            beneficiaryMember: {
+                isCommissionFrozen: false,
+            },
             ...(dateFilter ? { createdAt: dateFilter } : {}),
             ...(memberId ? { beneficiaryMemberId: memberId } : {}),
         };
         const repWhere = {
             status: client_1.CommissionStatus.PENDING,
             distributionRecordId: null,
+            beneficiaryMember: {
+                isCommissionFrozen: false,
+            },
             ...(dateFilter ? { createdAt: dateFilter } : {}),
             ...(memberId ? { beneficiaryMemberId: memberId } : {}),
         };
@@ -170,10 +179,13 @@ let DistributionService = DistributionService_1 = class DistributionService {
         }
         const allBeneficiaryEntries = Array.from(memberMap.values());
         const totalMembers = allBeneficiaryEntries.length;
+        const isTdsEnabled = this.systemSettingsService
+            ? await this.systemSettingsService.isTdsEnabled()
+            : true;
         const formattedData = allBeneficiaryEntries.map((item) => {
             const grossAmount = Math.round((item.membershipGrossAmount + item.repurchaseGrossAmount) * 100) / 100;
-            const tdsAmount = Math.round(grossAmount * 0.05 * 100) / 100;
-            const adminFee = Math.round(grossAmount * 0.05 * 100) / 100;
+            const tdsAmount = isTdsEnabled ? Math.round(grossAmount * 0.05 * 100) / 100 : 0;
+            const adminFee = isTdsEnabled ? Math.round(grossAmount * 0.05 * 100) / 100 : 0;
             const netAmount = Math.round((grossAmount - tdsAmount - adminFee) * 100) / 100;
             return {
                 member: item.member,
@@ -349,10 +361,13 @@ let DistributionService = DistributionService_1 = class DistributionService {
             let batchTotalAdminFee = 0;
             let batchTotalNet = 0;
             const notificationParamsList = [];
+            const isTdsEnabled = this.systemSettingsService
+                ? await this.systemSettingsService.isTdsEnabled()
+                : true;
             for (const [bId, group] of memberGroupMap.entries()) {
                 const grossAmount = Math.round(group.grossAmount * 100) / 100;
-                const tdsAmount = Math.round(grossAmount * 0.05 * 100) / 100;
-                const adminFee = Math.round(grossAmount * 0.05 * 100) / 100;
+                const tdsAmount = isTdsEnabled ? Math.round(grossAmount * 0.05 * 100) / 100 : 0;
+                const adminFee = isTdsEnabled ? Math.round(grossAmount * 0.05 * 100) / 100 : 0;
                 const netAmount = Math.round((grossAmount - tdsAmount - adminFee) * 100) / 100;
                 batchTotalGross += grossAmount;
                 batchTotalTds += tdsAmount;
@@ -644,9 +659,11 @@ exports.DistributionService = DistributionService;
 exports.DistributionService = DistributionService = DistributionService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(3, (0, common_1.Optional)()),
-    __param(3, (0, bull_1.InjectQueue)('distribution-queue')),
+    __param(4, (0, common_1.Optional)()),
+    __param(4, (0, bull_1.InjectQueue)('distribution-queue')),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         audit_service_1.AuditService,
-        notifications_service_1.NotificationsService, Object])
+        notifications_service_1.NotificationsService,
+        system_settings_service_1.SystemSettingsService, Object])
 ], DistributionService);
 //# sourceMappingURL=distribution.service.js.map

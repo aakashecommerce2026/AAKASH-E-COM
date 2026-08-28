@@ -30,13 +30,19 @@ function* updateProfileWorker(action) {
       ...action.payload,
       id: response.id || action.payload.id,
       name: response.name || action.payload.name,
-      username: response.username || action.payload.username,
+      username: response.username !== undefined ? response.username : action.payload.username,
       email: response.email || action.payload.email,
       mobile: response.mobile || action.payload.mobile,
-      role: response.role === 'ADMIN' ? 'Admin' : (action.payload.role || 'Member'),
+      address: response.address !== undefined ? response.address : action.payload.address,
+      profilePhoto: response.profilePhoto !== undefined ? response.profilePhoto : action.payload.profilePhoto,
+      role: response.role === 'ADMIN' || response.role === 'SUB_ADMIN' ? 'Admin' : (action.payload.role || 'Member'),
+      memberRole: response.role || action.payload.memberRole,
       referralCode: response.memberCode || action.payload.referralCode,
       status: response.status || action.payload.status,
-      bankDetails: apiPayload.bankDetails,
+      upiId: response.upiId || response.bankDetails?.upiId || apiPayload.upiId || action.payload.upiId || '',
+      secondaryUpiId: response.bankDetails?.secondaryUpiId || apiPayload.bankDetails?.secondaryUpiId || action.payload.secondaryUpiId || '',
+      upiProvider: response.bankDetails?.upiProvider || apiPayload.bankDetails?.upiProvider || action.payload.upiProvider || 'Google Pay',
+      bankDetails: response.bankDetails || apiPayload.bankDetails,
     };
 
     // Save to localStorage session

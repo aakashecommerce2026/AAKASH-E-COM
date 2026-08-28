@@ -45,6 +45,21 @@ export const updateMemberFailure = (error) => ({
   payload: error,
 });
 
+export const deleteMemberRequest = (id) => ({
+  type: types.DELETE_MEMBER_REQUEST,
+  payload: id,
+});
+
+export const deleteMemberSuccess = (id) => ({
+  type: types.DELETE_MEMBER_SUCCESS,
+  payload: id,
+});
+
+export const deleteMemberFailure = (error) => ({
+  type: types.DELETE_MEMBER_FAILURE,
+  payload: error,
+});
+
 // Commission Actions & Filters
 export const fetchCommissionsRequest = () => ({
   type: types.FETCH_COMMISSIONS_REQUEST,
@@ -98,9 +113,82 @@ export const clearCommissionEngineLogs = () => ({
   type: types.CLEAR_COMMISSION_ENGINE_LOGS,
 });
 
+export const fetchCommissionConfigsRequest = () => ({
+  type: types.FETCH_COMMISSION_CONFIGS_REQUEST,
+});
+
+export const fetchCommissionConfigsSuccess = (payload) => ({
+  type: types.FETCH_COMMISSION_CONFIGS_SUCCESS,
+  payload,
+});
+
+export const fetchCommissionConfigsFailure = (error) => ({
+  type: types.FETCH_COMMISSION_CONFIGS_FAILURE,
+  payload: error,
+});
+
+export const saveMembershipConfigRequest = (payload) => ({
+  type: types.SAVE_MEMBERSHIP_CONFIG_REQUEST,
+  payload,
+});
+
+export const saveMembershipConfigSuccess = (payload) => ({
+  type: types.SAVE_MEMBERSHIP_CONFIG_SUCCESS,
+  payload,
+});
+
+export const saveMembershipConfigFailure = (error) => ({
+  type: types.SAVE_MEMBERSHIP_CONFIG_FAILURE,
+  payload: error,
+});
+
+export const saveRepurchaseConfigRequest = (payload) => ({
+  type: types.SAVE_REPURCHASE_CONFIG_REQUEST,
+  payload,
+});
+
+export const saveRepurchaseConfigSuccess = (payload) => ({
+  type: types.SAVE_REPURCHASE_CONFIG_SUCCESS,
+  payload,
+});
+
+export const saveRepurchaseConfigFailure = (error) => ({
+  type: types.SAVE_REPURCHASE_CONFIG_FAILURE,
+  payload: error,
+});
+
 export const toggleCommissionDeductions = (enableDeductions) => ({
   type: types.TOGGLE_COMMISSION_DEDUCTIONS,
   payload: enableDeductions,
+});
+
+export const fetchTdsStatusRequest = () => ({
+  type: types.FETCH_TDS_STATUS_REQUEST,
+});
+
+export const fetchTdsStatusSuccess = (enabled) => ({
+  type: types.FETCH_TDS_STATUS_SUCCESS,
+  payload: enabled,
+});
+
+export const fetchTdsStatusFailure = (error) => ({
+  type: types.FETCH_TDS_STATUS_FAILURE,
+  payload: error,
+});
+
+export const saveTdsStatusRequest = (enabled) => ({
+  type: types.SAVE_TDS_STATUS_REQUEST,
+  payload: enabled,
+});
+
+export const saveTdsStatusSuccess = (enabled) => ({
+  type: types.SAVE_TDS_STATUS_SUCCESS,
+  payload: enabled,
+});
+
+export const saveTdsStatusFailure = (error) => ({
+  type: types.SAVE_TDS_STATUS_FAILURE,
+  payload: error,
 });
 
 // Repurchase Commission Engine Action Creators

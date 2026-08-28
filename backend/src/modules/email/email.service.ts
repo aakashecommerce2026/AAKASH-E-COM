@@ -401,4 +401,42 @@ ${text || html}
 
     return this.sendMail({ to: email, subject, html });
   }
+
+  /**
+   * Sends Account Deletion notification email to member
+   */
+  async sendAccountDeletionEmail(
+    email: string,
+    name: string,
+    memberCode: string,
+  ): Promise<boolean> {
+    const subject = `Account Termination Notice - AAKASH E-COM (${memberCode})`;
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #ffffff;">
+        <div style="background-color: #991b1b; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h2 style="margin: 0;">Account Termination Notice</h2>
+        </div>
+        <div style="padding: 25px;">
+          <p style="font-size: 16px; color: #333333;">Dear <strong>${name}</strong> (${memberCode}),</p>
+          <p style="color: #555555; line-height: 1.5;">
+            This email is to notify you that your AAKASH E-COM member account (Member Code: <strong>${memberCode}</strong>) has been deleted by system administration.
+          </p>
+          <p style="color: #555555; line-height: 1.5;">
+            Your active referral downline network has been safely migrated to the Super Admin network root to maintain system continuity.
+          </p>
+          <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 12px; margin: 20px 0; border-radius: 4px;">
+            <p style="margin: 0; color: #991b1b; font-size: 13px;">
+              If you believe this account deletion was performed in error, please contact customer support immediately.
+            </p>
+          </div>
+        </div>
+        <div style="border-top: 1px solid #eeeeee; padding: 15px; text-align: center; color: #999999; font-size: 12px;">
+          &copy; ${new Date().getFullYear()} AAKASH E-COM. All rights reserved.
+        </div>
+      </div>
+    `;
+
+    return this.sendMail({ to: email, subject, html });
+  }
 }

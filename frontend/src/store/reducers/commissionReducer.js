@@ -102,6 +102,29 @@ const commissionReducer = (state = initialState, action) => {
       };
 
     // Configurable Membership & Repurchase Rules Handlers
+    case types.FETCH_COMMISSION_CONFIGS_SUCCESS: {
+      const { membershipRules, repurchaseRules, version } = action.payload;
+      return {
+        ...state,
+        ...(membershipRules ? { strategyRules: membershipRules } : {}),
+        ...(repurchaseRules ? { repurchaseStrategyRules: repurchaseRules } : {}),
+        ...(version ? { currentMembershipVersion: version } : {}),
+      };
+    }
+    case types.SAVE_MEMBERSHIP_CONFIG_SUCCESS: {
+      const { rules, version } = action.payload;
+      return {
+        ...state,
+        strategyRules: rules,
+        currentMembershipVersion: version || state.currentMembershipVersion,
+      };
+    }
+    case types.SAVE_REPURCHASE_CONFIG_SUCCESS: {
+      return {
+        ...state,
+        repurchaseStrategyRules: action.payload,
+      };
+    }
     case types.UPDATE_COMMISSION_STRATEGY_RULES:
       return {
         ...state,
@@ -133,6 +156,15 @@ const commissionReducer = (state = initialState, action) => {
         ...state,
         repurchaseEngineLogs: [],
       };
+
+    case types.FETCH_TDS_STATUS_SUCCESS:
+    case types.SAVE_TDS_STATUS_SUCCESS: {
+      const isEnabled = Boolean(action.payload);
+      return {
+        ...state,
+        enableDeductions: isEnabled,
+      };
+    }
 
     case types.TOGGLE_COMMISSION_DEDUCTIONS: {
       const isEnabled = Boolean(action.payload);

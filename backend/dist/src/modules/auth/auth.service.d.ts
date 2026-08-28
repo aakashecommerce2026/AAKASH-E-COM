@@ -23,12 +23,14 @@ export declare class AuthService {
     hashPassword(password: string): Promise<string>;
     comparePassword(raw: string, hash: string): Promise<boolean>;
     validateAdminUser(identifier: string, password: string): Promise<{
+        email: string | null;
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
         memberCode: string;
         username: string | null;
-        name: string;
         mobile: string;
-        email: string | null;
         address: string | null;
         profilePhoto: string | null;
         referrerId: string | null;
@@ -39,16 +41,18 @@ export declare class AuthService {
         passwordHash: string;
         role: import("@prisma/client").$Enums.MemberRole;
         rank: import("@prisma/client").$Enums.MemberRank;
-        createdAt: Date;
-        updatedAt: Date;
+        isCommissionFrozen: boolean;
+        commissionFreezeReason: string | null;
     }>;
     validateMemberUser(identifier: string, password: string): Promise<{
+        email: string | null;
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
         memberCode: string;
         username: string | null;
-        name: string;
         mobile: string;
-        email: string | null;
         address: string | null;
         profilePhoto: string | null;
         referrerId: string | null;
@@ -59,16 +63,18 @@ export declare class AuthService {
         passwordHash: string;
         role: import("@prisma/client").$Enums.MemberRole;
         rank: import("@prisma/client").$Enums.MemberRank;
-        createdAt: Date;
-        updatedAt: Date;
+        isCommissionFrozen: boolean;
+        commissionFreezeReason: string | null;
     }>;
     validateUser(identifier: string, password: string, portalType?: string): Promise<{
+        email: string | null;
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
         memberCode: string;
         username: string | null;
-        name: string;
         mobile: string;
-        email: string | null;
         address: string | null;
         profilePhoto: string | null;
         referrerId: string | null;
@@ -79,8 +85,8 @@ export declare class AuthService {
         passwordHash: string;
         role: import("@prisma/client").$Enums.MemberRole;
         rank: import("@prisma/client").$Enums.MemberRank;
-        createdAt: Date;
-        updatedAt: Date;
+        isCommissionFrozen: boolean;
+        commissionFreezeReason: string | null;
     }>;
     login(loginDto: LoginDto): Promise<AuthResponseDto>;
     refreshToken(refreshTokenDto: RefreshTokenDto): Promise<AuthResponseDto>;

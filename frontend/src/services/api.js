@@ -96,6 +96,9 @@ export const membersApi = {
         'Content-Type': undefined,
       },
     }),
+  toggleCommissionFreeze: (id, data) =>
+    apiClient.patch(`/admin/members/${id}/commission-freeze`, data),
+  deleteMember: (id) => apiClient.delete(`/admin/members/${id}`),
 };
 
 // Promotions API Endpoints
@@ -107,7 +110,20 @@ export const promotionsApi = {
 
 // Repurchase API Endpoints
 export const repurchaseApi = {
-  getAll: (params) => apiClient.get('/admin/repurchase', { params }),
+  getAll: (params) => {
+    const storedAuth = localStorage.getItem('auth');
+    if (storedAuth) {
+      try {
+        const parsed = JSON.parse(storedAuth);
+        const role = parsed?.user?.memberRole || parsed?.user?.role;
+        if (role === 'Member' || role === 'MEMBER') {
+          return apiClient.get('/member/repurchase', { params });
+        }
+      } catch (e) {}
+    }
+    return apiClient.get('/admin/repurchase', { params });
+  },
+  getMyRepurchases: (params) => apiClient.get('/member/repurchase', { params }),
   getById: (id) => apiClient.get(`/admin/repurchase/${id}`),
   create: (data) => apiClient.post('/admin/repurchase', data),
   update: (id, data) => apiClient.put(`/admin/repurchase/${id}`, data),
@@ -147,10 +163,12 @@ export const auditApi = {
 export const commissionApi = {
   getMembershipLedger: (params) => apiClient.get('/membership-commissions/ledger', { params }),
   getMembershipConfig: (params) => apiClient.get('/membership-commissions/config', { params }),
+  saveMembershipConfig: (data) => apiClient.post('/membership-commissions/config', data),
   triggerMembershipCommission: (memberId, params) =>
     apiClient.post(`/membership-commissions/trigger/${memberId}`, null, { params }),
   getRepurchaseLedger: (params) => apiClient.get('/repurchase-commissions/ledger', { params }),
   getRepurchaseConfig: (params) => apiClient.get('/repurchase-commissions/config', { params }),
+  saveRepurchaseConfig: (data) => apiClient.post('/repurchase-commissions/config', data),
   triggerRepurchaseCommission: (entryId) =>
     apiClient.post(`/repurchase-commissions/trigger/${entryId}`),
 };
@@ -172,5 +190,11 @@ export const dashboardApi = {
   getBusinessStats: (params) => apiClient.get('/admin/dashboard/business', { params }),
   getActivityFeed: (params) => apiClient.get('/admin/dashboard/activity', { params }),
   getMemberDashboard: () => apiClient.get('/member/dashboard'),
+};
+
+// System Settings API Endpoints
+export const settingsApi = {
+  getTdsStatus: () => apiClient.get('/system-settings/tds'),
+  updateTdsStatus: (data) => apiClient.patch('/system-settings/tds', data),
 };
 

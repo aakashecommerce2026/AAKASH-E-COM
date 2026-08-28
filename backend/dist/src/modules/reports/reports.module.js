@@ -16,6 +16,9 @@ const admin_reports_service_1 = require("./admin-reports.service");
 const pdf_export_service_1 = require("./pdf-export.service");
 const excel_export_service_1 = require("./excel-export.service");
 const report_export_processor_1 = require("./report-export.processor");
+const report_pdf_export_service_1 = require("./export/report-pdf-export.service");
+const report_excel_export_service_1 = require("./export/report-excel-export.service");
+const report_export_queue_processor_1 = require("./export/report-export-queue.processor");
 const admin_earnings_membership_controller_1 = require("./admin-earnings-membership.controller");
 const member_earnings_membership_controller_1 = require("./member-earnings-membership.controller");
 const admin_earnings_repurchase_controller_1 = require("./admin-earnings-repurchase.controller");
@@ -23,6 +26,7 @@ const member_earnings_repurchase_controller_1 = require("./member-earnings-repur
 const member_earnings_total_controller_1 = require("./member-earnings-total.controller");
 const member_activity_controller_1 = require("./member-activity.controller");
 const admin_reports_controller_1 = require("./admin-reports.controller");
+const admin_reports_export_controller_1 = require("./admin-reports-export.controller");
 let ReportsModule = class ReportsModule {
 };
 exports.ReportsModule = ReportsModule;
@@ -30,9 +34,7 @@ exports.ReportsModule = ReportsModule = __decorate([
     (0, common_1.Module)({
         imports: [
             prisma_module_1.PrismaModule,
-            bull_1.BullModule.registerQueue({
-                name: 'report-export-queue',
-            }),
+            bull_1.BullModule.registerQueue({ name: 'reports-export' }, { name: 'report-export-queue' }),
         ],
         controllers: [
             admin_earnings_membership_controller_1.AdminEarningsMembershipController,
@@ -42,6 +44,7 @@ exports.ReportsModule = ReportsModule = __decorate([
             member_earnings_total_controller_1.MemberEarningsTotalController,
             member_activity_controller_1.MemberActivityController,
             admin_reports_controller_1.AdminReportsController,
+            admin_reports_export_controller_1.AdminReportsExportController,
         ],
         providers: [
             reports_service_1.ReportsService,
@@ -50,6 +53,9 @@ exports.ReportsModule = ReportsModule = __decorate([
             pdf_export_service_1.PdfExportService,
             excel_export_service_1.ExcelExportService,
             report_export_processor_1.ReportExportProcessor,
+            report_pdf_export_service_1.ReportPdfExportService,
+            report_excel_export_service_1.ReportExcelExportService,
+            report_export_queue_processor_1.ReportExportProcessor,
         ],
         exports: [
             reports_service_1.ReportsService,
@@ -57,6 +63,8 @@ exports.ReportsModule = ReportsModule = __decorate([
             admin_reports_service_1.AdminReportsService,
             pdf_export_service_1.PdfExportService,
             excel_export_service_1.ExcelExportService,
+            report_pdf_export_service_1.ReportPdfExportService,
+            report_excel_export_service_1.ReportExcelExportService,
         ],
     })
 ], ReportsModule);

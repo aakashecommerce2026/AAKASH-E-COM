@@ -3,10 +3,12 @@ import {
   ConflictException,
   NotFoundException,
   BadRequestException,
+  Optional,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { RepurchaseCommissionService } from '../repurchase-commission/repurchase-commission.service';
+import { DashboardCacheService } from '../dashboard/dashboard-cache.service';
 import { CreateRepurchaseEntryDto } from './dto/create-repurchase-entry.dto';
 import { UpdateRepurchaseEntryDto } from './dto/update-repurchase-entry.dto';
 import { QueryRepurchaseEntryDto } from './dto/query-repurchase-entry.dto';
@@ -18,6 +20,7 @@ export class RepurchaseService {
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
     private readonly repurchaseCommissionService: RepurchaseCommissionService,
+    @Optional() private readonly dashboardCacheService?: DashboardCacheService,
   ) {}
 
   /**
@@ -140,6 +143,7 @@ export class RepurchaseService {
         },
       });
 
+      await this.dashboardCacheService?.invalidateRepurchaseCache();
       return this.mapToResponseDto(entry);
     });
   }

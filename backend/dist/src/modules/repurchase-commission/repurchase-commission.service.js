@@ -175,6 +175,7 @@ let RepurchaseCommissionService = RepurchaseCommissionService_1 = class Repurcha
               m.member_code AS "memberCode",
               m.referrer_id AS "referrerId",
               m.status AS status,
+              m.is_commission_frozen AS "isCommissionFrozen",
               1 AS level
             FROM members target_m
             INNER JOIN members m ON target_m.referrer_id = m.id
@@ -187,12 +188,13 @@ let RepurchaseCommissionService = RepurchaseCommissionService_1 = class Repurcha
               m.member_code AS "memberCode",
               m.referrer_id AS "referrerId",
               m.status AS status,
+              m.is_commission_frozen AS "isCommissionFrozen",
               u.level + 1 AS level
             FROM members m
             INNER JOIN upline u ON m.id = u."referrerId"
             WHERE u.level < 20
           )
-          SELECT id, "memberCode", "referrerId", status, level FROM upline ORDER BY level ASC LIMIT 20;
+          SELECT id, "memberCode", "referrerId", status, "isCommissionFrozen", level FROM upline ORDER BY level ASC LIMIT 20;
         `);
                 if (Array.isArray(rawNodes) && rawNodes.length > 0) {
                     uplineNodes = rawNodes.map((node) => ({
@@ -200,13 +202,14 @@ let RepurchaseCommissionService = RepurchaseCommissionService_1 = class Repurcha
                         memberCode: node.memberCode,
                         referrerId: node.referrerId,
                         status: node.status,
+                        isCommissionFrozen: node.isCommissionFrozen,
                         level: Number(node.level),
                     }));
                 }
             }
         }
-        catch (error) {
-            this.logger.warn(`CTE query unhandled or mock environment (${error.message}). Using iterative fallback.`);
+        catch {
+            uplineNodes = [];
         }
         if (uplineNodes.length === 0) {
             let currentRefId = sourceMember.referrerId;
@@ -225,6 +228,7 @@ let RepurchaseCommissionService = RepurchaseCommissionService_1 = class Repurcha
                         referrerId: true,
                         memberCode: true,
                         status: true,
+                        isCommissionFrozen: true,
                     },
                 });
                 if (!parent)
@@ -234,6 +238,7 @@ let RepurchaseCommissionService = RepurchaseCommissionService_1 = class Repurcha
                     memberCode: parent.memberCode,
                     referrerId: parent.referrerId,
                     status: parent.status,
+                    isCommissionFrozen: parent.isCommissionFrozen,
                     level: lvl,
                 });
                 currentRefId = parent.referrerId;
@@ -247,7 +252,7 @@ let RepurchaseCommissionService = RepurchaseCommissionService_1 = class Repurcha
             const ratePercentage = rateMap.get(node.level) ?? 0;
             if (ratePercentage > 0) {
                 const commissionAmount = Math.round(repurchaseAmount * (ratePercentage / 100) * 100) / 100;
-                const ledgerStatus = !node.status || node.status === client_1.MemberStatus.ACTIVE
+                const ledgerStatus = !node.status || (node.status === client_1.MemberStatus.ACTIVE && !node.isCommissionFrozen)
                     ? client_1.CommissionStatus.PENDING
                     : client_1.CommissionStatus.HOLD;
                 const ledger = await db.repurchaseCommissionLedger.create({

@@ -23,6 +23,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { EmailModule } from './modules/email/email.module';
 import { OtpModule } from './modules/otp/otp.module';
 import { PromotionsModule } from './modules/promotions/promotions.module';
+import { SystemSettingsModule } from './modules/system-settings/system-settings.module';
 
 const envFile = process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env';
 
@@ -75,6 +76,7 @@ const envFile = process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env';
     EmailModule,
     OtpModule,
     PromotionsModule,
+    SystemSettingsModule,
   ],
   controllers: [AppController],
   providers: [

@@ -11,6 +11,7 @@ const membershipReducer = (state = initialState, action) => {
     case types.FETCH_MEMBERS_REQUEST:
     case types.ADD_MEMBER_REQUEST:
     case types.UPDATE_MEMBER_REQUEST:
+    case types.DELETE_MEMBER_REQUEST:
       return {
         ...state,
         loading: true,
@@ -34,9 +35,16 @@ const membershipReducer = (state = initialState, action) => {
         loading: false,
         members: state.members.map((m) => m.id === action.payload.id ? action.payload : m),
       };
+    case types.DELETE_MEMBER_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        members: state.members.filter((m) => m.id !== action.payload),
+      };
     case types.FETCH_MEMBERS_FAILURE:
     case types.ADD_MEMBER_FAILURE:
     case types.UPDATE_MEMBER_FAILURE:
+    case types.DELETE_MEMBER_FAILURE:
       return {
         ...state,
         loading: false,

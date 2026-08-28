@@ -6,13 +6,15 @@ import { QueryPendingDistributionDto } from './dto/query-pending-distribution.dt
 import { ProcessDistributionBatchDto } from './dto/process-distribution-batch.dto';
 import { QueryDistributionHistoryDto } from './dto/query-distribution-history.dto';
 import { MemberRole } from '@prisma/client';
+import { SystemSettingsService } from '../system-settings/system-settings.service';
 export declare class DistributionService {
     private readonly prisma;
     private readonly auditService;
     private readonly notificationsService;
+    private readonly systemSettingsService?;
     private readonly distributionQueue?;
     private readonly logger;
-    constructor(prisma: PrismaService, auditService: AuditService, notificationsService: NotificationsService, distributionQueue?: Queue | undefined);
+    constructor(prisma: PrismaService, auditService: AuditService, notificationsService: NotificationsService, systemSettingsService?: SystemSettingsService | undefined, distributionQueue?: Queue | undefined);
     private buildDateWhere;
     getPendingDistributionSummary(): Promise<{
         pendingMembershipLedgersCount: number;
@@ -99,8 +101,8 @@ export declare class DistributionService {
             processedBy: string | null;
             processor: {
                 id: string;
-                memberCode: string;
                 name: string;
+                memberCode: string;
             } | null;
             startedAt: Date | null;
             completedAt: Date | null;

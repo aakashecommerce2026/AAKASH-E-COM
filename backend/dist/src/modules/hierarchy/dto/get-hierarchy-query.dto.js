@@ -15,6 +15,7 @@ const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 class GetHierarchyQueryDto {
     maxLevels = 10;
+    includeSelf;
 }
 exports.GetHierarchyQueryDto = GetHierarchyQueryDto;
 __decorate([
@@ -30,4 +31,15 @@ __decorate([
     (0, class_validator_1.Max)(20),
     __metadata("design:type", Number)
 ], GetHierarchyQueryDto.prototype, "maxLevels", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        example: true,
+        default: false,
+        description: 'Whether to include the target root member itself at level 0 in downline tree output',
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => value === 'true' || value === true),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], GetHierarchyQueryDto.prototype, "includeSelf", void 0);
 //# sourceMappingURL=get-hierarchy-query.dto.js.map

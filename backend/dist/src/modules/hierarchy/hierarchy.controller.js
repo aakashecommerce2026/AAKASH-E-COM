@@ -30,7 +30,7 @@ let HierarchyController = class HierarchyController {
     }
     async getDownline(memberId, query) {
         const levels = query.maxLevels || 20;
-        return this.hierarchyService.getDownline(memberId, levels);
+        return this.hierarchyService.getDownline(memberId, levels, query.includeSelf || false);
     }
     async getDirectReferrals(memberId) {
         return this.hierarchyService.getDownline(memberId, 1);

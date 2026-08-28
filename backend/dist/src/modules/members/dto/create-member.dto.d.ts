@@ -14,4 +14,5 @@ export declare class CreateMemberDto {
     password: string;
     role?: MemberRole;
     otp?: string;
+    joiningFee?: number;
 }

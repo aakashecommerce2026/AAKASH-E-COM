@@ -26,13 +26,23 @@ function* fetchMembers() {
     const membersList = rawList.map((m) => ({
       id: m.id,
       name: m.name,
+      username: m.username || m.user_name || null,
       email: m.email || '',
       mobile: m.mobile || '',
+      address: m.address || '',
+      profilePhoto: m.profilePhoto || null,
+      upiId: m.upiId || null,
+      bankDetails: m.bankDetails || null,
+      profileCompletionPercentage: m.profileCompletionPercentage !== undefined ? m.profileCompletionPercentage : null,
+      isProfileComplete: m.isProfileComplete || false,
+      missingProfileFields: m.missingProfileFields || [],
+      isCommissionFrozen: !!m.isCommissionFrozen,
+      commissionFreezeReason: m.commissionFreezeReason || null,
       role: m.role === 'ADMIN' ? 'Admin' : m.role === 'SUB_ADMIN' ? 'SubAdmin' : 'Associate',
-      referralCode: m.memberCode,
+      referralCode: m.memberCode || m.referralCode,
       status: m.status,
       joinedDate: m.joiningDate ? m.joiningDate.split('T')[0] : new Date().toISOString().split('T')[0],
-      sponsorId: m.referrerId || null,
+      sponsorId: m.referrerId || m.sponsorId || null,
       referrer: m.referrer || null,
     }));
 
@@ -60,8 +70,18 @@ function* addMember(action) {
     const newMember = {
       id: created.id,
       name: created.name,
+      username: created.username || null,
       email: created.email || '',
       mobile: created.mobile || '',
+      address: created.address || '',
+      profilePhoto: created.profilePhoto || null,
+      upiId: created.upiId || null,
+      bankDetails: created.bankDetails || null,
+      profileCompletionPercentage: created.profileCompletionPercentage,
+      isProfileComplete: created.isProfileComplete,
+      missingProfileFields: created.missingProfileFields,
+      isCommissionFrozen: !!created.isCommissionFrozen,
+      commissionFreezeReason: created.commissionFreezeReason || null,
       role: created.role === 'ADMIN' ? 'Admin' : 'Associate',
       referralCode: created.memberCode,
       status: created.status,
@@ -88,9 +108,21 @@ function* updateMember(action) {
   }
 }
 
+function* deleteMemberSaga(action) {
+  try {
+    const id = action.payload;
+    yield call(membersApi.deleteMember, id);
+    yield put(actions.deleteMemberSuccess(id));
+    yield put(actions.fetchMembersRequest());
+  } catch (error) {
+    yield put(actions.deleteMemberFailure(error.message || 'Failed to delete member'));
+  }
+}
+
 // Watcher Saga
 export default function* membershipSaga() {
   yield takeLatest(types.FETCH_MEMBERS_REQUEST, fetchMembers);
   yield takeLatest(types.ADD_MEMBER_REQUEST, addMember);
   yield takeLatest(types.UPDATE_MEMBER_REQUEST, updateMember);
+  yield takeLatest(types.DELETE_MEMBER_REQUEST, deleteMemberSaga);
 }

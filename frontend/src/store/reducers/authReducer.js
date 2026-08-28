@@ -52,14 +52,41 @@ const authReducer = (state = initialState, action) => {
         error: null,
       };
 
-    case types.UPDATE_PROFILE_SUCCESS:
+    case types.UPDATE_PROFILE_SUCCESS: {
+      const payload = action.payload || {};
+      const updatedUser = {
+        ...state.user,
+        ...payload,
+        username: payload.username !== undefined ? payload.username : state.user?.username,
+        address: payload.address !== undefined ? payload.address : state.user?.address,
+        profilePhoto: payload.profilePhoto !== undefined ? payload.profilePhoto : state.user?.profilePhoto,
+        upiId: payload.upiId || payload.bankDetails?.upiId || state.user?.upiId || '',
+        secondaryUpiId: payload.secondaryUpiId || payload.bankDetails?.secondaryUpiId || state.user?.secondaryUpiId || '',
+        upiProvider: payload.upiProvider || payload.bankDetails?.upiProvider || state.user?.upiProvider || 'Google Pay',
+        role: payload.role === 'ADMIN' || payload.role === 'SUB_ADMIN' || payload.role === 'Admin'
+          ? 'Admin'
+          : (payload.role === 'MEMBER' || payload.role === 'Member' ? 'Member' : (state.user?.role || 'Member')),
+        memberRole: payload.memberRole || payload.role || state.user?.memberRole,
+        referralCode: payload.memberCode || payload.referralCode || state.user?.referralCode,
+      };
+
+      try {
+        const storedAuth = localStorage.getItem('auth');
+        if (storedAuth) {
+          const parsed = JSON.parse(storedAuth);
+          parsed.user = updatedUser;
+          localStorage.setItem('auth', JSON.stringify(parsed));
+        }
+      } catch (e) {}
+
       return {
         ...state,
         saving: false,
         saveSuccess: true,
-        user: action.payload,
+        user: updatedUser,
         error: null,
       };
+    }
 
     case types.UPDATE_PROFILE_FAILURE:
       return {

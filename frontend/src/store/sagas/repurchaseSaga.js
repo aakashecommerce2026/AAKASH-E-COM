@@ -8,19 +8,18 @@ import { RepurchaseCommissionStrategy } from '../../services/commissionEngine/Re
 function* fetchRepurchases() {
   try {
     const storedAuth = localStorage.getItem('auth');
-    if (!storedAuth) {
-      yield put(actions.fetchRepurchasesSuccess([]));
-      return;
+    let isMember = false;
+    if (storedAuth) {
+      try {
+        const authData = JSON.parse(storedAuth);
+        const userRole = authData?.user?.memberRole || authData?.user?.role;
+        if (userRole === 'MEMBER' || userRole === 'Member') {
+          isMember = true;
+        }
+      } catch (e) {}
     }
 
-    const authData = JSON.parse(storedAuth);
-    const userRole = authData?.user?.memberRole || authData?.user?.role;
-    if (userRole === 'MEMBER' || userRole === 'Member') {
-      yield put(actions.fetchRepurchasesSuccess([]));
-      return;
-    }
-
-    const response = yield call(repurchaseApi.getAll, { limit: 100 });
+    const response = yield call(isMember ? repurchaseApi.getMyRepurchases : repurchaseApi.getAll, { limit: 100 });
     const rawList = Array.isArray(response) ? response : response?.data || response?.items || [];
 
     const repurchasesList = rawList.map((item) => ({

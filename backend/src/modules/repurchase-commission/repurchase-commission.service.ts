@@ -237,6 +237,7 @@ export class RepurchaseCommissionService implements OnModuleInit {
       memberCode?: string;
       referrerId?: string | null;
       status?: string;
+      isCommissionFrozen?: boolean;
       level: number;
     }[] = [];
 
@@ -249,6 +250,7 @@ export class RepurchaseCommissionService implements OnModuleInit {
               m.member_code AS "memberCode",
               m.referrer_id AS "referrerId",
               m.status AS status,
+              m.is_commission_frozen AS "isCommissionFrozen",
               1 AS level
             FROM members target_m
             INNER JOIN members m ON target_m.referrer_id = m.id
@@ -261,12 +263,13 @@ export class RepurchaseCommissionService implements OnModuleInit {
               m.member_code AS "memberCode",
               m.referrer_id AS "referrerId",
               m.status AS status,
+              m.is_commission_frozen AS "isCommissionFrozen",
               u.level + 1 AS level
             FROM members m
             INNER JOIN upline u ON m.id = u."referrerId"
             WHERE u.level < 20
           )
-          SELECT id, "memberCode", "referrerId", status, level FROM upline ORDER BY level ASC LIMIT 20;
+          SELECT id, "memberCode", "referrerId", status, "isCommissionFrozen", level FROM upline ORDER BY level ASC LIMIT 20;
         `);
         if (Array.isArray(rawNodes) && rawNodes.length > 0) {
           uplineNodes = rawNodes.map((node: any) => ({
@@ -274,14 +277,13 @@ export class RepurchaseCommissionService implements OnModuleInit {
             memberCode: node.memberCode,
             referrerId: node.referrerId,
             status: node.status,
+            isCommissionFrozen: node.isCommissionFrozen,
             level: Number(node.level),
           }));
         }
       }
-    } catch (error) {
-      this.logger.warn(
-        `CTE query unhandled or mock environment (${(error as Error).message}). Using iterative fallback.`,
-      );
+    } catch {
+      uplineNodes = [];
     }
 
     // Fallback if CTE did not return nodes or running in mock environment
@@ -306,6 +308,7 @@ export class RepurchaseCommissionService implements OnModuleInit {
             referrerId: true,
             memberCode: true,
             status: true,
+            isCommissionFrozen: true,
           },
         });
 
@@ -316,6 +319,7 @@ export class RepurchaseCommissionService implements OnModuleInit {
           memberCode: parent.memberCode,
           referrerId: parent.referrerId,
           status: parent.status,
+          isCommissionFrozen: (parent as any).isCommissionFrozen,
           level: lvl,
         });
 
@@ -325,7 +329,7 @@ export class RepurchaseCommissionService implements OnModuleInit {
     }
 
     // 5. Compute amount = repurchaseAmount * (levelPercentage / 100) and write ledger rows
-    // Active members receive PENDING status; non-ACTIVE members receive HOLD status (flagged money-in-transit)
+    // Active members receive PENDING status; non-ACTIVE / frozen members receive HOLD status (flagged money-in-transit)
     const generatedLedgers: any[] = [];
 
     for (const node of uplineNodes) {
@@ -338,7 +342,7 @@ export class RepurchaseCommissionService implements OnModuleInit {
           Math.round(repurchaseAmount * (ratePercentage / 100) * 100) / 100;
 
         const ledgerStatus =
-          !node.status || node.status === MemberStatus.ACTIVE
+          !node.status || (node.status === MemberStatus.ACTIVE && !(node as any).isCommissionFrozen)
             ? CommissionStatus.PENDING
             : CommissionStatus.HOLD;
 

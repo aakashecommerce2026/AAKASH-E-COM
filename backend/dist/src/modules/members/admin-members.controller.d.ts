@@ -2,6 +2,7 @@ import { MemberRole } from '@prisma/client';
 import { MembersService } from './members.service';
 import { CreateAdminMemberDto } from './dto/create-admin-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
+import { FreezeCommissionDto } from './dto/freeze-commission.dto';
 import { QueryMembersDto } from './dto/query-members.dto';
 import { ReassignReferrerDto } from './dto/reassign-referrer.dto';
 import { MemberResponseDto } from './dto/member-response.dto';
@@ -12,6 +13,7 @@ export declare class AdminMembersController {
         tempPassword?: string;
     }>;
     updateMember(id: string, dto: UpdateMemberDto, actorId: string, actorRole: MemberRole): Promise<MemberResponseDto>;
+    toggleCommissionFreeze(id: string, dto: FreezeCommissionDto, actorId: string, actorRole: MemberRole): Promise<MemberResponseDto>;
     reassignReferrer(id: string, dto: ReassignReferrerDto, actorId: string, actorRole: MemberRole): Promise<MemberResponseDto>;
     getMembers(query: QueryMembersDto): Promise<{
         data: MemberResponseDto[];
@@ -26,18 +28,18 @@ export declare class AdminMembersController {
         referrer: {
             id: string;
             memberCode: string;
-            name: string;
             mobile: string;
             email: string | null;
+            name: string;
             status: import("@prisma/client").$Enums.MemberStatus;
             role: import("@prisma/client").$Enums.MemberRole;
         } | null;
         id: string;
         memberCode: string;
         username: string | null;
-        name: string;
         mobile: string;
         email: string | null;
+        name: string;
         address: string | null;
         profilePhoto: string | null;
         referrerId: string | null;
@@ -47,6 +49,8 @@ export declare class AdminMembersController {
         status: import("@prisma/client").$Enums.MemberStatus;
         role: import("@prisma/client").$Enums.MemberRole;
         rank: import("@prisma/client").$Enums.MemberRank;
+        isCommissionFrozen: boolean;
+        commissionFreezeReason: string | null;
         createdAt: Date;
         updatedAt: Date;
     }>;
@@ -57,9 +61,9 @@ export declare class AdminMembersController {
         referrer: {
             id: string;
             memberCode: string;
-            name: string;
             mobile: string;
             email: string | null;
+            name: string;
             joiningDate: Date;
             status: import("@prisma/client").$Enums.MemberStatus;
             role: import("@prisma/client").$Enums.MemberRole;
@@ -74,12 +78,17 @@ export declare class AdminMembersController {
         directReferrals: {
             id: string;
             memberCode: string;
-            name: string;
             mobile: string;
             email: string | null;
+            name: string;
             joiningDate: Date;
             status: import("@prisma/client").$Enums.MemberStatus;
             role: import("@prisma/client").$Enums.MemberRole;
         }[];
+    }>;
+    deleteMember(id: string, actorId: string, actorRole: MemberRole): Promise<{
+        message: string;
+        deletedMemberId: string;
+        reattachedDownlinesCount: number;
     }>;
 }

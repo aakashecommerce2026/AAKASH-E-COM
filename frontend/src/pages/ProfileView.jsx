@@ -134,9 +134,9 @@ const ProfileView = () => {
       setUsername(user.username || '');
       setEmail(user.email || '');
       setAddress(user.address || '');
-      setUpiId(user.upiId || (user.id === 2 ? 'priya@okicici' : 'arun@upi'));
-      setSecondaryUpiId(user.secondaryUpiId || '');
-      setUpiProvider(user.upiProvider || 'Google Pay');
+      setUpiId(user.upiId || user.bankDetails?.upiId || '');
+      setSecondaryUpiId(user.secondaryUpiId || user.bankDetails?.secondaryUpiId || '');
+      setUpiProvider(user.upiProvider || user.bankDetails?.upiProvider || 'Google Pay');
       setUpiError('');
     }
   }, [user]);

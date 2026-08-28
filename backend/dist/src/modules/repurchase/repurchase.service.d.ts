@@ -1,6 +1,7 @@
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { RepurchaseCommissionService } from '../repurchase-commission/repurchase-commission.service';
+import { DashboardCacheService } from '../dashboard/dashboard-cache.service';
 import { CreateRepurchaseEntryDto } from './dto/create-repurchase-entry.dto';
 import { UpdateRepurchaseEntryDto } from './dto/update-repurchase-entry.dto';
 import { QueryRepurchaseEntryDto } from './dto/query-repurchase-entry.dto';
@@ -9,7 +10,8 @@ export declare class RepurchaseService {
     private readonly prisma;
     private readonly auditService;
     private readonly repurchaseCommissionService;
-    constructor(prisma: PrismaService, auditService: AuditService, repurchaseCommissionService: RepurchaseCommissionService);
+    private readonly dashboardCacheService?;
+    constructor(prisma: PrismaService, auditService: AuditService, repurchaseCommissionService: RepurchaseCommissionService, dashboardCacheService?: DashboardCacheService | undefined);
     private hasCommissionsGenerated;
     create(dto: CreateRepurchaseEntryDto, actorId?: string, actorRole?: MemberRole): Promise<{
         id: any;

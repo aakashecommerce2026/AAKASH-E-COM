@@ -3,6 +3,8 @@ import {
   Get,
   Post,
   Put,
+  Patch,
+  Delete,
   Body,
   Param,
   Query,
@@ -20,6 +22,7 @@ import { MemberRole } from '@prisma/client';
 import { MembersService } from './members.service';
 import { CreateAdminMemberDto } from './dto/create-admin-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
+import { FreezeCommissionDto } from './dto/freeze-commission.dto';
 import { QueryMembersDto } from './dto/query-members.dto';
 import { ReassignReferrerDto } from './dto/reassign-referrer.dto';
 import { MemberResponseDto } from './dto/member-response.dto';
@@ -82,6 +85,23 @@ export class AdminMembersController {
     @CurrentUser('role') actorRole: MemberRole,
   ) {
     return this.membersService.update(id, dto, actorId, actorRole);
+  }
+
+  @Patch(':id/commission-freeze')
+  @ApiOperation({ summary: 'Freeze or unfreeze commission payouts for a member' })
+  @ApiResponse({
+    status: 200,
+    description: 'Member commission freeze status updated successfully',
+    type: MemberResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Member not found' })
+  async toggleCommissionFreeze(
+    @Param('id') id: string,
+    @Body() dto: FreezeCommissionDto,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('role') actorRole: MemberRole,
+  ) {
+    return this.membersService.toggleCommissionFreeze(id, dto, actorId, actorRole);
   }
 
   @Post(':id/reassign-referrer')
@@ -154,5 +174,26 @@ export class AdminMembersController {
   @ApiResponse({ status: 404, description: 'Member not found' })
   async getMemberDownlinePreview(@Param('id') id: string) {
     return this.membersService.getDownlinePreview(id);
+  }
+
+  @Delete(':id')
+  @Roles(MemberRole.ADMIN)
+  @ApiOperation({
+    summary: 'Delete a member and re-attach direct downlines to Super Admin (Admin only)',
+    description:
+      'Safely deletes member account, re-parents all direct referral downlines to Super Admin, dispatches deletion email, and logs activity audit.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Member deleted and downlines re-attached to Super Admin successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Cannot delete Super Admin root member' })
+  @ApiResponse({ status: 404, description: 'Member not found' })
+  async deleteMember(
+    @Param('id') id: string,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('role') actorRole: MemberRole,
+  ) {
+    return this.membersService.deleteMember(id, actorId, actorRole);
   }
 }

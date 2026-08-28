@@ -44,6 +44,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var MembersService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MembersService = void 0;
 const common_1 = require("@nestjs/common");
@@ -52,18 +53,18 @@ const prisma_service_1 = require("../../prisma/prisma.service");
 const audit_service_1 = require("../audit/audit.service");
 const client_1 = require("@prisma/client");
 const membership_commission_service_1 = require("../membership-commission/membership-commission.service");
-const common_2 = require("@nestjs/common");
 const email_service_1 = require("../email/email.service");
 const otp_service_1 = require("../otp/otp.service");
 const otp_purpose_enum_1 = require("../otp/enums/otp-purpose.enum");
 const promotions_service_1 = require("../promotions/promotions.service");
-let MembersService = class MembersService {
+let MembersService = MembersService_1 = class MembersService {
     prisma;
     auditService;
     membershipCommissionService;
     emailService;
     otpService;
     promotionsService;
+    logger = new common_1.Logger(MembersService_1.name);
     BCRYPT_SALT_ROUNDS = 12;
     constructor(prisma, auditService, membershipCommissionService, emailService, otpService, promotionsService) {
         this.prisma = prisma;
@@ -176,7 +177,10 @@ let MembersService = class MembersService {
                         : undefined,
                 },
             });
-            const generatedCommissions = await this.membershipCommissionService.calculateForNewMember(createdMember.id, 1000, tx);
+            const joiningFeeAmount = rest.joiningFee && Number(rest.joiningFee) > 0
+                ? Number(rest.joiningFee)
+                : 10000;
+            const generatedCommissions = await this.membershipCommissionService.calculateForNewMember(createdMember.id, joiningFeeAmount, tx);
             await this.auditService.logAction({
                 actorId: actorId || createdMember.id,
                 actorRole: actorRole || createdMember.role,
@@ -534,17 +538,153 @@ let MembersService = class MembersService {
             directReferrals,
         };
     }
+    calculateProfileCompletion(member) {
+        if (!member) {
+            return { completionPercentage: 0, isProfileComplete: false, missingFields: [] };
+        }
+        const fields = [
+            { name: 'Full Name', weight: 15, check: !!(member.name && member.name.trim()) },
+            { name: 'Mobile Number', weight: 15, check: !!(member.mobile && member.mobile.trim()) },
+            { name: 'Email Address', weight: 15, check: !!(member.email && member.email.trim()) },
+            { name: 'Username Handle', weight: 15, check: !!(member.username && member.username.trim()) },
+            { name: 'Address Details', weight: 15, check: !!(member.address && member.address.trim()) },
+            {
+                name: 'Payment Details (UPI/Bank)',
+                weight: 20,
+                check: !!((member.upiId && member.upiId.trim()) ||
+                    (member.bankDetails &&
+                        typeof member.bankDetails === 'object' &&
+                        (member.bankDetails.accountNumber || member.bankDetails.account_number))),
+            },
+            { name: 'Profile Photo', weight: 5, check: !!(member.profilePhoto && member.profilePhoto.trim()) },
+        ];
+        let completionPercentage = 0;
+        const missingFields = [];
+        fields.forEach((f) => {
+            if (f.check) {
+                completionPercentage += f.weight;
+            }
+            else {
+                missingFields.push(f.name);
+            }
+        });
+        return {
+            completionPercentage,
+            isProfileComplete: completionPercentage >= 100,
+            missingFields,
+        };
+    }
+    async toggleCommissionFreeze(id, dto, actorId, actorRole) {
+        const member = await this.prisma.member.findUnique({ where: { id } });
+        if (!member) {
+            throw new common_1.NotFoundException(`Member with ID '${id}' not found`);
+        }
+        const updated = await this.prisma.member.update({
+            where: { id },
+            data: {
+                isCommissionFrozen: dto.isFrozen,
+                commissionFreezeReason: dto.isFrozen
+                    ? dto.reason || 'Incomplete profile details'
+                    : null,
+            },
+        });
+        await this.auditService.logAction({
+            actorId: actorId || null,
+            actorRole: actorRole || client_1.MemberRole.ADMIN,
+            actionType: dto.isFrozen ? 'FREEZE_COMMISSION' : 'UNFREEZE_COMMISSION',
+            entityType: 'Member',
+            entityId: id,
+            metadata: {
+                isCommissionFrozen: dto.isFrozen,
+                reason: dto.reason || null,
+            },
+        });
+        return this.mapToResponseDto(updated);
+    }
+    async deleteMember(id, actorId, actorRole) {
+        const member = await this.prisma.member.findUnique({
+            where: { id },
+            select: {
+                id: true,
+                memberCode: true,
+                name: true,
+                email: true,
+                role: true,
+                referrerId: true,
+            },
+        });
+        if (!member) {
+            throw new common_1.NotFoundException(`Member with ID '${id}' not found`);
+        }
+        if (member.role === client_1.MemberRole.ADMIN || member.referrerId === null) {
+            throw new common_1.BadRequestException(`Cannot delete root Super Admin account '${member.memberCode}'`);
+        }
+        const superAdmin = await this.prisma.member.findFirst({
+            where: {
+                OR: [{ role: client_1.MemberRole.ADMIN }, { referrerId: null }],
+            },
+            orderBy: { joiningDate: 'asc' },
+            select: { id: true, memberCode: true },
+        });
+        if (!superAdmin) {
+            throw new common_1.BadRequestException('Super Admin root member not found in database to receive re-attached downlines');
+        }
+        if (member.email && this.emailService) {
+            try {
+                await this.emailService.sendAccountDeletionEmail(member.email, member.name, member.memberCode);
+            }
+            catch (err) {
+                this.logger.warn(`Failed to dispatch deletion email to ${member.email}: ${err.message}`);
+            }
+        }
+        return this.prisma.$transaction(async (tx) => {
+            const reattached = await tx.member.updateMany({
+                where: { referrerId: id },
+                data: { referrerId: superAdmin.id },
+            });
+            await tx.member.delete({
+                where: { id },
+            });
+            await this.auditService.logAction({
+                actorId: actorId || null,
+                actorRole: actorRole || client_1.MemberRole.ADMIN,
+                actionType: 'DELETE_MEMBER',
+                entityType: 'Member',
+                entityId: id,
+                metadata: {
+                    deletedMemberCode: member.memberCode,
+                    deletedMemberName: member.name,
+                    reattachedDownlinesCount: reattached.count,
+                    superAdminId: superAdmin.id,
+                    superAdminCode: superAdmin.memberCode,
+                },
+            });
+            return {
+                message: `Member '${member.name}' (${member.memberCode}) deleted successfully. ${reattached.count} downline members re-attached to Super Admin (${superAdmin.memberCode}).`,
+                deletedMemberId: id,
+                reattachedDownlinesCount: reattached.count,
+            };
+        });
+    }
     mapToResponseDto(member) {
         const { passwordHash, ...result } = member;
-        return result;
+        const profileStats = this.calculateProfileCompletion(member);
+        return {
+            ...result,
+            profileCompletionPercentage: profileStats.completionPercentage,
+            isProfileComplete: profileStats.isProfileComplete,
+            missingProfileFields: profileStats.missingFields,
+            isCommissionFrozen: member.isCommissionFrozen ?? false,
+            commissionFreezeReason: member.commissionFreezeReason ?? null,
+        };
     }
 };
 exports.MembersService = MembersService;
-exports.MembersService = MembersService = __decorate([
+exports.MembersService = MembersService = MembersService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __param(3, (0, common_2.Optional)()),
-    __param(4, (0, common_2.Optional)()),
-    __param(5, (0, common_2.Optional)()),
+    __param(3, (0, common_1.Optional)()),
+    __param(4, (0, common_1.Optional)()),
+    __param(5, (0, common_1.Optional)()),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         audit_service_1.AuditService,
         membership_commission_service_1.MembershipCommissionService,

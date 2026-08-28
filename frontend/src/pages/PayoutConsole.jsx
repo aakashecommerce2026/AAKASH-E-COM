@@ -31,7 +31,14 @@ import SavingsIcon from '@mui/icons-material/Savings';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import LockIcon from '@mui/icons-material/Lock';
-import { fetchPayoutsRequest, processPayoutRequest, batchProcessPayoutsRequest, toggleCommissionDeductions } from '../store/actions';
+import {
+  fetchPayoutsRequest,
+  processPayoutRequest,
+  batchProcessPayoutsRequest,
+  toggleCommissionDeductions,
+  fetchTdsStatusRequest,
+  saveTdsStatusRequest,
+} from '../store/actions';
 import QueryFilterExportBar from '../components/QueryFilterExportBar';
 import { exportToExcel, exportToPDF } from '../utils/exportUtils';
 
@@ -69,6 +76,7 @@ const PayoutConsole = () => {
 
   useEffect(() => {
     dispatch(fetchPayoutsRequest());
+    dispatch(fetchTdsStatusRequest());
   }, [dispatch]);
 
   // Handle Single Payout Release
@@ -278,7 +286,7 @@ const PayoutConsole = () => {
               control={
                 <Switch
                   checked={enableDeductions}
-                  onChange={(e) => dispatch(toggleCommissionDeductions(e.target.checked))}
+                  onChange={(e) => dispatch(saveTdsStatusRequest(e.target.checked))}
                   color="warning"
                   size="small"
                 />

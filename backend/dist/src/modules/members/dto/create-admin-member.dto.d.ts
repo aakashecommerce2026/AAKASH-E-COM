@@ -12,4 +12,5 @@ export declare class CreateAdminMemberDto {
     status?: MemberStatus;
     password?: string;
     role?: MemberRole;
+    joiningFee?: number;
 }

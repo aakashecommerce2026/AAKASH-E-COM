@@ -6,6 +6,7 @@ import {
   Button,
   Paper,
   CircularProgress,
+  LinearProgress,
   TextField,
   Dialog,
   DialogTitle,
@@ -30,13 +31,15 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
 import KeyIcon from '@mui/icons-material/Key';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { DataGrid } from '@mui/x-data-grid';
 import { useLocation } from 'react-router-dom';
-import { fetchMembersRequest, addMemberRequest, updateMemberRequest } from '../store/actions';
+import { fetchMembersRequest, addMemberRequest, updateMemberRequest, deleteMemberRequest } from '../store/actions';
 import { UnilevelTree } from '../components/UnilevelTree';
 import RegisterModal from '../components/RegisterModal';
-import { hierarchyApi } from '../services/api';
+import { hierarchyApi, membersApi } from '../services/api';
 
 // Helper function to generate unique referral code
 const generateUniqueReferralCode = (memberName, existingMembers = []) => {
@@ -99,6 +102,21 @@ const MemberManagement = () => {
   const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(true);
   const [registrationNotice, setRegistrationNotice] = useState('');
   const [serverDownlines, setServerDownlines] = useState([]);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedDeleteMember, setSelectedDeleteMember] = useState(null);
+
+  const handleOpenDeleteModal = (member) => {
+    setSelectedDeleteMember(member);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (selectedDeleteMember) {
+      dispatch(deleteMemberRequest(selectedDeleteMember.id));
+      setDeleteModalOpen(false);
+      setSelectedDeleteMember(null);
+    }
+  };
 
   useEffect(() => {
     dispatch(fetchMembersRequest());
@@ -211,6 +229,15 @@ const MemberManagement = () => {
               username: m.username || m.user_name || null,
               email: m.email || '',
               mobile: m.mobile || '',
+              address: m.address || '',
+              profilePhoto: m.profilePhoto || null,
+              upiId: m.upiId || null,
+              bankDetails: m.bankDetails || null,
+              profileCompletionPercentage: m.profileCompletionPercentage !== undefined ? m.profileCompletionPercentage : null,
+              isProfileComplete: m.isProfileComplete || false,
+              missingProfileFields: m.missingProfileFields || [],
+              isCommissionFrozen: !!m.isCommissionFrozen,
+              commissionFreezeReason: m.commissionFreezeReason || null,
               role: m.role === 'ADMIN' ? 'Admin' : 'Associate',
               referralCode: m.memberCode,
               status: m.status,
@@ -227,42 +254,49 @@ const MemberManagement = () => {
   // Compute members to display: Admin sees all, Member sees ONLY their branch and downline members, sorted by Hierarchy Level depth (Root -> L1 -> L2...)
   const displayMembers = useMemo(() => {
     let sourceList = isAdmin ? members : (serverDownlines.length > 0 ? serverDownlines : members);
-    if (!isAdmin && serverDownlines.length === 0 && currentMember) {
-      const downlineSet = new Set([currentMember.id]);
-      let addedNew = true;
-      while (addedNew) {
-        addedNew = false;
-        sourceList.forEach((m) => {
-          if (
-            m.sponsorId !== null &&
-            m.sponsorId !== undefined &&
-            downlineSet.has(m.sponsorId) &&
-            !downlineSet.has(m.id)
-          ) {
-            downlineSet.add(m.id);
-            addedNew = true;
-          }
-        });
+
+    if (!isAdmin && currentMember) {
+      const hasCurrent = sourceList.some(
+        (m) =>
+          String(m.id) === String(currentMember.id) ||
+          (m.referralCode && currentMember.referralCode && m.referralCode === currentMember.referralCode)
+      );
+
+      if (!hasCurrent) {
+        const rootNode = {
+          ...currentMember,
+          sponsorId: currentMember.sponsorId || null,
+          referrerId: currentMember.sponsorId || null,
+          level: 0,
+        };
+        sourceList = [rootNode, ...sourceList];
       }
-      sourceList = sourceList.filter((m) => downlineSet.has(m.id));
     }
 
     if (!sourceList || sourceList.length === 0) return [];
 
     // Calculate level depth from root sponsors
     const levelMap = new Map();
+    if (!isAdmin && currentMember) {
+      levelMap.set(String(currentMember.id), 0);
+    }
+
     let changed = true;
     let passes = 0;
     while (changed && passes < 50) {
       changed = false;
       passes++;
       sourceList.forEach((m) => {
-        if (!levelMap.has(m.id)) {
-          if (!m.sponsorId || m.sponsorId === m.id) {
-            levelMap.set(m.id, 0); // Root level 0
+        const mIdStr = String(m.id);
+        if (!levelMap.has(mIdStr)) {
+          const parentId = m.sponsorId || m.referrerId || m.referrer_id || m.sponsor_id;
+          const parentIdStr = parentId ? String(parentId) : null;
+
+          if (!parentIdStr || parentIdStr === mIdStr || !sourceList.some((p) => String(p.id) === parentIdStr)) {
+            levelMap.set(mIdStr, 0); // Root level 0
             changed = true;
-          } else if (levelMap.has(m.sponsorId)) {
-            levelMap.set(m.id, levelMap.get(m.sponsorId) + 1);
+          } else if (levelMap.has(parentIdStr)) {
+            levelMap.set(mIdStr, levelMap.get(parentIdStr) + 1);
             changed = true;
           }
         }
@@ -270,15 +304,18 @@ const MemberManagement = () => {
     }
 
     // Assign level depth to member objects
-    const listWithLevels = sourceList.map((m) => ({
-      ...m,
-      level: levelMap.has(m.id) ? levelMap.get(m.id) : (m.level !== undefined ? m.level : 0),
-    }));
+    const listWithLevels = sourceList.map((m) => {
+      const mIdStr = String(m.id);
+      return {
+        ...m,
+        level: levelMap.has(mIdStr) ? levelMap.get(mIdStr) : (m.level !== undefined ? m.level : 0),
+      };
+    });
 
     // Primary sort by hierarchy level ASC, secondary by sponsorId ASC, tertiary by ID
     return listWithLevels.sort((a, b) => {
       if (a.level !== b.level) return a.level - b.level;
-      if (a.sponsorId !== b.sponsorId) return (a.sponsorId || 0) - (b.sponsorId || 0);
+      if (a.sponsorId !== b.sponsorId) return String(a.sponsorId || 0).localeCompare(String(b.sponsorId || 0));
       return String(a.id).localeCompare(String(b.id));
     });
   }, [members, currentMember, isAdmin, serverDownlines]);
@@ -393,13 +430,68 @@ const MemberManagement = () => {
     }
   };
 
+  const [freezeModal, setFreezeModal] = useState({
+    open: false,
+    member: null,
+    reason: '',
+    submitting: false,
+  });
+
+  const calculateMemberCompletion = (row) => {
+    if (row.profileCompletionPercentage !== undefined && row.profileCompletionPercentage !== null) {
+      return row.profileCompletionPercentage;
+    }
+    let score = 0;
+    if (row.name && row.name.trim()) score += 15;
+    if (row.mobile && row.mobile.trim()) score += 15;
+    if (row.email && row.email.trim()) score += 15;
+    if (row.username || row.user_name) score += 15;
+    if (row.address && row.address.trim()) score += 15;
+    if (row.upiId || row.bankDetails) score += 20;
+    if (row.profilePhoto && row.profilePhoto.trim()) score += 5;
+    return score;
+  };
+
+  const handleOpenFreezeModal = (member) => {
+    setFreezeModal({
+      open: true,
+      member,
+      reason: member.commissionFreezeReason || '',
+      submitting: false,
+    });
+  };
+
+  const handleToggleCommissionFreeze = async (e) => {
+    e.preventDefault();
+    if (!freezeModal.member) return;
+
+    setFreezeModal((prev) => ({ ...prev, submitting: true }));
+    try {
+      const isFrozen = !freezeModal.member.isCommissionFrozen;
+      await membersApi.toggleCommissionFreeze(freezeModal.member.id, {
+        isFrozen,
+        reason: freezeModal.reason,
+      });
+
+      dispatch(fetchMembersRequest());
+      setRegistrationNotice(
+        `Updated commission payout status for ${freezeModal.member.name} (${freezeModal.member.referralCode || freezeModal.member.memberCode}) to ${isFrozen ? 'FROZEN' : 'ACTIVE'}!`
+      );
+      setTimeout(() => setRegistrationNotice(''), 6000);
+      setFreezeModal({ open: false, member: null, reason: '', submitting: false });
+    } catch (err) {
+      setRegistrationNotice('');
+      setFreezeModal((prev) => ({ ...prev, submitting: false }));
+    }
+  };
+
   // MUI DataGrid Column Configuration
   const columns = [
-    { field: 'id', headerName: 'ID', width: 90, sortable: true },
+    { field: 'id', headerName: 'ID', width: 80, sortable: true },
     { 
       field: 'level', 
       headerName: 'Hierarchy Level', 
-      width: 170, 
+      width: 150, 
       sortable: true,
       renderCell: (params) => {
         const lvl = params.value ?? 0;
@@ -418,7 +510,7 @@ const MemberManagement = () => {
       field: 'name', 
       headerName: 'Name', 
       flex: 1, 
-      minWidth: 180, 
+      minWidth: 170, 
       renderCell: (params) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <strong>{params.value}</strong>
@@ -428,11 +520,11 @@ const MemberManagement = () => {
         </Box>
       )
     },
-    { field: 'email', headerName: 'Email', flex: 1.2, minWidth: 200 },
+    { field: 'email', headerName: 'Email', flex: 1.1, minWidth: 180 },
     { 
       field: 'referralCode', 
-      headerName: 'Unique Referral Code', 
-      width: 170,
+      headerName: 'Referral Code', 
+      width: 140,
       renderCell: (params) => (
         <Chip 
           label={params.value || 'N/A'} 
@@ -443,10 +535,52 @@ const MemberManagement = () => {
         />
       )
     },
+    {
+      field: 'profileCompletion',
+      headerName: 'Profile Progress',
+      width: 180,
+      sortable: true,
+      renderCell: (params) => {
+        const score = calculateMemberCompletion(params.row);
+        const color = score >= 100 ? 'success' : score >= 60 ? 'warning' : 'error';
+        return (
+          <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ flexGrow: 1 }}>
+              <LinearProgress variant="determinate" value={score} color={color} sx={{ height: 8, borderRadius: 4 }} />
+            </Box>
+            <Chip
+              label={`${score}%`}
+              size="small"
+              color={color}
+              sx={{ height: 20, fontSize: '0.66rem', fontWeight: 800 }}
+            />
+          </Box>
+        );
+      }
+    },
+    {
+      field: 'isCommissionFrozen',
+      headerName: 'Commission Payout',
+      width: 160,
+      sortable: true,
+      renderCell: (params) => {
+        const isFrozen = params.row.isCommissionFrozen;
+        return (
+          <Chip
+            icon={isFrozen ? <LockIcon sx={{ fontSize: '13px !important' }} /> : <CheckCircleIcon sx={{ fontSize: '13px !important' }} />}
+            label={isFrozen ? 'Frozen' : 'Active'}
+            size="small"
+            color={isFrozen ? 'error' : 'success'}
+            variant={isFrozen ? 'filled' : 'outlined'}
+            sx={{ fontWeight: 700 }}
+          />
+        );
+      }
+    },
     { 
       field: 'sponsorId', 
       headerName: 'Sponsor ID', 
-      width: 130, 
+      width: 120, 
       renderCell: (params) => {
         const sponsorObj = members.find(m => m.id === params.value);
         return params.value ? (
@@ -463,24 +597,48 @@ const MemberManagement = () => {
         );
       }
     },
-    { field: 'joinedDate', headerName: 'Joined Date', width: 140 },
+    { field: 'joinedDate', headerName: 'Joined Date', width: 120 },
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 120,
+      width: 250,
       sortable: false,
       filterable: false,
       renderCell: (params) => (
-        <Button
-          variant="outlined"
-          color="secondary"
-          size="small"
-          startIcon={<EditIcon sx={{ fontSize: 14 }} />}
-          onClick={() => handleOpenEditModal(params.row)}
-          sx={{ py: 0.5 }}
-        >
-          Edit
-        </Button>
+        <Box sx={{ display: 'flex', gap: 0.8, alignItems: 'center' }}>
+          <Button
+            variant="outlined"
+            color="secondary"
+            size="small"
+            startIcon={<EditIcon sx={{ fontSize: 13 }} />}
+            onClick={() => handleOpenEditModal(params.row)}
+            sx={{ py: 0.4, px: 1, fontSize: '0.72rem' }}
+          >
+            Edit
+          </Button>
+          {isAdmin && (
+            <Button
+              variant="outlined"
+              color={params.row.isCommissionFrozen ? 'success' : 'warning'}
+              size="small"
+              startIcon={params.row.isCommissionFrozen ? <LockOpenIcon sx={{ fontSize: 13 }} /> : <LockIcon sx={{ fontSize: 13 }} />}
+              onClick={() => handleOpenFreezeModal(params.row)}
+              sx={{ py: 0.4, px: 1, fontSize: '0.72rem' }}
+            >
+              {params.row.isCommissionFrozen ? 'Unfreeze' : 'Freeze'}
+            </Button>
+          )}
+          {isAdmin && params.row.role !== 'Admin' && params.row.sponsorId !== null && (
+            <IconButton
+              size="small"
+              color="error"
+              onClick={() => handleOpenDeleteModal(params.row)}
+              title="Delete Member Account & Re-attach Downline to Super Admin"
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          )}
+        </Box>
       )
     }
   ];
@@ -882,6 +1040,104 @@ const MemberManagement = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Commission Freeze / Unfreeze Dialog Modal */}
+      <Dialog
+        open={freezeModal.open}
+        onClose={() => setFreezeModal({ open: false, member: null, reason: '', submitting: false })}
+        fullWidth
+        maxWidth="xs"
+        PaperProps={{ sx: { borderRadius: 3 } }}
+      >
+        <form onSubmit={handleToggleCommissionFreeze}>
+          <DialogTitle
+            sx={{
+              bgcolor: freezeModal.member?.isCommissionFrozen ? '#F0FDF4' : '#FEF2F2',
+              color: freezeModal.member?.isCommissionFrozen ? '#166534' : '#991B1B',
+              fontWeight: 800,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              py: 2,
+            }}
+          >
+            {freezeModal.member?.isCommissionFrozen ? (
+              <LockOpenIcon sx={{ color: '#16A34A' }} />
+            ) : (
+              <LockIcon sx={{ color: '#DC2626' }} />
+            )}
+            <Typography variant="subtitle1" fontWeight={800}>
+              {freezeModal.member?.isCommissionFrozen ? 'Unfreeze Member Commission' : 'Freeze Member Commission'}
+            </Typography>
+          </DialogTitle>
+          <DialogContent sx={{ pt: 3 }}>
+            {freezeModal.member && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Member: <strong>{freezeModal.member.name}</strong> ({freezeModal.member.referralCode || freezeModal.member.memberCode})
+                </Typography>
+
+                <Paper variant="outlined" sx={{ p: 2, bgcolor: '#F8FAFC', borderRadius: 2 }}>
+                  <Typography variant="caption" fontWeight={700} color="text.secondary" display="block" sx={{ mb: 0.5 }}>
+                    Profile Completion Progress:
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ flexGrow: 1 }}>
+                      <LinearProgress
+                        variant="determinate"
+                        value={calculateMemberCompletion(freezeModal.member)}
+                        color={calculateMemberCompletion(freezeModal.member) >= 100 ? 'success' : 'warning'}
+                        sx={{ height: 8, borderRadius: 4 }}
+                      />
+                    </Box>
+                    <Chip
+                      label={`${calculateMemberCompletion(freezeModal.member)}%`}
+                      size="small"
+                      color={calculateMemberCompletion(freezeModal.member) >= 100 ? 'success' : 'warning'}
+                      sx={{ fontWeight: 800 }}
+                    />
+                  </Box>
+                </Paper>
+
+                <TextField
+                  label="Freeze / Unfreeze Reason"
+                  multiline
+                  rows={2}
+                  fullWidth
+                  value={freezeModal.reason}
+                  onChange={(e) => setFreezeModal((prev) => ({ ...prev, reason: e.target.value }))}
+                  placeholder={freezeModal.member?.isCommissionFrozen ? 'Enter reason for unfreezing commission...' : 'e.g. Profile incomplete - missing bank details and address'}
+                  helperText="Reason will be recorded in activity audit logs."
+                />
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ p: 2, borderTop: '1px solid #E2E8F0' }}>
+            <Button
+              onClick={() => setFreezeModal({ open: false, member: null, reason: '', submitting: false })}
+              color="inherit"
+              disabled={freezeModal.submitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              color={freezeModal.member?.isCommissionFrozen ? 'success' : 'error'}
+              disabled={freezeModal.submitting}
+              sx={{ fontWeight: 700 }}
+            >
+              {freezeModal.submitting ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : freezeModal.member?.isCommissionFrozen ? (
+                'Confirm Unfreeze'
+              ) : (
+                'Confirm Freeze'
+              )}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+
       <OtpVerificationModal
         open={otpModalOpen}
         onClose={() => setOtpModalOpen(false)}
@@ -894,6 +1150,32 @@ const MemberManagement = () => {
           }
         }}
       />
+
+      {/* Delete Member Confirmation Dialog */}
+      <Dialog open={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800, color: 'error.main', pb: 1 }}>
+          Confirm Account Deletion
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Are you sure you want to delete member <strong>{selectedDeleteMember?.name}</strong> ({selectedDeleteMember?.referralCode})?
+          </Typography>
+          <Alert severity="warning" sx={{ mb: 2, borderRadius: 2 }}>
+            <strong>Network Downline Re-attachment:</strong> All direct referral downlines under this member will be automatically re-attached to the Super Admin root account.
+          </Alert>
+          <Typography variant="caption" color="text.secondary" display="block">
+            An official account termination email notice will be sent to <strong>{selectedDeleteMember?.email || 'the member email'}</strong>.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setDeleteModalOpen(false)} color="inherit" sx={{ fontWeight: 700 }}>
+            Cancel
+          </Button>
+          <Button onClick={handleConfirmDelete} variant="contained" color="error" sx={{ fontWeight: 700 }}>
+            Delete Account
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

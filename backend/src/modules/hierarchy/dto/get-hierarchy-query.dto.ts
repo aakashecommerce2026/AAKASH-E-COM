@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsBoolean, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
 
 export class GetHierarchyQueryDto {
   @ApiPropertyOptional({
@@ -14,4 +14,15 @@ export class GetHierarchyQueryDto {
   @Min(1)
   @Max(20)
   maxLevels?: number = 10;
+
+  @ApiPropertyOptional({
+    example: true,
+    default: false,
+    description:
+      'Whether to include the target root member itself at level 0 in downline tree output',
+  })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  includeSelf?: boolean;
 }

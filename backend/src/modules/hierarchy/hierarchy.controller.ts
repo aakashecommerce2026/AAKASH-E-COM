@@ -59,7 +59,11 @@ export class HierarchyController {
     @Query() query: GetHierarchyQueryDto,
   ) {
     const levels = query.maxLevels || 20;
-    return this.hierarchyService.getDownline(memberId, levels);
+    return this.hierarchyService.getDownline(
+      memberId,
+      levels,
+      query.includeSelf || false,
+    );
   }
 
   @Get(':memberId/direct-referrals')

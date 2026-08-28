@@ -33,6 +33,7 @@ const notifications_module_1 = require("./modules/notifications/notifications.mo
 const email_module_1 = require("./modules/email/email.module");
 const otp_module_1 = require("./modules/otp/otp.module");
 const promotions_module_1 = require("./modules/promotions/promotions.module");
+const system_settings_module_1 = require("./modules/system-settings/system-settings.module");
 const envFile = process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env';
 let AppModule = class AppModule {
 };
@@ -87,6 +88,7 @@ exports.AppModule = AppModule = __decorate([
             email_module_1.EmailModule,
             otp_module_1.OtpModule,
             promotions_module_1.PromotionsModule,
+            system_settings_module_1.SystemSettingsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [

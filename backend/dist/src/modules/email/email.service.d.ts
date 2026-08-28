@@ -18,4 +18,5 @@ export declare class EmailService {
     sendPayoutDisbursedEmail(email: string, name: string, batchNo: string, grossAmount: number, tdsAmount: number, adminFee: number, netAmount: number, paymentRef?: string): Promise<boolean>;
     sendSecurityAlertEmail(email: string, name: string, actionDescription: string, ipAddress?: string): Promise<boolean>;
     sendPasswordResetLinkEmail(email: string, name: string, resetLink: string, token: string): Promise<boolean>;
+    sendAccountDeletionEmail(email: string, name: string, memberCode: string): Promise<boolean>;
 }

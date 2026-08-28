@@ -51,7 +51,8 @@ export class MemberNetworkController {
     @Query() query: GetHierarchyQueryDto,
   ) {
     const levels = query.maxLevels || 20;
-    return this.hierarchyService.getDownline(memberId, levels);
+    const includeSelf = query.includeSelf !== false;
+    return this.hierarchyService.getDownline(memberId, levels, includeSelf);
   }
 
   @Get('summary')

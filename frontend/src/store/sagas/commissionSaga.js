@@ -1,7 +1,7 @@
 import { call, put, all, takeLatest, select } from 'redux-saga/effects';
 import * as types from '../actionTypes';
 import * as actions from '../actions';
-import { commissionApi } from '../../services/api';
+import { commissionApi, settingsApi } from '../../services/api';
 import { CommissionProcessor } from '../../services/commissionEngine/CommissionProcessor';
 import { MembershipCommissionStrategy } from '../../services/commissionEngine/MembershipCommissionStrategy';
 
@@ -140,12 +140,126 @@ function* generateMembershipCommissionsSaga(action) {
   }
 }
 
+function* fetchCommissionConfigsSaga() {
+  try {
+    const [memConfigRes, repConfigRes] = yield all([
+      call(commissionApi.getMembershipConfig),
+      call(commissionApi.getRepurchaseConfig),
+    ]);
 
+    const memList = Array.isArray(memConfigRes) ? memConfigRes : memConfigRes?.data || [];
+    const repList = Array.isArray(repConfigRes) ? repConfigRes : repConfigRes?.data || [];
 
+    const membershipRules = {};
+    let version = 1;
+    memList.forEach((c) => {
+      if (c.level) membershipRules[c.level] = Number(c.percentage);
+      if (c.version) version = Math.max(version, c.version);
+    });
 
+    const repurchaseRules = {};
+    repList.forEach((c) => {
+      if (c.level) repurchaseRules[c.level] = Number(c.percentage);
+    });
+
+    yield put(
+      actions.fetchCommissionConfigsSuccess({
+        membershipRules: Object.keys(membershipRules).length > 0 ? membershipRules : undefined,
+        repurchaseRules: Object.keys(repurchaseRules).length > 0 ? repurchaseRules : undefined,
+        version,
+      })
+    );
+  } catch (err) {
+    yield put(actions.fetchCommissionConfigsFailure(err.message || 'Failed to fetch commission configurations'));
+  }
+}
+
+function* saveMembershipConfigSaga(action) {
+  try {
+    const { version, isActive, rates } = action.payload;
+    const response = yield call(commissionApi.saveMembershipConfig, {
+      version: version || 1,
+      isActive: isActive !== false,
+      rates,
+    });
+
+    const list = Array.isArray(response) ? response : response?.data || [];
+    const updatedRules = {};
+    let newVersion = version;
+    list.forEach((c) => {
+      if (c.level) updatedRules[c.level] = Number(c.percentage);
+      if (c.version) newVersion = c.version;
+    });
+
+    if (Object.keys(updatedRules).length === 0) {
+      rates.forEach((r) => {
+        updatedRules[r.level] = Number(r.percentage);
+      });
+    }
+
+    yield put(
+      actions.saveMembershipConfigSuccess({
+        rules: updatedRules,
+        version: newVersion,
+      })
+    );
+  } catch (err) {
+    yield put(actions.saveMembershipConfigFailure(err.message || 'Failed to save membership commission configuration'));
+  }
+}
+
+function* saveRepurchaseConfigSaga(action) {
+  try {
+    const { rates } = action.payload;
+    const response = yield call(commissionApi.saveRepurchaseConfig, { rates });
+
+    const list = Array.isArray(response) ? response : response?.data || [];
+    const updatedRules = {};
+    list.forEach((c) => {
+      if (c.level) updatedRules[c.level] = Number(c.percentage);
+    });
+
+    if (Object.keys(updatedRules).length === 0) {
+      rates.forEach((r) => {
+        updatedRules[r.level] = Number(r.percentage);
+      });
+    }
+
+    yield put(actions.saveRepurchaseConfigSuccess(updatedRules));
+  } catch (err) {
+    yield put(actions.saveRepurchaseConfigFailure(err.message || 'Failed to save repurchase commission configuration'));
+  }
+}
+
+function* fetchTdsStatusSaga() {
+  try {
+    const res = yield call(settingsApi.getTdsStatus);
+    const enabled = res?.enabled !== false;
+    yield put(actions.fetchTdsStatusSuccess(enabled));
+  } catch (err) {
+    yield put(actions.fetchTdsStatusFailure(err.message || 'Failed to fetch TDS status'));
+  }
+}
+
+function* saveTdsStatusSaga(action) {
+  try {
+    const enabled = Boolean(action.payload);
+    const res = yield call(settingsApi.updateTdsStatus, { enabled });
+    const isEnabled = res?.enabled !== false;
+    yield put(actions.saveTdsStatusSuccess(isEnabled));
+    yield put(actions.toggleCommissionDeductions(isEnabled));
+  } catch (err) {
+    yield put(actions.saveTdsStatusFailure(err.message || 'Failed to update TDS status'));
+  }
+}
 
 // Watcher Saga
 export default function* commissionSaga() {
   yield takeLatest(types.FETCH_COMMISSIONS_REQUEST, fetchCommissions);
   yield takeLatest(types.GENERATE_MEMBERSHIP_COMMISSIONS_REQUEST, generateMembershipCommissionsSaga);
+  yield takeLatest(types.FETCH_COMMISSION_CONFIGS_REQUEST, fetchCommissionConfigsSaga);
+  yield takeLatest(types.SAVE_MEMBERSHIP_CONFIG_REQUEST, saveMembershipConfigSaga);
+  yield takeLatest(types.SAVE_REPURCHASE_CONFIG_REQUEST, saveRepurchaseConfigSaga);
+  yield takeLatest(types.FETCH_TDS_STATUS_REQUEST, fetchTdsStatusSaga);
+  yield takeLatest(types.SAVE_TDS_STATUS_REQUEST, saveTdsStatusSaga);
 }

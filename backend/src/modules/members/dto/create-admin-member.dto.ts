@@ -3,10 +3,12 @@ import {
   IsEmail,
   IsEnum,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
   Matches,
+  Min,
   MinLength,
   ValidateNested,
 } from 'class-validator';
@@ -94,4 +96,14 @@ export class CreateAdminMemberDto {
   @IsOptional()
   @IsEnum(MemberRole, { message: 'Invalid member role' })
   role?: MemberRole;
+
+  @ApiPropertyOptional({
+    example: 10000,
+    description: 'Joining Fee / Package Amount (defaults to 10000)',
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'Joining fee must be a number' })
+  @Min(0, { message: 'Joining fee cannot be negative' })
+  @Type(() => Number)
+  joiningFee?: number;
 }

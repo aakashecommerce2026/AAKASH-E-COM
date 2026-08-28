@@ -23,6 +23,8 @@ import {
   Prisma,
 } from '@prisma/client';
 
+import { SystemSettingsService } from '../system-settings/system-settings.service';
+
 @Injectable()
 export class DistributionService {
   private readonly logger = new Logger(DistributionService.name);
@@ -31,6 +33,8 @@ export class DistributionService {
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
     private readonly notificationsService: NotificationsService,
+    @Optional()
+    private readonly systemSettingsService?: SystemSettingsService,
     @Optional()
     @InjectQueue('distribution-queue')
     private readonly distributionQueue?: Queue,
@@ -115,6 +119,9 @@ export class DistributionService {
     const memWhere: Prisma.MembershipCommissionLedgerWhereInput = {
       status: CommissionStatus.PENDING,
       distributionRecordId: null,
+      beneficiaryMember: {
+        isCommissionFrozen: false,
+      },
       ...(dateFilter ? { createdAt: dateFilter } : {}),
       ...(memberId ? { beneficiaryMemberId: memberId } : {}),
     };
@@ -122,6 +129,9 @@ export class DistributionService {
     const repWhere: Prisma.RepurchaseCommissionLedgerWhereInput = {
       status: CommissionStatus.PENDING,
       distributionRecordId: null,
+      beneficiaryMember: {
+        isCommissionFrozen: false,
+      },
       ...(dateFilter ? { createdAt: dateFilter } : {}),
       ...(memberId ? { beneficiaryMemberId: memberId } : {}),
     };
@@ -225,14 +235,18 @@ export class DistributionService {
     const allBeneficiaryEntries = Array.from(memberMap.values());
     const totalMembers = allBeneficiaryEntries.length;
 
-    // Calculate per-member payouts with 5% TDS and 5% Admin Fee
+    const isTdsEnabled = this.systemSettingsService
+      ? await this.systemSettingsService.isTdsEnabled()
+      : true;
+
+    // Calculate per-member payouts with dynamic TDS (5%) and Admin Fee (5%) setting
     const formattedData = allBeneficiaryEntries.map((item) => {
       const grossAmount =
         Math.round(
           (item.membershipGrossAmount + item.repurchaseGrossAmount) * 100,
         ) / 100;
-      const tdsAmount = Math.round(grossAmount * 0.05 * 100) / 100; // 5% TDS
-      const adminFee = Math.round(grossAmount * 0.05 * 100) / 100; // 5% Admin Fee
+      const tdsAmount = isTdsEnabled ? Math.round(grossAmount * 0.05 * 100) / 100 : 0;
+      const adminFee = isTdsEnabled ? Math.round(grossAmount * 0.05 * 100) / 100 : 0;
       const netAmount =
         Math.round((grossAmount - tdsAmount - adminFee) * 100) / 100;
 
@@ -475,10 +489,14 @@ export class DistributionService {
       let batchTotalNet = 0;
       const notificationParamsList: any[] = [];
 
+      const isTdsEnabled = this.systemSettingsService
+        ? await this.systemSettingsService.isTdsEnabled()
+        : true;
+
       for (const [bId, group] of memberGroupMap.entries()) {
         const grossAmount = Math.round(group.grossAmount * 100) / 100;
-        const tdsAmount = Math.round(grossAmount * 0.05 * 100) / 100; // 5% TDS
-        const adminFee = Math.round(grossAmount * 0.05 * 100) / 100; // 5% Admin Fee
+        const tdsAmount = isTdsEnabled ? Math.round(grossAmount * 0.05 * 100) / 100 : 0;
+        const adminFee = isTdsEnabled ? Math.round(grossAmount * 0.05 * 100) / 100 : 0;
         const netAmount =
           Math.round((grossAmount - tdsAmount - adminFee) * 100) / 100;
 

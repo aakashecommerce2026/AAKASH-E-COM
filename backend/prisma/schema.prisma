@@ -95,6 +95,8 @@ model Member {
   passwordHash                 String                       @map("password_hash")
   role                         MemberRole                   @default(MEMBER)
   rank                         MemberRank                   @default(NONE)
+  isCommissionFrozen           Boolean                      @default(false) @map("is_commission_frozen")
+  commissionFreezeReason       String?                      @map("commission_freeze_reason") @db.Text
 
   // Reverse relations for RepurchaseEntry
   repurchases                  RepurchaseEntry[]            @relation("MemberRepurchases")
@@ -391,12 +393,24 @@ model PromotionHistory {
   memberId             String     @map("member_id")
   member               Member     @relation("MemberPromotions", fields: [memberId], references: [id], onDelete: Cascade)
   previousRank         MemberRank @map("previous_rank")
-  newRank              MemberRank @map("new_rank")
   directReferralsCount Int        @map("direct_referrals_count")
   promotedAt           DateTime   @default(now()) @map("promoted_at")
 
   @@index([memberId])
   @@map("promotion_history")
+}
+
+/// SystemSettings Table: Key-value configuration store for system-wide flags (e.g. TDS deductions ON/OFF)
+model SystemSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String   @db.Text
+  description String?  @db.Text
+  updatedBy   String?  @map("updated_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
 }
 
 

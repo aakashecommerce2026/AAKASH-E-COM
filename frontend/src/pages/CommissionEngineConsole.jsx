@@ -49,6 +49,11 @@ import {
   toggleCommissionDeductions,
   generateRepurchaseCommissionsRequest,
   clearRepurchaseEngineLogs,
+  fetchCommissionConfigsRequest,
+  saveMembershipConfigRequest,
+  saveRepurchaseConfigRequest,
+  fetchTdsStatusRequest,
+  saveTdsStatusRequest,
 } from '../store/actions';
 import { CommissionProcessor } from '../services/commissionEngine/CommissionProcessor';
 import { MembershipCommissionStrategy, DEFAULT_MEMBERSHIP_RULES } from '../services/commissionEngine/MembershipCommissionStrategy';
@@ -67,12 +72,26 @@ const formatINR = (amount) => {
 const CommissionEngineConsole = () => {
   const dispatch = useDispatch();
   const { members } = useSelector((state) => state.membership);
-  const { strategyRules, repurchaseStrategyRules, engineLogs, repurchaseEngineLogs, processedTxIds, enableDeductions = true } = useSelector((state) => state.commission);
+  const {
+    strategyRules,
+    repurchaseStrategyRules,
+    currentMembershipVersion,
+    engineLogs,
+    repurchaseEngineLogs,
+    processedTxIds,
+    enableDeductions = true,
+  } = useSelector((state) => state.commission);
 
   const [engineMode, setEngineMode] = useState('MEMBERSHIP'); // 'MEMBERSHIP' | 'REPURCHASE'
   const [activeTab, setActiveTab] = useState(0); // 0 = Rules Config, 1 = Traversal Simulator, 2 = Audit Logs
 
   const activeLogs = engineMode === 'MEMBERSHIP' ? (engineLogs || []) : (repurchaseEngineLogs || []);
+
+  // Fetch live active database configuration and TDS status on mount
+  React.useEffect(() => {
+    dispatch(fetchCommissionConfigsRequest());
+    dispatch(fetchTdsStatusRequest());
+  }, [dispatch]);
 
   // Editable 20-Level State Maps for both engines
   const [membershipRules, setMembershipRules] = useState(() => {
@@ -83,6 +102,19 @@ const CommissionEngineConsole = () => {
   const [repurchaseRules, setRepurchaseRules] = useState(() => {
     return { ...DEFAULT_REPURCHASE_RULES, ...(repurchaseStrategyRules || {}) };
   });
+
+  // Sync component state when Redux rules are loaded from database
+  React.useEffect(() => {
+    if (strategyRules && typeof strategyRules === 'object') {
+      setMembershipRules({ ...DEFAULT_MEMBERSHIP_RULES, ...strategyRules });
+    }
+  }, [strategyRules]);
+
+  React.useEffect(() => {
+    if (repurchaseStrategyRules && typeof repurchaseStrategyRules === 'object') {
+      setRepurchaseRules({ ...DEFAULT_REPURCHASE_RULES, ...repurchaseStrategyRules });
+    }
+  }, [repurchaseStrategyRules]);
 
   const [ruleSaveMessage, setRuleSaveMessage] = useState('');
   const [benchmarkAmount, setBenchmarkAmount] = useState(10000);
@@ -135,13 +167,29 @@ const CommissionEngineConsole = () => {
 
   const handleSaveRules = () => {
     if (engineMode === 'MEMBERSHIP') {
+      const rates = Array.from({ length: 20 }, (_, i) => ({
+        level: i + 1,
+        percentage: parseFloat(membershipRules[i + 1]) || 0,
+      }));
       dispatch(updateCommissionStrategyRules(membershipRules));
-      setRuleSaveMessage('Membership 20-Level strategy rates updated successfully in Redux engine store!');
+      dispatch(
+        saveMembershipConfigRequest({
+          version: (currentMembershipVersion || 1) + 1,
+          isActive: true,
+          rates,
+        })
+      );
+      setRuleSaveMessage('Direct referral membership 20-Level strategy rates saved to database successfully!');
     } else {
+      const rates = Array.from({ length: 20 }, (_, i) => ({
+        level: i + 1,
+        percentage: parseFloat(repurchaseRules[i + 1]) || 0,
+      }));
       dispatch(updateRepurchaseStrategyRules(repurchaseRules));
-      setRuleSaveMessage('Repurchase 20-Level strategy rates updated successfully in Redux engine store!');
+      dispatch(saveRepurchaseConfigRequest({ rates }));
+      setRuleSaveMessage('Repurchase 20-Level strategy rates saved to database successfully!');
     }
-    setTimeout(() => setRuleSaveMessage(''), 4000);
+    setTimeout(() => setRuleSaveMessage(''), 5000);
   };
 
   const handleResetRules = () => {
@@ -402,7 +450,7 @@ const CommissionEngineConsole = () => {
                   control={
                     <Switch
                       checked={enableDeductions}
-                      onChange={(e) => dispatch(toggleCommissionDeductions(e.target.checked))}
+                      onChange={(e) => dispatch(saveTdsStatusRequest(e.target.checked))}
                       color="warning"
                     />
                   }

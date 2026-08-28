@@ -25,6 +25,7 @@ export class HierarchyService {
   async getDownline(
     memberId: string,
     maxLevels: number = 10,
+    includeSelf: boolean = false,
   ): Promise<HierarchyNode[]> {
     const member = await this.prisma.member.findUnique({
       where: { id: memberId },
@@ -39,6 +40,46 @@ export class HierarchyService {
       Math.max(1, maxLevels || 10),
       this.ABSOLUTE_MAX_LEVELS_CAP,
     );
+
+    if (includeSelf) {
+      const downline = await this.prisma.$queryRaw<HierarchyNode[]>`
+        WITH RECURSIVE downline AS (
+          SELECT 
+            m.id,
+            m.member_code AS "memberCode",
+            m.name,
+            m.mobile,
+            m.email,
+            m.referrer_id AS "referrerId",
+            m.joining_date AS "joiningDate",
+            m.status::text AS status,
+            m.role::text AS role,
+            0 AS level
+          FROM members m
+          WHERE m.id = ${memberId}
+
+          UNION ALL
+
+          SELECT 
+            m.id,
+            m.member_code AS "memberCode",
+            m.name,
+            m.mobile,
+            m.email,
+            m.referrer_id AS "referrerId",
+            m.joining_date AS "joiningDate",
+            m.status::text AS status,
+            m.role::text AS role,
+            d.level + 1 AS level
+          FROM members m
+          INNER JOIN downline d ON m.referrer_id = d.id
+          WHERE d.level < LEAST(${cappedLevels}::int, 20)
+        )
+        SELECT * FROM downline ORDER BY level ASC, "joiningDate" DESC LIMIT 5000;
+      `;
+
+      return downline;
+    }
 
     const downline = await this.prisma.$queryRaw<HierarchyNode[]>`
       WITH RECURSIVE downline AS (

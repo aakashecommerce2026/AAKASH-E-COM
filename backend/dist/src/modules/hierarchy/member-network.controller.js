@@ -30,7 +30,8 @@ let MemberNetworkController = class MemberNetworkController {
     }
     async getDownline(memberId, query) {
         const levels = query.maxLevels || 20;
-        return this.hierarchyService.getDownline(memberId, levels);
+        const includeSelf = query.includeSelf !== false;
+        return this.hierarchyService.getDownline(memberId, levels, includeSelf);
     }
     async getNetworkSummary(memberId, query) {
         const levels = query.maxLevels || 20;

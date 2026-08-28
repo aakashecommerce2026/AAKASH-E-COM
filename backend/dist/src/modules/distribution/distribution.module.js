@@ -12,6 +12,7 @@ const bull_1 = require("@nestjs/bull");
 const prisma_module_1 = require("../../prisma/prisma.module");
 const audit_module_1 = require("../audit/audit.module");
 const notifications_module_1 = require("../notifications/notifications.module");
+const system_settings_module_1 = require("../system-settings/system-settings.module");
 const distribution_service_1 = require("./distribution.service");
 const admin_distribution_controller_1 = require("./admin-distribution.controller");
 const distribution_processor_1 = require("./distribution.processor");
@@ -24,6 +25,7 @@ exports.DistributionModule = DistributionModule = __decorate([
             prisma_module_1.PrismaModule,
             audit_module_1.AuditModule,
             notifications_module_1.NotificationsModule,
+            system_settings_module_1.SystemSettingsModule,
             bull_1.BullModule.registerQueue({
                 name: 'distribution-queue',
             }),

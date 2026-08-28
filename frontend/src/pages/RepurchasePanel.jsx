@@ -210,11 +210,7 @@ const RepurchasePanel = () => {
 
   // Filtered Repurchase Logs
   const filteredLogs = useMemo(() => {
-    const baseList = isAdmin
-      ? repurchases
-      : repurchases.filter(
-          (item) => item.memberName.toLowerCase() === user?.name?.toLowerCase()
-        );
+    const baseList = repurchases;
 
     return baseList.filter((item) => {
       const matchesSearch =

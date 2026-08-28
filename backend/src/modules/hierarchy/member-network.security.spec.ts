@@ -81,6 +81,7 @@ describe('Member Network Visibility & Security Restrictions Test Suite', () => {
       expect(mockHierarchyService.getDownline).toHaveBeenCalledWith(
         mockRootMemberId,
         15,
+        true,
       );
       expect(mockHierarchyService.getDownline).not.toHaveBeenCalledWith(
         mockUplineMemberId,

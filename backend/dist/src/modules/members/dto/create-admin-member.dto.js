@@ -27,6 +27,7 @@ class CreateAdminMemberDto {
     status;
     password;
     role;
+    joiningFee;
 }
 exports.CreateAdminMemberDto = CreateAdminMemberDto;
 __decorate([
@@ -118,4 +119,15 @@ __decorate([
     (0, class_validator_1.IsEnum)(client_1.MemberRole, { message: 'Invalid member role' }),
     __metadata("design:type", String)
 ], CreateAdminMemberDto.prototype, "role", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        example: 10000,
+        description: 'Joining Fee / Package Amount (defaults to 10000)',
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)({}, { message: 'Joining fee must be a number' }),
+    (0, class_validator_1.Min)(0, { message: 'Joining fee cannot be negative' }),
+    (0, class_transformer_1.Type)(() => Number),
+    __metadata("design:type", Number)
+], CreateAdminMemberDto.prototype, "joiningFee", void 0);
 //# sourceMappingURL=create-admin-member.dto.js.map

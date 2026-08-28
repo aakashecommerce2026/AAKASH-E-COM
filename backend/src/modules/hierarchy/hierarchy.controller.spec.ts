@@ -50,6 +50,7 @@ describe('HierarchyController', () => {
     expect(hierarchyService.getDownline).toHaveBeenCalledWith(
       'member-uuid-1',
       20,
+      false,
     );
     expect(result).toEqual([mockNode]);
   });
