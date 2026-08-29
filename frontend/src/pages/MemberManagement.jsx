@@ -8,6 +8,7 @@ import {
   CircularProgress,
   LinearProgress,
   TextField,
+  MenuItem,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -95,6 +96,10 @@ const MemberManagement = () => {
   const [editingMember, setEditingMember] = useState(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [mobile, setMobile] = useState('');
+  const [username, setUsername] = useState('');
+  const [status, setStatus] = useState('ACTIVE');
+  const [role, setRole] = useState('MEMBER');
   const [referralCode, setReferralCode] = useState('');
   const [sponsorReferralCode, setSponsorReferralCode] = useState('');
   const [sponsorId, setSponsorId] = useState('');
@@ -350,12 +355,16 @@ const MemberManagement = () => {
     setEditingMember(member);
     setName(member.name || '');
     setEmail(member.email || '');
-    setReferralCode(member.referralCode || '');
+    setMobile(member.mobile || '');
+    setUsername(member.username || member.user_name || '');
+    setStatus(member.status || 'ACTIVE');
+    setRole(member.role === 'Admin' || member.role === 'ADMIN' ? 'ADMIN' : 'MEMBER');
+    setReferralCode(member.referralCode || member.memberCode || '');
     
     // Find sponsor code
-    const sponsorObj = members.find(m => m.id === member.sponsorId);
-    setSponsorReferralCode(sponsorObj ? (sponsorObj.referralCode || String(sponsorObj.id)) : '');
-    setSponsorId(member.sponsorId ? String(member.sponsorId) : '');
+    const sponsorObj = members.find(m => m.id === member.sponsorId || m.id === member.referrerId);
+    setSponsorReferralCode(sponsorObj ? (sponsorObj.referralCode || sponsorObj.memberCode || String(sponsorObj.id)) : '');
+    setSponsorId(member.sponsorId ? String(member.sponsorId) : (member.referrerId ? String(member.referrerId) : ''));
     setOpenModal(true);
   };
 
@@ -364,6 +373,10 @@ const MemberManagement = () => {
     setEditingMember(null);
     setName('');
     setEmail('');
+    setMobile('');
+    setUsername('');
+    setStatus('ACTIVE');
+    setRole('MEMBER');
     setReferralCode('');
     setSponsorReferralCode('');
     setSponsorId('');
@@ -399,32 +412,40 @@ const MemberManagement = () => {
 
   const handleSaveMember = (e) => {
     e.preventDefault();
-    if (!name || !email || !referralCode || !isReferralCodeUnique) return;
-
-    const finalSponsorId = matchedSponsor ? matchedSponsor.id : (sponsorId ? parseInt(sponsorId, 10) : null);
-    const autoPassword = `AK@${Math.floor(100000 + Math.random() * 900000)}`;
-
-    const payload = {
-      name,
-      email,
-      password: autoPassword,
-      referralCode: referralCode.trim().toUpperCase(),
-      sponsorId: finalSponsorId,
-      membershipAmount: parseFloat(membershipAmount) || 10000,
-      isPaymentConfirmed,
-      membershipTxId: `MTX-REG-${Date.now()}`,
-    };
+    if (!name || !email) return;
 
     if (editingMember) {
-      // Edit Mode
-      dispatch(updateMemberRequest({
-        ...payload,
+      // Edit Mode: Update profile fields without altering existing referrer/sponsor structure
+      const updatePayload = {
         id: editingMember.id,
-        joinedDate: editingMember.joinedDate
-      }));
+        name: name.trim(),
+        email: email.trim(),
+        ...(mobile ? { mobile: mobile.trim() } : {}),
+        ...(username ? { username: username.trim() } : {}),
+        ...(status ? { status } : {}),
+        ...(role ? { role } : {}),
+      };
+
+      dispatch(updateMemberRequest(updatePayload));
       handleCloseModal();
     } else {
-      // Add Mode: Open Email OTP verification modal first
+      // Add Mode
+      if (!referralCode || !isReferralCodeUnique) return;
+      const finalSponsorId = matchedSponsor ? matchedSponsor.id : (sponsorId ? parseInt(sponsorId, 10) : null);
+      const autoPassword = `AK@${Math.floor(100000 + Math.random() * 900000)}`;
+
+      const payload = {
+        name,
+        email,
+        mobile: mobile.trim() || undefined,
+        password: autoPassword,
+        referralCode: referralCode.trim().toUpperCase(),
+        sponsorId: finalSponsorId,
+        membershipAmount: parseFloat(membershipAmount) || 10000,
+        isPaymentConfirmed,
+        membershipTxId: `MTX-REG-${Date.now()}`,
+      };
+
       setPendingPayload(payload);
       setOtpModalOpen(true);
     }
@@ -774,78 +795,36 @@ const MemberManagement = () => {
       {/* Edit Profile Dialog Modal for Existing Member Modifications */}
       <Dialog open={Boolean(openModal && editingMember)} onClose={handleCloseModal} fullWidth maxWidth="sm">
         <DialogTitle sx={{ fontWeight: 800, color: 'primary.main', borderBottom: '1px solid #E2E8F0', pb: 2 }}>
-          Edit Member Profile
+          Edit Member Profile — {editingMember?.name}
         </DialogTitle>
         <form onSubmit={handleSaveMember}>
           <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 3 }}>
-            
-            {/* Step 1: Sponsor Referral Code Lookup */}
-            {!editingMember && (
-              <Box sx={{ p: 2, bgcolor: '#FAF9F6', borderRadius: 2.5, border: '1px solid #E2E8F0' }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'primary.dark', mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <VerifiedIcon fontSize="small" color="secondary" /> Step 1: Enter Sponsor Referral Code
-                </Typography>
-
-                <TextField
-                  label="Sponsor Referral Code"
-                  variant="outlined"
-                  fullWidth
-                  required
-                  value={sponsorReferralCode}
-                  onChange={(e) => setSponsorReferralCode(e.target.value)}
-                  disabled={!isAdmin || saving}
-                  placeholder="e.g. AK100, PC101"
-                  helperText={!isAdmin ? "Automatically set to your personal referral code" : "Enter referral code of the sponsor who invited this new member"}
-                  sx={{ bgcolor: 'white' }}
-                />
-
-                {/* Real-time Sponsor Matching Status */}
-                {matchedSponsor ? (
-                  <Paper variant="outlined" sx={{ mt: 1.5, p: 1.5, bgcolor: '#F0FDF4', borderColor: '#BBF7D0', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <CheckCircleIcon color="success" />
-                    <Box>
-                      <Typography variant="body2" sx={{ fontWeight: 800, color: '#166534' }}>
-                        Verified Sponsor: {matchedSponsor.name}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: '#15803D' }}>
-                        Sponsor ID: <strong>{matchedSponsor.id}</strong> | Code: <strong>{matchedSponsor.referralCode}</strong> | Role: {matchedSponsor.role}
-                      </Typography>
-                    </Box>
-                  </Paper>
-                ) : sponsorReferralCode ? (
-                  <Paper variant="outlined" sx={{ mt: 1.5, p: 1.5, bgcolor: '#FEF2F2', borderColor: '#FECACA', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <ErrorIcon color="error" />
-                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#991B1B' }}>
-                      Sponsor Referral Code "{sponsorReferralCode}" not found in network.
-                    </Typography>
-                  </Paper>
-                ) : null}
-              </Box>
-            )}
-
-            {/* Step 2: New Member Details & System-Generated Unique Referral Code */}
-            <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'primary.dark', mt: 1 }}>
-              Step 2: New Member Information & System-Generated Referral Code
+            <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'primary.dark' }}>
+              Member Information & Profile Details
             </Typography>
 
             <TextField
-              label="Full Name"
+              label="Full Name *"
               variant="outlined"
               fullWidth
               required
               disabled={saving}
               value={name}
-              onChange={(e) => {
-                const newName = e.target.value;
-                setName(newName);
-                if (!editingMember) {
-                  setReferralCode(generateUniqueReferralCode(newName, members));
-                }
-              }}
+              onChange={(e) => setName(e.target.value)}
             />
 
             <TextField
-              label="Email Address"
+              label="Username"
+              variant="outlined"
+              fullWidth
+              disabled={saving}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="e.g. johndoe123"
+            />
+
+            <TextField
+              label="Email Address *"
               type="email"
               variant="outlined"
               fullWidth
@@ -855,83 +834,70 @@ const MemberManagement = () => {
               onChange={(e) => setEmail(e.target.value)}
             />
 
-            {/* System-Generated Unique Referral Code (LOCKED / READ-ONLY) */}
-            <Box>
-              <TextField
-                label="New Member Unique Referral Code (System Locked)"
-                variant="outlined"
-                fullWidth
-                required
-                disabled={true}
-                value={referralCode}
-                helperText="🔒 System-Generated & Locked. Used by this new member to refer downlines."
-                slotProps={{
-                  input: {
-                    readOnly: true,
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <LockIcon color="action" fontSize="small" />
-                      </InputAdornment>
-                    ),
-                    endAdornment: !editingMember && (
-                      <InputAdornment position="end">
-                        <IconButton
-                          color="secondary"
-                          onClick={handleRegenerateCode}
-                          title="Regenerate System Code"
-                          size="small"
-                        >
-                          <AutoFixHighIcon fontSize="small" />
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }
-                }}
-                sx={{ bgcolor: '#F8FAFC' }}
-              />
-            </Box>
+            <TextField
+              label="Mobile Phone Number"
+              variant="outlined"
+              fullWidth
+              disabled={saving}
+              value={mobile}
+              onChange={(e) => setMobile(e.target.value)}
+              placeholder="+919876543210"
+            />
 
-            {/* Step 3: Payment Confirmation & Tree Placement Controls */}
-            {!editingMember && (
-              <Box sx={{ p: 2, bgcolor: '#FEFCE8', borderRadius: 2.5, border: '1px solid #FEF08A' }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'secondary.dark', mb: 1 }}>
-                  Step 3: Membership Payment & Tree Placement
-                </Typography>
-
+            {isAdmin && (
+              <Box sx={{ display: 'flex', gap: 2 }}>
                 <TextField
-                  label="Membership Package Fee (₹)"
-                  type="number"
+                  select
+                  label="Member Status"
                   variant="outlined"
                   fullWidth
-                  required
                   disabled={saving}
-                  value={membershipAmount}
-                  onChange={(e) => setMembershipAmount(e.target.value)}
-                  sx={{ bgcolor: 'white', mb: 1.5 }}
-                />
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                >
+                  <MenuItem value="ACTIVE">ACTIVE</MenuItem>
+                  <MenuItem value="INACTIVE">INACTIVE</MenuItem>
+                  <MenuItem value="BLOCKED">BLOCKED</MenuItem>
+                  <MenuItem value="SUSPENDED">SUSPENDED</MenuItem>
+                </TextField>
 
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={isPaymentConfirmed}
-                      onChange={(e) => setIsPaymentConfirmed(e.target.checked)}
-                      color="secondary"
-                    />
-                  }
-                  label={
-                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                      Payment Confirmed & Membership Activated ({isPaymentConfirmed ? 'Active & Confirmed' : 'Pending Payment'})
-                    </Typography>
-                  }
-                />
-
-                <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                  {isPaymentConfirmed 
-                    ? `✓ Payment confirmed. The user will be placed under ${matchedSponsor ? matchedSponsor.name : 'Sponsor'} in the Unilevel Tree line, and 20-level upline commissions will be generated.`
-                    : '⚠️ Payment pending. User will not generate upline commissions until payment is confirmed.'}
-                </Typography>
+                <TextField
+                  select
+                  label="Access Role"
+                  variant="outlined"
+                  fullWidth
+                  disabled={saving}
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                >
+                  <MenuItem value="MEMBER">MEMBER (Associate)</MenuItem>
+                  <MenuItem value="ADMIN">ADMIN</MenuItem>
+                  <MenuItem value="SUB_ADMIN">SUB_ADMIN</MenuItem>
+                  <MenuItem value="SUPPORT">SUPPORT</MenuItem>
+                </TextField>
               </Box>
             )}
+
+            {/* System Referral Code (READ-ONLY) */}
+            <TextField
+              label="Member Unique Referral Code (Locked)"
+              variant="outlined"
+              fullWidth
+              disabled={true}
+              value={referralCode}
+              helperText="🔒 System-Generated Member Code"
+              slotProps={{
+                input: {
+                  readOnly: true,
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockIcon color="action" fontSize="small" />
+                    </InputAdornment>
+                  ),
+                }
+              }}
+              sx={{ bgcolor: '#F8FAFC' }}
+            />
 
           </DialogContent>
           <DialogActions sx={{ p: 3, borderTop: '1px solid #E2E8F0' }}>
@@ -942,10 +908,10 @@ const MemberManagement = () => {
               type="submit"
               variant="contained"
               color="secondary"
-              disabled={saving || (!editingMember && (!matchedSponsor || !isReferralCodeUnique))}
+              disabled={saving || !name || !email}
               sx={{ fontWeight: 700 }}
             >
-              {saving ? <CircularProgress size={20} color="inherit" /> : editingMember ? 'Save Profile Changes' : 'Confirm Payment & Place in Tree'}
+              {saving ? <CircularProgress size={20} color="inherit" /> : 'Save Profile Changes'}
             </Button>
           </DialogActions>
         </form>

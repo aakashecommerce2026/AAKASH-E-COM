@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { MemberRole, MemberStatus } from '@prisma/client';
 
 export class QueryMembersDto {
@@ -28,11 +28,13 @@ export class QueryMembersDto {
 
   @ApiPropertyOptional({ enum: MemberStatus })
   @IsOptional()
+  @Transform(({ value }: { value: any }) => (typeof value === 'string' ? value.toUpperCase() : value))
   @IsEnum(MemberStatus)
   status?: MemberStatus;
 
   @ApiPropertyOptional({ enum: MemberRole })
   @IsOptional()
+  @Transform(({ value }: { value: any }) => (typeof value === 'string' ? value.toUpperCase() : value))
   @IsEnum(MemberRole)
   role?: MemberRole;
 

@@ -7,7 +7,7 @@ export declare class PromotionsController {
         memberCode: any;
         name: any;
         currentRank: any;
-        nextRank: import("./promotions.service").MemberRank.BRONZE | import("./promotions.service").MemberRank.SILVER | import("./promotions.service").MemberRank.GOLD | import("./promotions.service").MemberRank.PLATINUM | "MAX";
+        nextRank: "MAX" | import("./promotions.service").MemberRank.BRONZE | import("./promotions.service").MemberRank.SILVER | import("./promotions.service").MemberRank.GOLD | import("./promotions.service").MemberRank.PLATINUM;
         activeDirectCount: number;
         targetThreshold: number;
         remainingReferralsNeeded: number;
@@ -25,7 +25,7 @@ export declare class PromotionsController {
         memberCode: any;
         name: any;
         currentRank: any;
-        nextRank: import("./promotions.service").MemberRank.BRONZE | import("./promotions.service").MemberRank.SILVER | import("./promotions.service").MemberRank.GOLD | import("./promotions.service").MemberRank.PLATINUM | "MAX";
+        nextRank: "MAX" | import("./promotions.service").MemberRank.BRONZE | import("./promotions.service").MemberRank.SILVER | import("./promotions.service").MemberRank.GOLD | import("./promotions.service").MemberRank.PLATINUM;
         activeDirectCount: number;
         targetThreshold: number;
         remainingReferralsNeeded: number;

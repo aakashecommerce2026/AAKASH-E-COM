@@ -50,6 +50,7 @@ export const ProfileModal = ({ open, onClose }) => {
 
   // Lock / Unlock Editing State
   const [isEditing, setIsEditing] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   // Personal Info State
   const [name, setName] = useState('');
@@ -121,9 +122,10 @@ export const ProfileModal = ({ open, onClose }) => {
       }
 
       dispatch(updateProfileSuccess(updatedUser));
-      setPhotoMessage({ type: 'success', text: 'Profile photo uploaded successfully!' });
+      dispatch(clearProfileStatus());
+      setPhotoMessage({ type: 'success', text: 'Profile photo uploaded and saved successfully!' });
     } catch (err) {
-      setPhotoMessage({ type: 'error', text: err.message || 'Failed to upload photo.' });
+      setPhotoMessage({ type: 'error', text: err.message || 'Failed to upload profile photo.' });
     } finally {
       setPhotoUploading(false);
     }
@@ -144,29 +146,36 @@ export const ProfileModal = ({ open, onClose }) => {
 
   useEffect(() => {
     populateUserData();
-    setIsEditing(false); // Reset to read-only when opening
+  }, [populateUserData]);
+
+  useEffect(() => {
     if (open) {
+      dispatch(clearProfileStatus());
+      setHasSubmitted(false);
+      setIsEditing(false);
       membersApi
         .getProfile()
         .then((profileData) => {
           if (profileData) {
             dispatch(updateProfileSuccess(profileData));
+            dispatch(clearProfileStatus());
           }
         })
         .catch(() => {});
     }
-  }, [populateUserData, open, dispatch]);
+  }, [open, dispatch]);
 
   useEffect(() => {
-    if (saveSuccess && open) {
+    if (saveSuccess && open && hasSubmitted) {
       setIsEditing(false);
       const timer = setTimeout(() => {
         dispatch(clearProfileStatus());
+        setHasSubmitted(false);
         onClose();
       }, 1200);
       return () => clearTimeout(timer);
     }
-  }, [saveSuccess, open, dispatch, onClose]);
+  }, [saveSuccess, open, hasSubmitted, dispatch, onClose]);
 
   const validateInputs = () => {
     if (!address || address.trim().length < 5) {
@@ -189,6 +198,7 @@ export const ProfileModal = ({ open, onClose }) => {
     e.preventDefault();
     if (!validateInputs()) return;
 
+    setHasSubmitted(true);
     const updatedUser = {
       ...user,
       name: name.trim(),
@@ -280,7 +290,7 @@ export const ProfileModal = ({ open, onClose }) => {
 
       <form onSubmit={handleSave}>
         <DialogContent sx={{ pt: 3, pb: 4 }}>
-          {saveSuccess && (
+          {saveSuccess && hasSubmitted && (
             <Alert severity="success" icon={<CheckCircleIcon />} sx={{ mb: 3, borderRadius: 2 }}>
               Member profile and UPI handles saved successfully!
             </Alert>
@@ -330,7 +340,7 @@ export const ProfileModal = ({ open, onClose }) => {
 
           <Grid container spacing={3}>
             {/* Grid 1: Personal Account Info */}
-            <Grid item xs={12} md={5}>
+            <Grid xs={12} md={5}>
               <Paper variant="outlined" sx={{ p: 2.5, height: '100%', borderRadius: 3, bgcolor: '#FAF9F6', boxSizing: 'border-box' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -484,7 +494,7 @@ export const ProfileModal = ({ open, onClose }) => {
             </Grid>
 
             {/* Grid 2: UPI Identifiers Grid */}
-            <Grid item xs={12} md={7}>
+            <Grid xs={12} md={7}>
               <Paper variant="outlined" sx={{ p: 2.5, height: '100%', borderRadius: 3, bgcolor: '#FAF9F6', boxSizing: 'border-box' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -519,7 +529,7 @@ export const ProfileModal = ({ open, onClose }) => {
                   />
 
                   <Grid container spacing={1.5}>
-                    <Grid item xs={7}>
+                    <Grid xs={7}>
                       <TextField
                         select
                         fullWidth
@@ -536,7 +546,7 @@ export const ProfileModal = ({ open, onClose }) => {
                         ))}
                       </TextField>
                     </Grid>
-                    <Grid item xs={5}>
+                    <Grid xs={5}>
                       <TextField
                         label="Secondary UPI"
                         variant="outlined"
@@ -576,7 +586,7 @@ export const ProfileModal = ({ open, onClose }) => {
             </Grid>
 
             {/* Grid 3: Security & Password Management */}
-            <Grid item xs={12}>
+            <Grid xs={12}>
               <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, bgcolor: '#FAF9F6' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
                   <KeyIcon color="warning" />
@@ -592,8 +602,8 @@ export const ProfileModal = ({ open, onClose }) => {
                   </Alert>
                 )}
 
-                <Grid container spacing={2} alignItems="center">
-                  <Grid item xs={12} sm={4}>
+                <Grid container spacing={2} sx={{ alignItems: 'center' }}>
+                  <Grid xs={12} sm={4}>
                     <TextField
                       label="Current Password"
                       type="password"
@@ -604,7 +614,7 @@ export const ProfileModal = ({ open, onClose }) => {
                       onChange={(e) => setCurrentPassword(e.target.value)}
                     />
                   </Grid>
-                  <Grid item xs={12} sm={4}>
+                  <Grid xs={12} sm={4}>
                     <TextField
                       label="New Password"
                       type="password"
@@ -615,7 +625,7 @@ export const ProfileModal = ({ open, onClose }) => {
                       onChange={(e) => setNewPassword(e.target.value)}
                     />
                   </Grid>
-                  <Grid item xs={12} sm={4}>
+                  <Grid xs={12} sm={4}>
                     <TextField
                       label="Confirm New Password"
                       type="password"
@@ -626,7 +636,7 @@ export const ProfileModal = ({ open, onClose }) => {
                       onChange={(e) => setConfirmPassword(e.target.value)}
                     />
                   </Grid>
-                  <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', pt: 1 }}>
+                  <Grid xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', pt: 1 }}>
                     <Button
                       type="button"
                       variant="contained"
@@ -658,7 +668,11 @@ export const ProfileModal = ({ open, onClose }) => {
                 variant="contained" 
                 color="secondary" 
                 startIcon={<EditIcon />}
-                onClick={() => setIsEditing(true)}
+                onClick={() => {
+                  dispatch(clearProfileStatus());
+                  setHasSubmitted(false);
+                  setIsEditing(true);
+                }}
                 sx={{ px: 3, fontWeight: 700 }}
               >
                 Edit Profile & UPI

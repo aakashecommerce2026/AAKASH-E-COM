@@ -10,14 +10,14 @@ import {
 import { Type } from 'class-transformer';
 
 export class SearchDownlineQueryDto {
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'John',
     description:
       'Search string to filter downline members by name, memberCode, mobile, or email',
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  q!: string;
+  q?: string;
 
   @ApiPropertyOptional({
     example: 20,

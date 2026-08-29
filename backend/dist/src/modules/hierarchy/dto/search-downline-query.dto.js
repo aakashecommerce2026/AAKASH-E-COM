@@ -19,12 +19,12 @@ class SearchDownlineQueryDto {
 }
 exports.SearchDownlineQueryDto = SearchDownlineQueryDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({
+    (0, swagger_1.ApiPropertyOptional)({
         example: 'John',
         description: 'Search string to filter downline members by name, memberCode, mobile, or email',
     }),
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], SearchDownlineQueryDto.prototype, "q", void 0);
 __decorate([

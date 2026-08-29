@@ -23,14 +23,12 @@ export declare class AuthService {
     hashPassword(password: string): Promise<string>;
     comparePassword(raw: string, hash: string): Promise<boolean>;
     validateAdminUser(identifier: string, password: string): Promise<{
-        email: string | null;
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        name: string;
         memberCode: string;
         username: string | null;
+        name: string;
         mobile: string;
+        email: string | null;
         address: string | null;
         profilePhoto: string | null;
         referrerId: string | null;
@@ -43,16 +41,16 @@ export declare class AuthService {
         rank: import("@prisma/client").$Enums.MemberRank;
         isCommissionFrozen: boolean;
         commissionFreezeReason: string | null;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     validateMemberUser(identifier: string, password: string): Promise<{
-        email: string | null;
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        name: string;
         memberCode: string;
         username: string | null;
+        name: string;
         mobile: string;
+        email: string | null;
         address: string | null;
         profilePhoto: string | null;
         referrerId: string | null;
@@ -65,16 +63,16 @@ export declare class AuthService {
         rank: import("@prisma/client").$Enums.MemberRank;
         isCommissionFrozen: boolean;
         commissionFreezeReason: string | null;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     validateUser(identifier: string, password: string, portalType?: string): Promise<{
-        email: string | null;
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        name: string;
         memberCode: string;
         username: string | null;
+        name: string;
         mobile: string;
+        email: string | null;
         address: string | null;
         profilePhoto: string | null;
         referrerId: string | null;
@@ -87,6 +85,8 @@ export declare class AuthService {
         rank: import("@prisma/client").$Enums.MemberRank;
         isCommissionFrozen: boolean;
         commissionFreezeReason: string | null;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     login(loginDto: LoginDto): Promise<AuthResponseDto>;
     refreshToken(refreshTokenDto: RefreshTokenDto): Promise<AuthResponseDto>;

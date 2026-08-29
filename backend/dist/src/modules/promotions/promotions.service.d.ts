@@ -42,7 +42,7 @@ export declare class PromotionsService {
         memberCode: any;
         name: any;
         currentRank: any;
-        nextRank: MemberRank.BRONZE | MemberRank.SILVER | MemberRank.GOLD | MemberRank.PLATINUM | "MAX";
+        nextRank: "MAX" | MemberRank.BRONZE | MemberRank.SILVER | MemberRank.GOLD | MemberRank.PLATINUM;
         activeDirectCount: number;
         targetThreshold: number;
         remainingReferralsNeeded: number;

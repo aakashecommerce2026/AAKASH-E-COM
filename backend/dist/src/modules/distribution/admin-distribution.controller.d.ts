@@ -69,8 +69,8 @@ export declare class AdminDistributionController {
             processedBy: string | null;
             processor: {
                 id: string;
-                name: string;
                 memberCode: string;
+                name: string;
             } | null;
             startedAt: Date | null;
             completedAt: Date | null;

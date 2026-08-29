@@ -167,7 +167,7 @@ export const PromotionProgressCard = ({ memberId }) => {
 
         {/* Direct Referrals Progress Counter */}
         <Grid container spacing={2} sx={{ mb: 2.5 }}>
-          <Grid item xs={12} sm={6}>
+          <Grid xs={12} sm={6}>
             <Paper variant="outlined" sx={{ p: 2, borderRadius: 2.5, bgcolor: '#F8FAFC' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                 <GroupAddIcon color="primary" sx={{ fontSize: 20 }} />
@@ -181,7 +181,7 @@ export const PromotionProgressCard = ({ memberId }) => {
             </Paper>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid xs={12} sm={6}>
             <Paper variant="outlined" sx={{ p: 2, borderRadius: 2.5, bgcolor: isMaxRank ? '#F0F9FF' : '#FFFBEB' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                 <StarsIcon sx={{ color: isMaxRank ? '#0284C7' : '#D97706', fontSize: 20 }} />
@@ -234,7 +234,7 @@ export const PromotionProgressCard = ({ memberId }) => {
             const isCurrent = currentRank === step.rank;
 
             return (
-              <Grid item xs={6} sm={3} key={step.rank}>
+              <Grid xs={6} sm={3} key={step.rank}>
                 <Tooltip title={step.note} arrow placement="top">
                   <Paper
                     variant="outlined"

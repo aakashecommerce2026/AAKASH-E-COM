@@ -37,18 +37,18 @@ export declare class MembersService {
         referrer: {
             id: string;
             memberCode: string;
+            name: string;
             mobile: string;
             email: string | null;
-            name: string;
             status: import("@prisma/client").$Enums.MemberStatus;
             role: import("@prisma/client").$Enums.MemberRole;
         } | null;
         id: string;
         memberCode: string;
         username: string | null;
+        name: string;
         mobile: string;
         email: string | null;
-        name: string;
         address: string | null;
         profilePhoto: string | null;
         referrerId: string | null;
@@ -79,9 +79,9 @@ export declare class MembersService {
         referrer: {
             id: string;
             memberCode: string;
+            name: string;
             mobile: string;
             email: string | null;
-            name: string;
             joiningDate: Date;
             status: import("@prisma/client").$Enums.MemberStatus;
             role: import("@prisma/client").$Enums.MemberRole;
@@ -96,9 +96,9 @@ export declare class MembersService {
         directReferrals: {
             id: string;
             memberCode: string;
+            name: string;
             mobile: string;
             email: string | null;
-            name: string;
             joiningDate: Date;
             status: import("@prisma/client").$Enums.MemberStatus;
             role: import("@prisma/client").$Enums.MemberRole;

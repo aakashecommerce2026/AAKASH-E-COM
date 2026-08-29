@@ -747,7 +747,7 @@ export const MemberPerformanceChart = () => {
     return () => {
       isMounted = false;
     };
-  }, [user]);
+  }, [user?.id]);
 
   if (loading || data.length === 0) {
     return (

@@ -51,6 +51,7 @@ const ProfileView = () => {
 
   // Edit Mode Lock/Unlock State
   const [isEditing, setIsEditing] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   // Reset Password Modal State
   const [resetModalOpen, setResetModalOpen] = useState(false);
@@ -76,13 +77,9 @@ const ProfileView = () => {
   // Calculate Profile Completion Score (0% - 100%)
   const completionScore = useMemo(() => {
     let score = 0;
-    // 1. Basic Info (Name, Email, Mobile) = 25%
     if (name && email && user?.mobile) score += 25;
-    // 2. Full Shipping Address = 25%
     if (address && address.trim().length >= 5) score += 25;
-    // 3. Profile Photo Uploaded = 25%
     if (user?.profilePhoto) score += 25;
-    // 4. Primary UPI / Bank Handle = 25%
     if (upiId && upiId.includes('@')) score += 25;
     return score;
   }, [name, email, user, address, upiId]);
@@ -111,7 +108,6 @@ const ProfileView = () => {
         profilePhoto: photoPath,
       };
 
-      // Save to localStorage session
       const storedAuth = localStorage.getItem('auth');
       if (storedAuth) {
         const parsed = JSON.parse(storedAuth);
@@ -120,6 +116,7 @@ const ProfileView = () => {
       }
 
       dispatch(updateProfileSuccess(updatedUser));
+      dispatch(clearProfileStatus());
       setPhotoMessage({ type: 'success', text: 'Profile photo uploaded and saved successfully!' });
     } catch (err) {
       setPhotoMessage({ type: 'error', text: err.message || 'Failed to upload profile photo.' });
@@ -145,15 +142,17 @@ const ProfileView = () => {
     populateUserData();
   }, [populateUserData]);
 
-  // Fetch fresh profile from DB on component mount
   useEffect(() => {
     let isMounted = true;
+    dispatch(clearProfileStatus());
+    setHasSubmitted(false);
     membersApi
       .getProfile()
       .then((profileData) => {
         if (!isMounted) return;
         if (profileData) {
           dispatch(updateProfileSuccess(profileData));
+          dispatch(clearProfileStatus());
         }
       })
       .catch(() => {});
@@ -163,14 +162,15 @@ const ProfileView = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (saveSuccess) {
-      setIsEditing(false); // Lock fields after successful Saga save
+    if (saveSuccess && hasSubmitted) {
+      setIsEditing(false);
       const timer = setTimeout(() => {
         dispatch(clearProfileStatus());
+        setHasSubmitted(false);
       }, 3500);
       return () => clearTimeout(timer);
     }
-  }, [saveSuccess, dispatch]);
+  }, [saveSuccess, hasSubmitted, dispatch]);
 
   const validateInputs = () => {
     if (!address || address.trim().length < 5) {
@@ -193,6 +193,7 @@ const ProfileView = () => {
     e.preventDefault();
     if (!validateInputs()) return;
 
+    setHasSubmitted(true);
     const updatedUser = {
       ...user,
       name: name.trim(),
@@ -204,7 +205,6 @@ const ProfileView = () => {
       upiProvider,
     };
 
-    // Dispatch explicit Redux event for profile update (processed by profileSaga with latency delay)
     dispatch(updateProfileRequest(updatedUser));
   };
 
@@ -255,7 +255,11 @@ const ProfileView = () => {
               variant="contained"
               color="secondary"
               startIcon={<EditIcon />}
-              onClick={() => setIsEditing(true)}
+              onClick={() => {
+                dispatch(clearProfileStatus());
+                setHasSubmitted(false);
+                setIsEditing(true);
+              }}
               sx={{ fontWeight: 800, borderRadius: 2, px: 2.5 }}
             >
               Edit Profile
@@ -276,7 +280,7 @@ const ProfileView = () => {
       </Box>
 
       {/* State View Cycling: Success & Error Alerts */}
-      {saveSuccess && (
+      {saveSuccess && hasSubmitted && (
         <Alert severity="success" icon={<CheckCircleIcon />} sx={{ mb: 3.5, borderRadius: 2.5, fontWeight: 700 }}>
           Profile updated successfully! Your profile details and UPI payment handles have been saved.
         </Alert>

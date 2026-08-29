@@ -47,9 +47,11 @@ export class HierarchyService {
           SELECT 
             m.id,
             m.member_code AS "memberCode",
+            m.username,
             m.name,
             m.mobile,
             m.email,
+            m.profile_photo AS "profilePhoto",
             m.referrer_id AS "referrerId",
             m.joining_date AS "joiningDate",
             m.status::text AS status,
@@ -63,9 +65,11 @@ export class HierarchyService {
           SELECT 
             m.id,
             m.member_code AS "memberCode",
+            m.username,
             m.name,
             m.mobile,
             m.email,
+            m.profile_photo AS "profilePhoto",
             m.referrer_id AS "referrerId",
             m.joining_date AS "joiningDate",
             m.status::text AS status,
@@ -86,9 +90,11 @@ export class HierarchyService {
         SELECT 
           m.id,
           m.member_code AS "memberCode",
+          m.username,
           m.name,
           m.mobile,
           m.email,
+          m.profile_photo AS "profilePhoto",
           m.referrer_id AS "referrerId",
           m.joining_date AS "joiningDate",
           m.status::text AS status,
@@ -102,9 +108,11 @@ export class HierarchyService {
         SELECT 
           m.id,
           m.member_code AS "memberCode",
+          m.username,
           m.name,
           m.mobile,
           m.email,
+          m.profile_photo AS "profilePhoto",
           m.referrer_id AS "referrerId",
           m.joining_date AS "joiningDate",
           m.status::text AS status,
@@ -147,9 +155,11 @@ export class HierarchyService {
         SELECT 
           m.id,
           m.member_code AS "memberCode",
+          m.username,
           m.name,
           m.mobile,
           m.email,
+          m.profile_photo AS "profilePhoto",
           m.referrer_id AS "referrerId",
           m.joining_date AS "joiningDate",
           m.status::text AS status,
@@ -164,9 +174,11 @@ export class HierarchyService {
         SELECT 
           m.id,
           m.member_code AS "memberCode",
+          m.username,
           m.name,
           m.mobile,
           m.email,
+          m.profile_photo AS "profilePhoto",
           m.referrer_id AS "referrerId",
           m.joining_date AS "joiningDate",
           m.status::text AS status,
@@ -203,16 +215,18 @@ export class HierarchyService {
       Math.max(1, maxLevels),
       this.ABSOLUTE_MAX_LEVELS_CAP,
     );
-    const searchTerm = `%${queryDto.q.trim()}%`;
+    const searchTerm = queryDto.q && queryDto.q.trim() ? `%${queryDto.q.trim()}%` : '%';
 
     const results = await this.prisma.$queryRaw<HierarchyNode[]>`
       WITH RECURSIVE downline AS (
         SELECT 
           m.id,
           m.member_code AS "memberCode",
+          m.username,
           m.name,
           m.mobile,
           m.email,
+          m.profile_photo AS "profilePhoto",
           m.referrer_id AS "referrerId",
           m.joining_date AS "joiningDate",
           m.status::text AS status,
@@ -226,9 +240,11 @@ export class HierarchyService {
         SELECT 
           m.id,
           m.member_code AS "memberCode",
+          m.username,
           m.name,
           m.mobile,
           m.email,
+          m.profile_photo AS "profilePhoto",
           m.referrer_id AS "referrerId",
           m.joining_date AS "joiningDate",
           m.status::text AS status,

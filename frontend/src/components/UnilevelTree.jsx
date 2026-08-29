@@ -190,6 +190,7 @@ export const UnilevelTree = ({ members = [] }) => {
     const CARD_WIDTH = 340;
     const CARD_HEIGHT = 104;
     const LEVEL_HEIGHT = 210;
+    const LEFT_RAIL_WIDTH = 250; // Fixed width of sticky left level summary sidebar rail
 
     const traverse = (node, level) => {
       const nodeIdStr = getNormId(node.id);
@@ -212,7 +213,7 @@ export const UnilevelTree = ({ members = [] }) => {
       coords[nodeIdStr] = nodeLayout;
 
       if (visibleChildren.length === 0) {
-        nodeLayout.x = 40 + leafCount * (CARD_WIDTH + 30);
+        nodeLayout.x = LEFT_RAIL_WIDTH + 30 + leafCount * (CARD_WIDTH + 30);
         leafCount++;
       } else {
         const childLayouts = visibleChildren.map((c) => traverse(c, level + 1));
@@ -239,10 +240,26 @@ export const UnilevelTree = ({ members = [] }) => {
       cardWidth: CARD_WIDTH,
       cardHeight: CARD_HEIGHT,
       levelHeight: LEVEL_HEIGHT,
-      canvasWidth: Math.max(leafCount * (CARD_WIDTH + 30) + 80, 900),
+      leftRailWidth: LEFT_RAIL_WIDTH,
+      canvasWidth: Math.max(LEFT_RAIL_WIDTH + 30 + leafCount * (CARD_WIDTH + 30) + 60, 1100),
       canvasHeight: (maxLevel + 1) * LEVEL_HEIGHT + 80,
     };
   }, [rootMembers, childrenMap, expandedNodes]);
+
+  // Aggregate stats per level depth for Left Level Sidebar Cards
+  const levelStatsMap = useMemo(() => {
+    if (!layoutData || !layoutData.coords) return {};
+    const map = {};
+    Object.values(layoutData.coords).forEach((node) => {
+      const lvl = node.level;
+      if (!map[lvl]) {
+        map[lvl] = { count: 0, directCountSum: 0 };
+      }
+      map[lvl].count += 1;
+      map[lvl].directCountSum += node.directCount;
+    });
+    return map;
+  }, [layoutData]);
 
   // Compute SVG Bezier connectors between all parents and visible children
   const connectors = useMemo(() => {
@@ -444,34 +461,130 @@ export const UnilevelTree = ({ members = [] }) => {
                 p: 2,
               }}
             >
-              {/* Level Depth Guidance Indicators (Sticky Axis) */}
+              {/* Horizontal Swimlane Row Bands per Level */}
               {Array.from({ length: layoutData.maxLevel + 1 }).map((_, levelIdx) => (
                 <Box
-                  key={`level-guide-${levelIdx}`}
+                  key={`level-band-${levelIdx}`}
                   sx={{
                     position: 'absolute',
-                    left: 10,
-                    top: 40 + levelIdx * layoutData.levelHeight + 40,
-                    zIndex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
+                    left: 0,
+                    top: 40 + levelIdx * layoutData.levelHeight - 12,
+                    width: layoutData.canvasWidth,
+                    height: layoutData.cardHeight + 24,
+                    bgcolor: levelIdx % 2 === 0 ? 'rgba(248, 250, 252, 0.75)' : 'rgba(240, 253, 244, 0.45)',
+                    borderTop: '1px dashed #E2E8F0',
+                    borderBottom: '1px dashed #E2E8F0',
+                    pointerEvents: 'none',
+                    zIndex: 0,
                   }}
-                >
-                  <Chip
-                    label={levelIdx === 0 ? 'Level 0 (Root)' : `Level ${levelIdx}`}
-                    size="small"
-                    sx={{
-                      bgcolor: levelIdx === 0 ? '#064E3B' : '#047857',
-                      color: '#FFFFFF',
-                      fontWeight: 800,
-                      fontSize: '0.65rem',
-                      height: 20,
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    }}
-                  />
-                </Box>
+                />
               ))}
+
+              {/* Left Level Summary Sidebar Rail */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  left: 12,
+                  top: 0,
+                  width: layoutData.leftRailWidth - 12,
+                  height: layoutData.canvasHeight,
+                  zIndex: 10,
+                  pointerEvents: 'auto',
+                }}
+              >
+                {/* Level Cards Anchored Vertically to Each Generation Depth */}
+                {Array.from({ length: layoutData.maxLevel + 1 }).map((_, levelIdx) => {
+                  const stats = levelStatsMap[levelIdx] || { count: 0, directCountSum: 0 };
+                  const isRoot = levelIdx === 0;
+
+                  return (
+                    <Box
+                      key={`level-card-${levelIdx}`}
+                      sx={{
+                        position: 'absolute',
+                        left: 0,
+                        top: 40 + levelIdx * layoutData.levelHeight,
+                        width: '100%',
+                        height: layoutData.cardHeight,
+                        bgcolor: '#FFFFFF',
+                        borderRadius: 2.5,
+                        border: '1px solid #E2E8F0',
+                        borderLeft: `6px solid ${isRoot ? '#064E3B' : '#059669'}`,
+                        boxShadow: '0 4px 14px rgba(6,78,59,0.06)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justify: 'space-between',
+                        p: 1.5,
+                        boxSizing: 'border-box',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          boxShadow: '0 6px 16px rgba(6,78,59,0.14)',
+                          borderColor: '#059669',
+                        },
+                      }}
+                    >
+                      {/* Top Header Tag */}
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Chip
+                          label={isRoot ? 'LEVEL 0 • ROOT' : levelIdx === 1 ? 'LEVEL 1 • DIRECTS' : `LEVEL ${levelIdx} • GEN ${levelIdx}`}
+                          size="small"
+                          sx={{
+                            bgcolor: isRoot ? '#064E3B' : '#047857',
+                            color: '#FFFFFF',
+                            fontWeight: 800,
+                            fontSize: '0.62rem',
+                            height: 20,
+                            borderRadius: 1,
+                          }}
+                        />
+                        <Chip
+                          icon={<GroupsIcon sx={{ fontSize: '12px !important' }} />}
+                          label={`${stats.count} Member${stats.count > 1 ? 's' : ''}`}
+                          size="small"
+                          sx={{
+                            bgcolor: '#ECFDF5',
+                            color: '#065F46',
+                            fontWeight: 800,
+                            fontSize: '0.66rem',
+                            height: 20,
+                            border: '1px solid #A7F3D0',
+                          }}
+                        />
+                      </Box>
+
+                      {/* Middle Description */}
+                      <Box>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 800, fontSize: '0.84rem', color: '#0F172A', lineHeight: 1.2 }}>
+                          {isRoot ? 'Root Sponsor Node' : levelIdx === 1 ? 'Direct Referrals' : `Generation ${levelIdx} Branch`}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.68rem' }}>
+                          {isRoot ? 'Network Upline Root' : `${stats.count} downline member${stats.count > 1 ? 's' : ''} in level`}
+                        </Typography>
+                      </Box>
+
+                      {/* Bottom Footer Ribbon */}
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justify: 'space-between',
+                          pt: 0.5,
+                          borderTop: '1px dashed #F1F5F9',
+                        }}
+                      >
+                        <Typography variant="caption" sx={{ fontSize: '0.64rem', color: '#059669', fontWeight: 700 }}>
+                          {isRoot ? 'Level Active' : `Downline Tier ${levelIdx}`}
+                        </Typography>
+                        <Chip
+                          label={`Tier ${levelIdx}`}
+                          size="small"
+                          sx={{ height: 16, fontSize: '0.58rem', fontWeight: 700, bgcolor: '#F1F5F9', color: '#475569' }}
+                        />
+                      </Box>
+                    </Box>
+                  );
+                })}
+              </Box>
 
               {/* SVG Connector Lines Canvas for Downline Connections */}
               <svg
@@ -562,6 +675,7 @@ export const UnilevelTree = ({ members = [] }) => {
                       {/* Top Header: Avatar + Full Name & @username handle */}
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
                         <Avatar
+                          src={member.profilePhoto || member.profile_photo || member.avatarUrl || member.avatar || null}
                           sx={{
                             bgcolor: node.level === 0 ? '#064E3B' : node.hasChildren ? '#047857' : '#D97706',
                             color: '#FFFFFF',

@@ -1,4 +1,4 @@
 export declare class SearchDownlineQueryDto {
-    q: string;
+    q?: string;
     maxLevels?: number;
 }
