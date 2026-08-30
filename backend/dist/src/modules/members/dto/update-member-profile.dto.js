@@ -39,14 +39,14 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ description: 'Email Address' }),
     (0, class_validator_1.IsOptional)(),
-    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' && value.trim() === '' ? undefined : value)),
+    (0, class_transformer_1.Transform)(({ value }) => typeof value === 'string' && value.trim() === '' ? undefined : value),
     (0, class_validator_1.IsEmail)(),
     __metadata("design:type", String)
 ], UpdateMemberProfileDto.prototype, "email", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ description: 'Mobile Number' }),
     (0, class_validator_1.IsOptional)(),
-    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' && value.trim() === '' ? undefined : value)),
+    (0, class_transformer_1.Transform)(({ value }) => typeof value === 'string' && value.trim() === '' ? undefined : value),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateMemberProfileDto.prototype, "mobile", void 0);

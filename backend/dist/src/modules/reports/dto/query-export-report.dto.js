@@ -40,7 +40,9 @@ __decorate([
     __metadata("design:type", String)
 ], QueryExportReportDto.prototype, "period", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Start date (ISO string e.g. 2026-01-01)' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Start date (ISO string e.g. 2026-01-01)',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
@@ -52,7 +54,10 @@ __decorate([
     __metadata("design:type", String)
 ], QueryExportReportDto.prototype, "endDate", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'If true, processes export asynchronously via Bull queue', default: false }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'If true, processes export asynchronously via Bull queue',
+        default: false,
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_transformer_1.Transform)(({ value }) => value === 'true' || value === true),
     (0, class_validator_1.IsBoolean)(),

@@ -106,7 +106,9 @@ let ReportPdfExportService = class ReportPdfExportService {
             kpiY -= 16;
         });
         yPos -= Math.min(summaryEntries.length * 16, 120) + 30;
-        if (reportData.trend && Array.isArray(reportData.trend) && reportData.trend.length > 0) {
+        if (reportData.trend &&
+            Array.isArray(reportData.trend) &&
+            reportData.trend.length > 0) {
             page.drawText('PERIOD TREND BREAKDOWN', {
                 x: 30,
                 y: yPos,
@@ -150,7 +152,9 @@ let ReportPdfExportService = class ReportPdfExportService {
                 }
                 headers.forEach((h, colIdx) => {
                     const rawVal = rowItem[h];
-                    const displayVal = typeof rawVal === 'number' ? rawVal.toFixed(2) : String(rawVal ?? '');
+                    const displayVal = typeof rawVal === 'number'
+                        ? rawVal.toFixed(2)
+                        : String(rawVal ?? '');
                     page.drawText(displayVal.substring(0, 18), {
                         x: 40 + colIdx * 100,
                         y: yPos - 8,

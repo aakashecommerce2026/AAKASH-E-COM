@@ -48,7 +48,8 @@ let AdminReportsExportController = class AdminReportsExportController {
             return res.status(202).json({
                 jobId: job.id,
                 status: 'QUEUED',
-                message: 'Report export job queued. Download link available upon completion at GET /admin/reports/export/jobs/' + job.id,
+                message: 'Report export job queued. Download link available upon completion at GET /admin/reports/export/jobs/' +
+                    job.id,
             });
         }
         const reportData = await this.adminReportsService.getPeriodReport(period, {
@@ -75,7 +76,8 @@ let AdminReportsExportController = class AdminReportsExportController {
             return res.status(202).json({
                 jobId: job.id,
                 status: 'QUEUED',
-                message: 'Report export job queued. Download link available upon completion at GET /admin/reports/export/jobs/' + job.id,
+                message: 'Report export job queued. Download link available upon completion at GET /admin/reports/export/jobs/' +
+                    job.id,
             });
         }
         const reportData = await this.adminReportsService.getPeriodReport(period, {
@@ -119,7 +121,10 @@ __decorate([
         summary: 'GET /admin/reports/export/pdf — Export daily/weekly/monthly report to PDF',
         description: 'Generates a PDF document for member registrations, repurchase activities, earnings summary, or business summary.',
     }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'PDF file binary or queue job reference' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'PDF file binary or queue job reference',
+    }),
     __param(0, (0, common_1.Query)()),
     __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
@@ -132,7 +137,10 @@ __decorate([
         summary: 'GET /admin/reports/export/excel — Export daily/weekly/monthly report to Excel (.xlsx)',
         description: 'Generates an Excel workbook with formatted headers matching the report type and period breakdown.',
     }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Excel .xlsx file binary or queue job reference' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Excel .xlsx file binary or queue job reference',
+    }),
     __param(0, (0, common_1.Query)()),
     __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),

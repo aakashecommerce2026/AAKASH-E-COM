@@ -723,15 +723,39 @@ export class MembersService {
     missingFields: string[];
   } {
     if (!member) {
-      return { completionPercentage: 0, isProfileComplete: false, missingFields: [] };
+      return {
+        completionPercentage: 0,
+        isProfileComplete: false,
+        missingFields: [],
+      };
     }
 
     const fields: { name: string; weight: number; check: boolean }[] = [
-      { name: 'Full Name', weight: 15, check: !!(member.name && member.name.trim()) },
-      { name: 'Mobile Number', weight: 15, check: !!(member.mobile && member.mobile.trim()) },
-      { name: 'Email Address', weight: 15, check: !!(member.email && member.email.trim()) },
-      { name: 'Username Handle', weight: 15, check: !!(member.username && member.username.trim()) },
-      { name: 'Address Details', weight: 15, check: !!(member.address && member.address.trim()) },
+      {
+        name: 'Full Name',
+        weight: 15,
+        check: !!(member.name && member.name.trim()),
+      },
+      {
+        name: 'Mobile Number',
+        weight: 15,
+        check: !!(member.mobile && member.mobile.trim()),
+      },
+      {
+        name: 'Email Address',
+        weight: 15,
+        check: !!(member.email && member.email.trim()),
+      },
+      {
+        name: 'Username Handle',
+        weight: 15,
+        check: !!(member.username && member.username.trim()),
+      },
+      {
+        name: 'Address Details',
+        weight: 15,
+        check: !!(member.address && member.address.trim()),
+      },
       {
         name: 'Payment Details (UPI/Bank)',
         weight: 20,
@@ -739,10 +763,15 @@ export class MembersService {
           (member.upiId && member.upiId.trim()) ||
           (member.bankDetails &&
             typeof member.bankDetails === 'object' &&
-            (member.bankDetails.accountNumber || member.bankDetails.account_number))
+            (member.bankDetails.accountNumber ||
+              member.bankDetails.account_number))
         ),
       },
-      { name: 'Profile Photo', weight: 5, check: !!(member.profilePhoto && member.profilePhoto.trim()) },
+      {
+        name: 'Profile Photo',
+        weight: 5,
+        check: !!(member.profilePhoto && member.profilePhoto.trim()),
+      },
     ];
 
     let completionPercentage = 0;
@@ -810,7 +839,11 @@ export class MembersService {
     id: string,
     actorId?: string,
     actorRole?: MemberRole,
-  ): Promise<{ message: string; deletedMemberId: string; reattachedDownlinesCount: number }> {
+  ): Promise<{
+    message: string;
+    deletedMemberId: string;
+    reattachedDownlinesCount: number;
+  }> {
     const member = await this.prisma.member.findUnique({
       where: { id },
       select: {
@@ -858,7 +891,9 @@ export class MembersService {
           member.memberCode,
         );
       } catch (err: any) {
-        this.logger.warn(`Failed to dispatch deletion email to ${member.email}: ${err.message}`);
+        this.logger.warn(
+          `Failed to dispatch deletion email to ${member.email}: ${err.message}`,
+        );
       }
     }
 

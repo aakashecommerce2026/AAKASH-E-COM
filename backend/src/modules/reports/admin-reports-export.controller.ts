@@ -1,6 +1,20 @@
-import { Controller, Get, Query, Param, Res, UseGuards, NotFoundException, Inject } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  Param,
+  Res,
+  UseGuards,
+  NotFoundException,
+  Inject,
+} from '@nestjs/common';
 import type { Response } from 'express';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { MemberRole } from '@prisma/client';
 import { InjectQueue } from '@nestjs/bull';
 import type { Queue } from 'bull';
@@ -27,10 +41,15 @@ export class AdminReportsExportController {
 
   @Get('pdf')
   @ApiOperation({
-    summary: 'GET /admin/reports/export/pdf — Export daily/weekly/monthly report to PDF',
-    description: 'Generates a PDF document for member registrations, repurchase activities, earnings summary, or business summary.',
+    summary:
+      'GET /admin/reports/export/pdf — Export daily/weekly/monthly report to PDF',
+    description:
+      'Generates a PDF document for member registrations, repurchase activities, earnings summary, or business summary.',
   })
-  @ApiResponse({ status: 200, description: 'PDF file binary or queue job reference' })
+  @ApiResponse({
+    status: 200,
+    description: 'PDF file binary or queue job reference',
+  })
   async exportPdf(@Query() query: QueryExportReportDto, @Res() res: Response) {
     const period = query.period || 'daily';
 
@@ -46,7 +65,9 @@ export class AdminReportsExportController {
       return res.status(202).json({
         jobId: job.id,
         status: 'QUEUED',
-        message: 'Report export job queued. Download link available upon completion at GET /admin/reports/export/jobs/' + job.id,
+        message:
+          'Report export job queued. Download link available upon completion at GET /admin/reports/export/jobs/' +
+          job.id,
       });
     }
 
@@ -56,7 +77,11 @@ export class AdminReportsExportController {
       endDate: query.endDate,
     });
 
-    const pdfBuffer = await this.pdfExportService.generatePdf(reportData, period, query.type);
+    const pdfBuffer = await this.pdfExportService.generatePdf(
+      reportData,
+      period,
+      query.type,
+    );
 
     const filename = `${query.type}-${period}-${new Date().toISOString().split('T')[0]}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
@@ -66,11 +91,19 @@ export class AdminReportsExportController {
 
   @Get('excel')
   @ApiOperation({
-    summary: 'GET /admin/reports/export/excel — Export daily/weekly/monthly report to Excel (.xlsx)',
-    description: 'Generates an Excel workbook with formatted headers matching the report type and period breakdown.',
+    summary:
+      'GET /admin/reports/export/excel — Export daily/weekly/monthly report to Excel (.xlsx)',
+    description:
+      'Generates an Excel workbook with formatted headers matching the report type and period breakdown.',
   })
-  @ApiResponse({ status: 200, description: 'Excel .xlsx file binary or queue job reference' })
-  async exportExcel(@Query() query: QueryExportReportDto, @Res() res: Response) {
+  @ApiResponse({
+    status: 200,
+    description: 'Excel .xlsx file binary or queue job reference',
+  })
+  async exportExcel(
+    @Query() query: QueryExportReportDto,
+    @Res() res: Response,
+  ) {
     const period = query.period || 'daily';
 
     if (query.async) {
@@ -85,7 +118,9 @@ export class AdminReportsExportController {
       return res.status(202).json({
         jobId: job.id,
         status: 'QUEUED',
-        message: 'Report export job queued. Download link available upon completion at GET /admin/reports/export/jobs/' + job.id,
+        message:
+          'Report export job queued. Download link available upon completion at GET /admin/reports/export/jobs/' +
+          job.id,
       });
     }
 
@@ -95,17 +130,25 @@ export class AdminReportsExportController {
       endDate: query.endDate,
     });
 
-    const excelBuffer = await this.excelExportService.generateExcel(reportData, period, query.type);
+    const excelBuffer = await this.excelExportService.generateExcel(
+      reportData,
+      period,
+      query.type,
+    );
 
     const filename = `${query.type}-${period}-${new Date().toISOString().split('T')[0]}.xlsx`;
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     return res.send(excelBuffer);
   }
 
   @Get('jobs/:id')
   @ApiOperation({
-    summary: 'GET /admin/reports/export/jobs/:id — Check export queue job status or download result',
+    summary:
+      'GET /admin/reports/export/jobs/:id — Check export queue job status or download result',
   })
   @ApiResponse({ status: 200, description: 'Export job status and payload' })
   async getJobStatus(@Param('id') id: string, @Res() res: Response) {

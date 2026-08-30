@@ -23,6 +23,7 @@ import {
   InputAdornment,
   Divider,
   Avatar,
+  Autocomplete,
 } from '@mui/material';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
@@ -434,32 +435,106 @@ const RepurchasePanel = () => {
           {/* Form Content */}
           <Box sx={{ p: 3 }}>
             <Grid container spacing={2.5}>
-              {/* Member Selection (Member ID & Member Name) */}
+              {/* Member Selection (Searchable Member ID & Name Dropdown) */}
               <Grid item xs={12} sm={6} md={4}>
-                <TextField
-                  select
-                  fullWidth
+                <Autocomplete
                   size="small"
-                  label="Select Member (Member ID & Name) *"
-                  value={formData.memberId}
-                  onChange={(e) => handleInputChange('memberId', e.target.value)}
-                  error={Boolean(errors.memberId)}
-                  helperText={errors.memberId}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <PersonIcon color="action" fontSize="small" />
-                      </InputAdornment>
-                    ),
+                  options={members || []}
+                  getOptionLabel={(option) => {
+                    if (!option) return '';
+                    if (typeof option === 'string') return option;
+                    const code = option.referralCode || `MEM-${option.id}`;
+                    return `${code} — ${option.name}`;
                   }}
-                >
-                  <MenuItem value="">-- Select Beneficiary Member --</MenuItem>
-                  {members.map((m) => (
-                    <MenuItem key={m.id} value={m.id}>
-                      <strong>{m.referralCode || `MEM-${m.id}`}</strong> — {m.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
+                  isOptionEqualToValue={(option, value) => {
+                    if (!option || !value) return false;
+                    const valId = typeof value === 'object' ? value.id : value;
+                    return String(option.id) === String(valId);
+                  }}
+                  filterOptions={(options, state) => {
+                    const query = (state.inputValue || '').trim().toLowerCase();
+                    if (!query) return options;
+                    return options.filter((m) => {
+                      const code = (m.referralCode || `MEM-${m.id}`).toLowerCase();
+                      const name = (m.name || '').toLowerCase();
+                      const idStr = String(m.id).toLowerCase();
+                      const mobile = (m.mobile || '').toLowerCase();
+                      return (
+                        code.includes(query) ||
+                        name.includes(query) ||
+                        idStr.includes(query) ||
+                        mobile.includes(query)
+                      );
+                    });
+                  }}
+                  value={members.find((m) => String(m.id) === String(formData.memberId)) || null}
+                  onChange={(event, newValue) => {
+                    if (newValue) {
+                      handleInputChange('memberId', newValue.id);
+                    } else {
+                      handleInputChange('memberId', '');
+                    }
+                  }}
+                  renderOption={(props, option) => {
+                    const { key: _key, ...optionProps } = props;
+                    const code = option.referralCode || `MEM-${option.id}`;
+                    return (
+                      <Box
+                        component="li"
+                        key={option.id}
+                        {...optionProps}
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          width: '100%',
+                          py: 1,
+                        }}
+                      >
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: 'primary.dark' }}>
+                            {code}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {option.name}
+                          </Typography>
+                        </Box>
+                        {option.mobile && (
+                          <Chip
+                            label={option.mobile}
+                            size="small"
+                            variant="outlined"
+                            sx={{ height: 20, fontSize: '0.68rem' }}
+                          />
+                        )}
+                      </Box>
+                    );
+                  }}
+                  renderInput={(params) => {
+                    const { InputProps, ...restParams } = params || {};
+                    const { startAdornment, ...restInputProps } = InputProps || {};
+                    return (
+                      <TextField
+                        {...restParams}
+                        label="Select / Search Member (ID or Name) *"
+                        placeholder="Type Member ID or Name..."
+                        error={Boolean(errors.memberId)}
+                        helperText={errors.memberId || 'Search by Member ID or Name'}
+                        InputProps={{
+                          ...restInputProps,
+                          startAdornment: (
+                            <>
+                              <InputAdornment position="start">
+                                <PersonIcon color="action" fontSize="small" />
+                              </InputAdornment>
+                              {startAdornment}
+                            </>
+                          ),
+                        }}
+                      />
+                    );
+                  }}
+                />
               </Grid>
 
               {/* Amount of Purchase */}

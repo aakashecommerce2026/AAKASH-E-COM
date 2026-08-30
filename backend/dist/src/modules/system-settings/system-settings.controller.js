@@ -43,7 +43,9 @@ let SystemSettingsController = class SystemSettingsController {
 exports.SystemSettingsController = SystemSettingsController;
 __decorate([
     (0, common_1.Get)('tds'),
-    (0, swagger_1.ApiOperation)({ summary: 'Get current system-wide TDS statutory tax deductions setting' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Get current system-wide TDS statutory tax deductions setting',
+    }),
     (0, swagger_1.ApiResponse)({ status: 200, type: system_settings_dto_1.TdsStatusResponseDto }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
@@ -52,7 +54,9 @@ __decorate([
 __decorate([
     (0, common_1.Patch)('tds'),
     (0, roles_decorator_1.Roles)(client_1.MemberRole.ADMIN),
-    (0, swagger_1.ApiOperation)({ summary: 'Toggle system-wide TDS statutory tax deductions (Admin only)' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Toggle system-wide TDS statutory tax deductions (Admin only)',
+    }),
     (0, swagger_1.ApiResponse)({ status: 200, type: system_settings_dto_1.TdsStatusResponseDto }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, current_user_decorator_1.CurrentUser)('id')),

@@ -7,7 +7,11 @@ export class ReportExcelExportService {
   /**
    * Generates a formatted Excel spreadsheet (.xlsx) buffer for a report dataset
    */
-  async generateExcel(reportData: any, period: ExportPeriodType, reportType: string): Promise<Buffer> {
+  async generateExcel(
+    reportData: any,
+    period: ExportPeriodType,
+    reportType: string,
+  ): Promise<Buffer> {
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'AAKASH MLM System';
     workbook.created = new Date();
@@ -19,8 +23,17 @@ export class ReportExcelExportService {
     summarySheet.mergeCells('A1:D1');
     const titleCell = summarySheet.getCell('A1');
     titleCell.value = `AAKASH MLM — ${reportType.toUpperCase().replace(/-/g, ' ')} REPORT (${period.toUpperCase()})`;
-    titleCell.font = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FFFFFF' } };
-    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '1E3A8A' } };
+    titleCell.font = {
+      name: 'Calibri',
+      size: 14,
+      bold: true,
+      color: { argb: 'FFFFFF' },
+    };
+    titleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: '1E3A8A' },
+    };
     titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
 
     summarySheet.getRow(1).height = 30;
@@ -28,7 +41,12 @@ export class ReportExcelExportService {
     // Metadata
     summarySheet.addRow([]);
     summarySheet.addRow(['Period Type:', period.toUpperCase()]);
-    summarySheet.addRow(['Date Range:', reportData.dateRange ? `${reportData.dateRange.startDate} to ${reportData.dateRange.endDate}` : 'All Time']);
+    summarySheet.addRow([
+      'Date Range:',
+      reportData.dateRange
+        ? `${reportData.dateRange.startDate} to ${reportData.dateRange.endDate}`
+        : 'All Time',
+    ]);
     summarySheet.addRow(['Generated At:', new Date().toLocaleString()]);
     summarySheet.addRow([]);
 
@@ -36,7 +54,11 @@ export class ReportExcelExportService {
     const kpiHeaderRow = summarySheet.addRow(['Metric', 'Value']);
     kpiHeaderRow.font = { bold: true, color: { argb: 'FFFFFF' } };
     kpiHeaderRow.eachCell((cell) => {
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '2563EB' } };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: '2563EB' },
+      };
     });
 
     const summaryObj = reportData.summary || {};
@@ -47,20 +69,25 @@ export class ReportExcelExportService {
       summarySheet.addRow([formattedKey, val]);
     });
 
-    summarySheet.columns = [
-      { width: 35 },
-      { width: 25 },
-    ];
+    summarySheet.columns = [{ width: 35 }, { width: 25 }];
 
     // 2. Trend Breakdown Sheet
-    if (reportData.trend && Array.isArray(reportData.trend) && reportData.trend.length > 0) {
+    if (
+      reportData.trend &&
+      Array.isArray(reportData.trend) &&
+      reportData.trend.length > 0
+    ) {
       const trendSheet = workbook.addWorksheet('Period Trend');
 
       const headers = Object.keys(reportData.trend[0]);
       const headerRow = trendSheet.addRow(headers.map((h) => h.toUpperCase()));
       headerRow.font = { bold: true, color: { argb: 'FFFFFF' } };
       headerRow.eachCell((cell) => {
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '1E3A8A' } };
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: '1E3A8A' },
+        };
       });
 
       reportData.trend.forEach((item: any) => {
@@ -72,16 +99,28 @@ export class ReportExcelExportService {
     }
 
     // 3. Detailed Data Sheet (if data array present)
-    if (reportData.data && Array.isArray(reportData.data) && reportData.data.length > 0) {
+    if (
+      reportData.data &&
+      Array.isArray(reportData.data) &&
+      reportData.data.length > 0
+    ) {
       const dataSheet = workbook.addWorksheet('Detailed Records');
 
       const firstRow = reportData.data[0];
-      const dataHeaders = Object.keys(firstRow).filter((k) => typeof firstRow[k] !== 'object');
-      const dataHeaderRow = dataSheet.addRow(dataHeaders.map((h) => h.toUpperCase()));
+      const dataHeaders = Object.keys(firstRow).filter(
+        (k) => typeof firstRow[k] !== 'object',
+      );
+      const dataHeaderRow = dataSheet.addRow(
+        dataHeaders.map((h) => h.toUpperCase()),
+      );
 
       dataHeaderRow.font = { bold: true, color: { argb: 'FFFFFF' } };
       dataHeaderRow.eachCell((cell) => {
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '059669' } };
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: '059669' },
+        };
       });
 
       reportData.data.forEach((item: any) => {

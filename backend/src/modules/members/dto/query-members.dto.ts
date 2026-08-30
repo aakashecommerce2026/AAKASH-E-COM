@@ -28,13 +28,17 @@ export class QueryMembersDto {
 
   @ApiPropertyOptional({ enum: MemberStatus })
   @IsOptional()
-  @Transform(({ value }: { value: any }) => (typeof value === 'string' ? value.toUpperCase() : value))
+  @Transform(({ value }: { value: any }) =>
+    typeof value === 'string' ? value.toUpperCase() : value,
+  )
   @IsEnum(MemberStatus)
   status?: MemberStatus;
 
   @ApiPropertyOptional({ enum: MemberRole })
   @IsOptional()
-  @Transform(({ value }: { value: any }) => (typeof value === 'string' ? value.toUpperCase() : value))
+  @Transform(({ value }: { value: any }) =>
+    typeof value === 'string' ? value.toUpperCase() : value,
+  )
   @IsEnum(MemberRole)
   role?: MemberRole;
 

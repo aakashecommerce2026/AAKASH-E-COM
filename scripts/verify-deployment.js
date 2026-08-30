@@ -86,7 +86,7 @@ try {
   const mainTsContent = fs.readFileSync(path.join(backendDir, 'src', 'main.ts'), 'utf8');
   const appModuleContent = fs.readFileSync(path.join(backendDir, 'src', 'app.module.ts'), 'utf8');
 
-  if (!mainTsContent.includes('helmet()')) {
+  if (!mainTsContent.includes('app.use(\n    helmet') && !mainTsContent.includes('app.use(helmet') && !mainTsContent.includes('helmet()')) {
     throw new Error('Helmet HTTP security header middleware missing in main.ts!');
   }
   if (!appModuleContent.includes('ThrottlerModule')) {

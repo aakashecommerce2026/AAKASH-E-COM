@@ -252,7 +252,9 @@ let RepurchaseCommissionService = RepurchaseCommissionService_1 = class Repurcha
             const ratePercentage = rateMap.get(node.level) ?? 0;
             if (ratePercentage > 0) {
                 const commissionAmount = Math.round(repurchaseAmount * (ratePercentage / 100) * 100) / 100;
-                const ledgerStatus = !node.status || (node.status === client_1.MemberStatus.ACTIVE && !node.isCommissionFrozen)
+                const ledgerStatus = !node.status ||
+                    (node.status === client_1.MemberStatus.ACTIVE &&
+                        !node.isCommissionFrozen)
                     ? client_1.CommissionStatus.PENDING
                     : client_1.CommissionStatus.HOLD;
                 const ledger = await db.repurchaseCommissionLedger.create({

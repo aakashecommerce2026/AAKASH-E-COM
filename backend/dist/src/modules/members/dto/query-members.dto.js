@@ -52,14 +52,14 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ enum: client_1.MemberStatus }),
     (0, class_validator_1.IsOptional)(),
-    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.toUpperCase() : value)),
+    (0, class_transformer_1.Transform)(({ value }) => typeof value === 'string' ? value.toUpperCase() : value),
     (0, class_validator_1.IsEnum)(client_1.MemberStatus),
     __metadata("design:type", String)
 ], QueryMembersDto.prototype, "status", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ enum: client_1.MemberRole }),
     (0, class_validator_1.IsOptional)(),
-    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.toUpperCase() : value)),
+    (0, class_transformer_1.Transform)(({ value }) => typeof value === 'string' ? value.toUpperCase() : value),
     (0, class_validator_1.IsEnum)(client_1.MemberRole),
     __metadata("design:type", String)
 ], QueryMembersDto.prototype, "role", void 0);

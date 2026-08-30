@@ -15,13 +15,17 @@ export class UpdateMemberProfileDto {
 
   @ApiPropertyOptional({ description: 'Email Address' })
   @IsOptional()
-  @Transform(({ value }: { value: any }) => (typeof value === 'string' && value.trim() === '' ? undefined : value))
+  @Transform(({ value }: { value: any }) =>
+    typeof value === 'string' && value.trim() === '' ? undefined : value,
+  )
   @IsEmail()
   email?: string;
 
   @ApiPropertyOptional({ description: 'Mobile Number' })
   @IsOptional()
-  @Transform(({ value }: { value: any }) => (typeof value === 'string' && value.trim() === '' ? undefined : value))
+  @Transform(({ value }: { value: any }) =>
+    typeof value === 'string' && value.trim() === '' ? undefined : value,
+  )
   @IsString()
   mobile?: string;
 

@@ -342,7 +342,9 @@ export class RepurchaseCommissionService implements OnModuleInit {
           Math.round(repurchaseAmount * (ratePercentage / 100) * 100) / 100;
 
         const ledgerStatus =
-          !node.status || (node.status === MemberStatus.ACTIVE && !(node as any).isCommissionFrozen)
+          !node.status ||
+          (node.status === MemberStatus.ACTIVE &&
+            !(node as any).isCommissionFrozen)
             ? CommissionStatus.PENDING
             : CommissionStatus.HOLD;
 

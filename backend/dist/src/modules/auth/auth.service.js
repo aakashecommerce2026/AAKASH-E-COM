@@ -302,7 +302,7 @@ let AuthService = AuthService_1 = class AuthService {
 ${resetLink}
 ==================================================
 `);
-            await this.emailService.sendPasswordResetLinkEmail(member.email, member.name, resetLink, otpCode);
+            await this.emailService.sendPasswordResetLinkEmail(member.email, member.name, resetLink);
         }
         return {
             message: 'If an account with that email exists, a password reset link has been sent.',

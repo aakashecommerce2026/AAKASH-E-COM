@@ -357,7 +357,7 @@ ${text || html}
     email: string,
     name: string,
     resetLink: string,
-    token: string,
+    token?: string,
   ): Promise<boolean> {
     const subject = `Reset Your Password - AAKASH E-COM`;
 
@@ -382,12 +382,6 @@ ${text || html}
             Or copy and paste this reset URL into your browser:<br/>
             <a href="${resetLink}" style="color: #059669; word-break: break-all;">${resetLink}</a>
           </p>
-
-          <div style="background-color: #f8fafc; border-left: 4px solid #0284c7; padding: 12px; margin: 20px 0; border-radius: 4px;">
-            <p style="margin: 0; color: #334155; font-size: 14px;">
-              Reset Code / Token: <strong style="color: #0369a1; font-size: 16px; letter-spacing: 2px;">${token}</strong>
-            </p>
-          </div>
 
           <p style="color: #888888; font-size: 13px;">
             ⏳ This reset link will expire in <strong>10 minutes</strong>. If you did not request a password reset, please ignore this email.

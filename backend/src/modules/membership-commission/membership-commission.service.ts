@@ -341,7 +341,9 @@ export class MembershipCommissionService {
         const commissionAmount = (joiningFee * ratePercentage) / 100;
 
         const ledgerStatus =
-          !node.status || (node.status === MemberStatus.ACTIVE && !(node as any).isCommissionFrozen)
+          !node.status ||
+          (node.status === MemberStatus.ACTIVE &&
+            !(node as any).isCommissionFrozen)
             ? CommissionStatus.PENDING
             : CommissionStatus.HOLD;
 

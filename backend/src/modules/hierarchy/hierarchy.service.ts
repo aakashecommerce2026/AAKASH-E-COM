@@ -215,7 +215,8 @@ export class HierarchyService {
       Math.max(1, maxLevels),
       this.ABSOLUTE_MAX_LEVELS_CAP,
     );
-    const searchTerm = queryDto.q && queryDto.q.trim() ? `%${queryDto.q.trim()}%` : '%';
+    const searchTerm =
+      queryDto.q && queryDto.q.trim() ? `%${queryDto.q.trim()}%` : '%';
 
     const results = await this.prisma.$queryRaw<HierarchyNode[]>`
       WITH RECURSIVE downline AS (

@@ -54,7 +54,10 @@ __decorate([
     __metadata("design:type", Object)
 ], AuthUserDto.prototype, "address", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: '/uploads/profile-photos/avatar.jpg', nullable: true }),
+    (0, swagger_1.ApiProperty)({
+        example: '/uploads/profile-photos/avatar.jpg',
+        nullable: true,
+    }),
     __metadata("design:type", Object)
 ], AuthUserDto.prototype, "profilePhoto", void 0);
 __decorate([

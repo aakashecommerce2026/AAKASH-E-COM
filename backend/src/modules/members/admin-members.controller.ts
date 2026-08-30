@@ -88,7 +88,9 @@ export class AdminMembersController {
   }
 
   @Patch(':id/commission-freeze')
-  @ApiOperation({ summary: 'Freeze or unfreeze commission payouts for a member' })
+  @ApiOperation({
+    summary: 'Freeze or unfreeze commission payouts for a member',
+  })
   @ApiResponse({
     status: 200,
     description: 'Member commission freeze status updated successfully',
@@ -101,7 +103,12 @@ export class AdminMembersController {
     @CurrentUser('id') actorId: string,
     @CurrentUser('role') actorRole: MemberRole,
   ) {
-    return this.membersService.toggleCommissionFreeze(id, dto, actorId, actorRole);
+    return this.membersService.toggleCommissionFreeze(
+      id,
+      dto,
+      actorId,
+      actorRole,
+    );
   }
 
   @Post(':id/reassign-referrer')
@@ -179,15 +186,20 @@ export class AdminMembersController {
   @Delete(':id')
   @Roles(MemberRole.ADMIN)
   @ApiOperation({
-    summary: 'Delete a member and re-attach direct downlines to Super Admin (Admin only)',
+    summary:
+      'Delete a member and re-attach direct downlines to Super Admin (Admin only)',
     description:
       'Safely deletes member account, re-parents all direct referral downlines to Super Admin, dispatches deletion email, and logs activity audit.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Member deleted and downlines re-attached to Super Admin successfully',
+    description:
+      'Member deleted and downlines re-attached to Super Admin successfully',
   })
-  @ApiResponse({ status: 400, description: 'Cannot delete Super Admin root member' })
+  @ApiResponse({
+    status: 400,
+    description: 'Cannot delete Super Admin root member',
+  })
   @ApiResponse({ status: 404, description: 'Member not found' })
   async deleteMember(
     @Param('id') id: string,

@@ -17,7 +17,10 @@ class UpdateTdsStatusDto {
 }
 exports.UpdateTdsStatusDto = UpdateTdsStatusDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: true, description: 'Enable or disable TDS & Admin statutory deductions system-wide' }),
+    (0, swagger_1.ApiProperty)({
+        example: true,
+        description: 'Enable or disable TDS & Admin statutory deductions system-wide',
+    }),
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], UpdateTdsStatusDto.prototype, "enabled", void 0);
@@ -31,7 +34,9 @@ __decorate([
     __metadata("design:type", Boolean)
 ], TdsStatusResponseDto.prototype, "enabled", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'TDS (5%) & Admin Fee (5%) deductions enabled system-wide.' }),
+    (0, swagger_1.ApiProperty)({
+        example: 'TDS (5%) & Admin Fee (5%) deductions enabled system-wide.',
+    }),
     __metadata("design:type", String)
 ], TdsStatusResponseDto.prototype, "message", void 0);
 //# sourceMappingURL=system-settings.dto.js.map

@@ -19,7 +19,8 @@ export class MemberRepurchaseController {
 
   @Get()
   @ApiOperation({
-    summary: 'GET /member/repurchase — View own member repurchase transaction history',
+    summary:
+      'GET /member/repurchase — View own member repurchase transaction history',
     description:
       'Returns paginated list of repurchase orders for the currently authenticated member.',
   })

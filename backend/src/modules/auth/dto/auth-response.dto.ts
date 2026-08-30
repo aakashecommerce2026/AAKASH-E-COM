@@ -22,7 +22,10 @@ export class AuthUserDto {
   @ApiProperty({ example: '123 Main Street, City', nullable: true })
   address?: string | null;
 
-  @ApiProperty({ example: '/uploads/profile-photos/avatar.jpg', nullable: true })
+  @ApiProperty({
+    example: '/uploads/profile-photos/avatar.jpg',
+    nullable: true,
+  })
   profilePhoto?: string | null;
 
   @ApiProperty({ example: 'MEMBER' })

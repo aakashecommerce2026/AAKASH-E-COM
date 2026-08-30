@@ -7,7 +7,11 @@ export class ReportPdfExportService {
   /**
    * Generates a formatted PDF document buffer for a given report dataset
    */
-  async generatePdf(reportData: any, period: ExportPeriodType, reportType: string): Promise<Buffer> {
+  async generatePdf(
+    reportData: any,
+    period: ExportPeriodType,
+    reportType: string,
+  ): Promise<Buffer> {
     const pdfDoc = await PDFDocument.create();
     let page = pdfDoc.addPage([595.28, 841.89]); // A4 portrait
     const { width, height } = page.getSize();
@@ -39,13 +43,16 @@ export class ReportPdfExportService {
       color: rgb(1, 1, 1),
     });
 
-    page.drawText(`Type: ${reportType.toUpperCase()} | Period: ${period.toUpperCase()}`, {
-      x: 45,
-      y: yPos - 30,
-      size: 10,
-      font: fontRegular,
-      color: rgb(0.9, 0.9, 0.9),
-    });
+    page.drawText(
+      `Type: ${reportType.toUpperCase()} | Period: ${period.toUpperCase()}`,
+      {
+        x: 45,
+        y: yPos - 30,
+        size: 10,
+        font: fontRegular,
+        color: rgb(0.9, 0.9, 0.9),
+      },
+    );
 
     yPos -= 60;
 
@@ -131,7 +138,11 @@ export class ReportPdfExportService {
     yPos -= Math.min(summaryEntries.length * 16, 120) + 30;
 
     // Trend / Breakdown Section Header
-    if (reportData.trend && Array.isArray(reportData.trend) && reportData.trend.length > 0) {
+    if (
+      reportData.trend &&
+      Array.isArray(reportData.trend) &&
+      reportData.trend.length > 0
+    ) {
       page.drawText('PERIOD TREND BREAKDOWN', {
         x: 30,
         y: yPos,
@@ -186,7 +197,9 @@ export class ReportPdfExportService {
         headers.forEach((h, colIdx) => {
           const rawVal = rowItem[h];
           const displayVal =
-            typeof rawVal === 'number' ? rawVal.toFixed(2) : String(rawVal ?? '');
+            typeof rawVal === 'number'
+              ? rawVal.toFixed(2)
+              : String(rawVal ?? '');
 
           page.drawText(displayVal.substring(0, 18), {
             x: 40 + colIdx * 100,

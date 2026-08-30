@@ -540,23 +540,52 @@ let MembersService = MembersService_1 = class MembersService {
     }
     calculateProfileCompletion(member) {
         if (!member) {
-            return { completionPercentage: 0, isProfileComplete: false, missingFields: [] };
+            return {
+                completionPercentage: 0,
+                isProfileComplete: false,
+                missingFields: [],
+            };
         }
         const fields = [
-            { name: 'Full Name', weight: 15, check: !!(member.name && member.name.trim()) },
-            { name: 'Mobile Number', weight: 15, check: !!(member.mobile && member.mobile.trim()) },
-            { name: 'Email Address', weight: 15, check: !!(member.email && member.email.trim()) },
-            { name: 'Username Handle', weight: 15, check: !!(member.username && member.username.trim()) },
-            { name: 'Address Details', weight: 15, check: !!(member.address && member.address.trim()) },
+            {
+                name: 'Full Name',
+                weight: 15,
+                check: !!(member.name && member.name.trim()),
+            },
+            {
+                name: 'Mobile Number',
+                weight: 15,
+                check: !!(member.mobile && member.mobile.trim()),
+            },
+            {
+                name: 'Email Address',
+                weight: 15,
+                check: !!(member.email && member.email.trim()),
+            },
+            {
+                name: 'Username Handle',
+                weight: 15,
+                check: !!(member.username && member.username.trim()),
+            },
+            {
+                name: 'Address Details',
+                weight: 15,
+                check: !!(member.address && member.address.trim()),
+            },
             {
                 name: 'Payment Details (UPI/Bank)',
                 weight: 20,
                 check: !!((member.upiId && member.upiId.trim()) ||
                     (member.bankDetails &&
                         typeof member.bankDetails === 'object' &&
-                        (member.bankDetails.accountNumber || member.bankDetails.account_number))),
+                        (member.bankDetails.accountNumber ||
+                            member.bankDetails.account_number))),
             },
-            { name: 'Profile Photo', weight: 5, check: !!(member.profilePhoto && member.profilePhoto.trim()) },
+            {
+                name: 'Profile Photo',
+                weight: 5,
+                check: !!(member.profilePhoto && member.profilePhoto.trim()),
+            },
         ];
         let completionPercentage = 0;
         const missingFields = [];

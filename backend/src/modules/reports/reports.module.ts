@@ -59,4 +59,3 @@ import { AdminReportsExportController } from './admin-reports-export.controller'
   ],
 })
 export class ReportsModule {}
-

@@ -15,10 +15,22 @@ describe('Admin Reports Export Integration Test Suite', () => {
 
   const mockReportData = {
     periodType: 'daily',
-    dateRange: { startDate: '2026-08-01T00:00:00.000Z', endDate: '2026-08-19T23:59:59.999Z' },
+    dateRange: {
+      startDate: '2026-08-01T00:00:00.000Z',
+      endDate: '2026-08-19T23:59:59.999Z',
+    },
     summary: { totalRegistrations: 10, activeRegistrations: 8 },
-    trend: [{ period: '2026-08-19', totalRegistrations: 2, activeCount: 2, pendingCount: 0 }],
-    data: [{ id: '1', memberCode: 'AK1001', name: 'John Doe', status: 'ACTIVE' }],
+    trend: [
+      {
+        period: '2026-08-19',
+        totalRegistrations: 2,
+        activeCount: 2,
+        pendingCount: 0,
+      },
+    ],
+    data: [
+      { id: '1', memberCode: 'AK1001', name: 'John Doe', status: 'ACTIVE' },
+    ],
   };
 
   beforeEach(async () => {
@@ -51,10 +63,14 @@ describe('Admin Reports Export Integration Test Suite', () => {
       ],
     }).compile();
 
-    controller = module.get<AdminReportsExportController>(AdminReportsExportController);
+    controller = module.get<AdminReportsExportController>(
+      AdminReportsExportController,
+    );
     reportsService = module.get<AdminReportsService>(AdminReportsService);
     pdfService = module.get<ReportPdfExportService>(ReportPdfExportService);
-    excelService = module.get<ReportExcelExportService>(ReportExcelExportService);
+    excelService = module.get<ReportExcelExportService>(
+      ReportExcelExportService,
+    );
   });
 
   it('should be defined', () => {
@@ -71,11 +87,18 @@ describe('Admin Reports Export Integration Test Suite', () => {
       };
 
       const result = await controller.exportPdf(
-        { type: ReportType.MEMBER_REGISTRATIONS, period: 'daily', async: false },
+        {
+          type: ReportType.MEMBER_REGISTRATIONS,
+          period: 'daily',
+          async: false,
+        },
         mockRes,
       );
 
-      expect(mockRes.setHeader).toHaveBeenCalledWith('Content-Type', 'application/pdf');
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        'Content-Type',
+        'application/pdf',
+      );
       expect(result).toBeInstanceOf(Buffer);
     });
 
@@ -104,7 +127,11 @@ describe('Admin Reports Export Integration Test Suite', () => {
       };
 
       const result = await controller.exportExcel(
-        { type: ReportType.REPURCHASE_ACTIVITIES, period: 'daily', async: false },
+        {
+          type: ReportType.REPURCHASE_ACTIVITIES,
+          period: 'daily',
+          async: false,
+        },
         mockRes,
       );
 

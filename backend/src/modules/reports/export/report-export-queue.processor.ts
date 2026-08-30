@@ -26,7 +26,9 @@ export class ReportExportProcessor {
 
   @Process('generate-export')
   async handleGenerateExport(job: Job<ReportExportJobData>) {
-    this.logger.log(`Processing report export job ${job.id} (${job.data.format.toUpperCase()} - ${job.data.type})`);
+    this.logger.log(
+      `Processing report export job ${job.id} (${job.data.format.toUpperCase()} - ${job.data.type})`,
+    );
 
     const { format, period, type, startDate, endDate } = job.data;
 
@@ -38,12 +40,22 @@ export class ReportExportProcessor {
 
     let buffer: Buffer;
     if (format === 'pdf') {
-      buffer = await this.pdfExportService.generatePdf(reportData, period, type);
+      buffer = await this.pdfExportService.generatePdf(
+        reportData,
+        period,
+        type,
+      );
     } else {
-      buffer = await this.excelExportService.generateExcel(reportData, period, type);
+      buffer = await this.excelExportService.generateExcel(
+        reportData,
+        period,
+        type,
+      );
     }
 
-    this.logger.log(`Export job ${job.id} completed. Generated ${buffer.length} bytes.`);
+    this.logger.log(
+      `Export job ${job.id} completed. Generated ${buffer.length} bytes.`,
+    );
 
     return {
       status: 'COMPLETED',

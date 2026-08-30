@@ -26,7 +26,11 @@ export class SystemSettingsService {
     }
   }
 
-  async setTdsEnabled(enabled: boolean, actorId?: string, actorRole?: MemberRole) {
+  async setTdsEnabled(
+    enabled: boolean,
+    actorId?: string,
+    actorRole?: MemberRole,
+  ) {
     const value = enabled ? 'true' : 'false';
 
     const setting = await this.prisma.systemSetting.upsert({
@@ -34,13 +38,15 @@ export class SystemSettingsService {
       update: {
         value,
         updatedBy: actorId || null,
-        description: 'System-wide flag for TDS (5%) & Admin Fee (5%) statutory tax deductions',
+        description:
+          'System-wide flag for TDS (5%) & Admin Fee (5%) statutory tax deductions',
       },
       create: {
         key: TDS_DEDUCTIONS_KEY,
         value,
         updatedBy: actorId || null,
-        description: 'System-wide flag for TDS (5%) & Admin Fee (5%) statutory tax deductions',
+        description:
+          'System-wide flag for TDS (5%) & Admin Fee (5%) statutory tax deductions',
       },
     });
 
@@ -53,7 +59,9 @@ export class SystemSettingsService {
       metadata: { enabled, value },
     });
 
-    this.logger.log(`Statutory TDS deductions system setting updated: ENABLED = ${enabled}`);
+    this.logger.log(
+      `Statutory TDS deductions system setting updated: ENABLED = ${enabled}`,
+    );
 
     return {
       enabled,

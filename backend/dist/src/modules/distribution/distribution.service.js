@@ -184,8 +184,12 @@ let DistributionService = DistributionService_1 = class DistributionService {
             : true;
         const formattedData = allBeneficiaryEntries.map((item) => {
             const grossAmount = Math.round((item.membershipGrossAmount + item.repurchaseGrossAmount) * 100) / 100;
-            const tdsAmount = isTdsEnabled ? Math.round(grossAmount * 0.05 * 100) / 100 : 0;
-            const adminFee = isTdsEnabled ? Math.round(grossAmount * 0.05 * 100) / 100 : 0;
+            const tdsAmount = isTdsEnabled
+                ? Math.round(grossAmount * 0.05 * 100) / 100
+                : 0;
+            const adminFee = isTdsEnabled
+                ? Math.round(grossAmount * 0.05 * 100) / 100
+                : 0;
             const netAmount = Math.round((grossAmount - tdsAmount - adminFee) * 100) / 100;
             return {
                 member: item.member,
@@ -366,8 +370,12 @@ let DistributionService = DistributionService_1 = class DistributionService {
                 : true;
             for (const [bId, group] of memberGroupMap.entries()) {
                 const grossAmount = Math.round(group.grossAmount * 100) / 100;
-                const tdsAmount = isTdsEnabled ? Math.round(grossAmount * 0.05 * 100) / 100 : 0;
-                const adminFee = isTdsEnabled ? Math.round(grossAmount * 0.05 * 100) / 100 : 0;
+                const tdsAmount = isTdsEnabled
+                    ? Math.round(grossAmount * 0.05 * 100) / 100
+                    : 0;
+                const adminFee = isTdsEnabled
+                    ? Math.round(grossAmount * 0.05 * 100) / 100
+                    : 0;
                 const netAmount = Math.round((grossAmount - tdsAmount - adminFee) * 100) / 100;
                 batchTotalGross += grossAmount;
                 batchTotalTds += tdsAmount;

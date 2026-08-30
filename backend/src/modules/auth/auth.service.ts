@@ -399,7 +399,6 @@ ${resetLink}
         member.email,
         member.name,
         resetLink,
-        otpCode,
       );
     }
 

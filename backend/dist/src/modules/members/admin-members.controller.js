@@ -110,7 +110,9 @@ __decorate([
 ], AdminMembersController.prototype, "updateMember", null);
 __decorate([
     (0, common_1.Patch)(':id/commission-freeze'),
-    (0, swagger_1.ApiOperation)({ summary: 'Freeze or unfreeze commission payouts for a member' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Freeze or unfreeze commission payouts for a member',
+    }),
     (0, swagger_1.ApiResponse)({
         status: 200,
         description: 'Member commission freeze status updated successfully',
@@ -213,7 +215,10 @@ __decorate([
         status: 200,
         description: 'Member deleted and downlines re-attached to Super Admin successfully',
     }),
-    (0, swagger_1.ApiResponse)({ status: 400, description: 'Cannot delete Super Admin root member' }),
+    (0, swagger_1.ApiResponse)({
+        status: 400,
+        description: 'Cannot delete Super Admin root member',
+    }),
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Member not found' }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, current_user_decorator_1.CurrentUser)('id')),

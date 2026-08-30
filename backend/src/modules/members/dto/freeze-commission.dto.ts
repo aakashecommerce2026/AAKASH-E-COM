@@ -4,8 +4,7 @@ import { IsBoolean, IsOptional, IsString } from 'class-validator';
 export class FreezeCommissionDto {
   @ApiProperty({
     example: true,
-    description:
-      'Set true to freeze commission payouts, or false to unfreeze',
+    description: 'Set true to freeze commission payouts, or false to unfreeze',
   })
   @IsBoolean()
   isFrozen!: boolean;

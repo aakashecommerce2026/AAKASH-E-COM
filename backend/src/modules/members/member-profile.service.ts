@@ -116,7 +116,11 @@ export class MemberProfileService {
 
     const existingBank = (member.bankDetails as Record<string, any>) || {};
     const mergedBankDetails = bankDetails
-      ? { ...existingBank, ...bankDetails, ...(upiId !== undefined ? { upiId } : {}) }
+      ? {
+          ...existingBank,
+          ...bankDetails,
+          ...(upiId !== undefined ? { upiId } : {}),
+        }
       : upiId !== undefined
         ? { ...existingBank, upiId }
         : undefined;
