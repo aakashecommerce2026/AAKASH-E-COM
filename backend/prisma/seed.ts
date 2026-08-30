@@ -6,9 +6,9 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Seeding database...');
 
-  const adminEmail = 'admin@aakashecom.com';
+  const adminEmail = 'aakashecommerce2000@gmail.com';
   const adminMobile = '+919876543210';
-  const rawPassword = 'Admin@123456Password';
+  const rawPassword = 'Aakash.Emart@2000';
   const hashedPassword = await bcrypt.hash(rawPassword, 10);
 
   const existingAdmin = await prisma.member.findFirst({
