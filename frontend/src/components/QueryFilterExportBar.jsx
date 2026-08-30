@@ -60,8 +60,9 @@ const QueryFilterExportBar = ({
             size="small"
             value={searchQuery || ""}
             onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Search network records..."
             sx={{
-              minWidth: 240,
+              minWidth: { xs: "100%", sm: 220 },
               flexGrow: 1,
               "& .MuiOutlinedInput-root": { borderRadius: 2 },
             }}
@@ -83,7 +84,8 @@ const QueryFilterExportBar = ({
               value={typeFilter || "ALL"}
               onChange={(e) => onTypeFilterChange(e.target.value)}
               sx={{
-                minWidth: 180,
+                minWidth: { xs: "100%", sm: 160 },
+                width: { xs: "100%", sm: "auto" },
                 "& .MuiOutlinedInput-root": { borderRadius: 2 },
               }}
               InputProps={{
@@ -104,7 +106,7 @@ const QueryFilterExportBar = ({
           )}
 
           {/* From Date Picker */}
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, width: { xs: "100%", sm: "auto" } }}>
             <Typography variant="caption" sx={{ fontWeight: 700, color: "#475569", fontSize: "0.75rem" }}>
               From Date
             </Typography>
@@ -114,21 +116,20 @@ const QueryFilterExportBar = ({
               value={startDate || ""}
               onChange={(e) => onStartDateChange(e.target.value)}
               sx={{
-                minWidth: 165,
+                minWidth: { xs: "100%", sm: 150 },
+                width: { xs: "100%", sm: "auto" },
                 "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "#FFFFFF" },
                 "& .MuiInputBase-input": {
                   py: "6px",
-                  px: 1.5,
-                  fontSize: "0.875rem",
-                  fontWeight: 500,
-                  color: "#0F172A",
+                  fontSize: "0.85rem",
+                  color: "#1E293B",
                 },
               }}
             />
           </Box>
 
           {/* To Date Picker */}
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, width: { xs: "100%", sm: "auto" } }}>
             <Typography variant="caption" sx={{ fontWeight: 700, color: "#475569", fontSize: "0.75rem" }}>
               To Date
             </Typography>
@@ -138,14 +139,13 @@ const QueryFilterExportBar = ({
               value={endDate || ""}
               onChange={(e) => onEndDateChange(e.target.value)}
               sx={{
-                minWidth: 165,
+                minWidth: { xs: "100%", sm: 150 },
+                width: { xs: "100%", sm: "auto" },
                 "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "#FFFFFF" },
                 "& .MuiInputBase-input": {
                   py: "6px",
-                  px: 1.5,
-                  fontSize: "0.875rem",
-                  fontWeight: 500,
-                  color: "#0F172A",
+                  fontSize: "0.85rem",
+                  color: "#1E293B",
                 },
               }}
             />

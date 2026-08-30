@@ -667,12 +667,12 @@ const MemberManagement = () => {
   return (
     <Box>
       {/* Header Title Section */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3.5, flexWrap: 'wrap', gap: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, flexDirection: { xs: 'column', sm: 'row' }, mb: 3.5, gap: 2 }}>
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 800, color: 'primary.main', mb: 1 }}>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: 'primary.main', mb: 1, fontSize: { xs: '1.4rem', sm: '2.1rem' } }}>
             {isAdmin ? 'Member Directory & Unilevel Tree' : 'My Downline Network Tree'}
           </Typography>
-          <Typography variant="body1" color="text.secondary">
+          <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: '0.85rem', sm: '1rem' } }}>
             {isAdmin 
               ? 'Manage network members, confirm membership payments, generate unique referral codes, and verify placement in the tree line.' 
               : 'View your personal referral network, downline organization, and placement tree.'}
@@ -683,7 +683,7 @@ const MemberManagement = () => {
           color="secondary"
           startIcon={<AddIcon />}
           onClick={handleOpenAddModal}
-          sx={{ fontWeight: 700 }}
+          sx={{ fontWeight: 700, width: { xs: '100%', sm: 'auto' }, py: 1 }}
         >
           Register New Referral
         </Button>
@@ -719,12 +719,15 @@ const MemberManagement = () => {
       )}
 
       {/* Tabs Selector for Directory List vs Unilevel Tree Chart */}
-      <Paper sx={{ mb: 3.5 }}>
+      <Paper sx={{ mb: 3.5, borderRadius: 3, overflow: 'hidden' }}>
         <Tabs 
           value={activeTab} 
           onChange={(e, val) => setActiveTab(val)} 
           indicatorColor="secondary" 
           textColor="secondary"
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
           sx={{ borderBottom: '1px solid #E2E8F0', px: 2 }}
         >
           <Tab 
@@ -742,12 +745,13 @@ const MemberManagement = () => {
 
       {/* State View Cycling */}
       {activeTab === 0 ? (
-        <Paper elevation={0} sx={{ border: '1px solid #E2E8F0', borderRadius: 3, overflow: 'hidden' }}>
-          <DataGrid
-            rows={displayMembers}
-            columns={columns}
-            loading={loading}
-            pageSizeOptions={[5, 10, 25]}
+        <Paper elevation={0} sx={{ border: '1px solid #E2E8F0', borderRadius: 3, overflow: 'hidden', width: '100%' }}>
+          <Box sx={{ width: '100%', overflowX: 'auto', minHeight: 400 }}>
+            <DataGrid
+              rows={displayMembers}
+              columns={columns}
+              loading={loading}
+              pageSizeOptions={[5, 10, 25]}
             initialState={{
               pagination: { paginationModel: { pageSize: 10 } },
               sorting: {
@@ -761,6 +765,7 @@ const MemberManagement = () => {
               '& .MuiDataGrid-columnHeaders': { bgcolor: '#FAF9F6', fontWeight: 700 },
             }}
           />
+          </Box>
         </Paper>
       ) : (
         <Box sx={{ width: '100%' }}>

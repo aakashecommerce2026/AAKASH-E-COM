@@ -88,9 +88,10 @@ let AdminReportsController = class AdminReportsController {
         if (query.async) {
             return this.handleAsyncExport('pdf', period, query, res);
         }
+        const reportType = query.type || query_period_report_dto_1.ReportType.BUSINESS_SUMMARY;
         const reportData = await this.adminReportsService.getPeriodReport(period, query);
-        const pdfBuffer = await this.pdfExportService.generateReportPdf(query.type, period, reportData);
-        const filename = `report_${query.type}_${period}.pdf`;
+        const pdfBuffer = await this.pdfExportService.generateReportPdf(reportType, period, reportData);
+        const filename = `report_${reportType}_${period}.pdf`;
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
         return res.send(pdfBuffer);
@@ -100,9 +101,10 @@ let AdminReportsController = class AdminReportsController {
         if (query.async) {
             return this.handleAsyncExport('excel', period, query, res);
         }
+        const reportType = query.type || query_period_report_dto_1.ReportType.BUSINESS_SUMMARY;
         const reportData = await this.adminReportsService.getPeriodReport(period, query);
-        const excelBuffer = await this.excelExportService.generateReportExcel(query.type, period, reportData);
-        const filename = `report_${query.type}_${period}.xlsx`;
+        const excelBuffer = await this.excelExportService.generateReportExcel(reportType, period, reportData);
+        const filename = `report_${reportType}_${period}.xlsx`;
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
         return res.send(excelBuffer);
@@ -167,12 +169,13 @@ let AdminReportsController = class AdminReportsController {
             catch (error) {
             }
         }
+        const reportType = query.type || query_period_report_dto_1.ReportType.BUSINESS_SUMMARY;
         const reportData = await this.adminReportsService.getPeriodReport(period, query);
         const buffer = format === 'pdf'
-            ? await this.pdfExportService.generateReportPdf(query.type, period, reportData)
-            : await this.excelExportService.generateReportExcel(query.type, period, reportData);
+            ? await this.pdfExportService.generateReportPdf(reportType, period, reportData)
+            : await this.excelExportService.generateReportExcel(reportType, period, reportData);
         const ext = format === 'pdf' ? 'pdf' : 'xlsx';
-        const filename = `report_${query.type}_${period}_${jobId}.${ext}`;
+        const filename = `report_${reportType}_${period}_${jobId}.${ext}`;
         const filePath = path.join(this.exportsDir, filename);
         fs.writeFileSync(filePath, buffer);
         return res.status(200).json({

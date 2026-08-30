@@ -378,12 +378,15 @@ const PayoutConsole = () => {
       </Grid>
 
       {/* Tabs Bar */}
-      <Paper elevation={0} sx={{ border: '1px solid #E2E8F0', borderRadius: 3, mb: 3 }}>
+      <Paper elevation={0} sx={{ border: '1px solid #E2E8F0', borderRadius: 3, mb: 3, overflow: 'hidden' }}>
         <Tabs
           value={activeTab}
           onChange={(e, val) => setActiveTab(val)}
           indicatorColor="primary"
           textColor="primary"
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
           sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
         >
           <Tab label="All Ledger Payouts" sx={{ fontWeight: 700 }} />

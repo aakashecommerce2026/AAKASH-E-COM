@@ -299,20 +299,21 @@ export const UnilevelTree = ({ members = [] }) => {
     <Paper
       elevation={0}
       sx={{
-        p: 3.5,
+        p: { xs: 1.5, sm: 3.5 },
         bgcolor: '#F8FAFC',
         borderRadius: 3.5,
         border: '1px solid #E2E8F0',
         overflow: 'hidden',
+        width: '100%',
       }}
     >
       {/* Header Bar & Control Panel */}
       <Box
         sx={{
           display: 'flex',
-          justify: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          flexDirection: { xs: 'column', sm: 'row' },
           gap: 2,
           mb: 3,
           pb: 2.5,
@@ -320,23 +321,16 @@ export const UnilevelTree = ({ members = [] }) => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Avatar
-            sx={{
-              bgcolor: 'primary.dark',
-              width: 44,
-              height: 44,
-              boxShadow: '0 4px 10px rgba(6,78,59,0.2)',
-            }}
-          >
-            <AccountTreeIcon sx={{ color: '#6EE7B7' }} />
+          <Avatar sx={{ bgcolor: '#064E3B', color: '#FBBF24', width: 44, height: 44 }}>
+            <AccountTreeIcon />
           </Avatar>
           <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="h6" fontWeight={800} color="#0F172A">
-                Unilevel Network Hierarchy
+              <Typography variant="h6" sx={{ fontWeight: 900, color: '#022C22', fontSize: { xs: '1.05rem', sm: '1.25rem' } }}>
+                Unilevel Member Hierarchy
               </Typography>
               <Chip
-                label="Downline Isolation Active"
+                label="Interactive Tree"
                 color="success"
                 size="small"
                 icon={<SecurityIcon />}
@@ -350,7 +344,7 @@ export const UnilevelTree = ({ members = [] }) => {
         </Box>
 
         {/* Toolbar & Search Controls */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' } }}>
           <ButtonGroup size="small" variant="outlined" sx={{ bgcolor: '#FFFFFF' }}>
             <Tooltip title="Expand All Nodes">
               <Button onClick={expandAll} color="secondary">
@@ -385,9 +379,10 @@ export const UnilevelTree = ({ members = [] }) => {
             </Tooltip>
           </ButtonGroup>
 
-          <form onSubmit={handleSearchNode} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <form onSubmit={handleSearchNode} style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
             <TextField
               size="small"
+              fullWidth
               placeholder="Search Username / Name / Code"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -400,16 +395,16 @@ export const UnilevelTree = ({ members = [] }) => {
                   ),
                 },
               }}
-              sx={{ bgcolor: '#FFFFFF', borderRadius: 1.5, width: 240 }}
+              sx={{ bgcolor: '#FFFFFF', borderRadius: 2 }}
             />
             <Button
               type="submit"
               variant="contained"
               color="secondary"
               size="small"
-              sx={{ height: 38, fontWeight: 700, px: 2.5 }}
+              sx={{ px: 2, height: 40, fontWeight: 700 }}
             >
-              Locate
+              Search
             </Button>
           </form>
         </Box>

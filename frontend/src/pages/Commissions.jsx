@@ -417,12 +417,15 @@ const Commissions = () => {
       />
 
       {/* Tabs Selector for Direct Referral vs Repurchase Commission */}
-      <Paper sx={{ mb: 3.5 }}>
+      <Paper sx={{ mb: 3.5, borderRadius: 3, overflow: 'hidden' }}>
         <Tabs 
           value={activeTab} 
           onChange={(e, val) => setActiveTab(val)} 
           indicatorColor="secondary" 
           textColor="secondary"
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
           sx={{ borderBottom: '1px solid #E2E8F0', px: 2 }}
         >
           <Tab 
