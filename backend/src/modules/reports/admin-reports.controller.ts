@@ -25,7 +25,7 @@ import * as path from 'path';
 import { AdminReportsService, PeriodType } from './admin-reports.service';
 import { PdfExportService } from './pdf-export.service';
 import { ExcelExportService } from './excel-export.service';
-import { QueryPeriodReportDto } from './dto/query-period-report.dto';
+import { QueryPeriodReportDto, ReportType } from './dto/query-period-report.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -113,17 +113,18 @@ export class AdminReportsController {
       return this.handleAsyncExport('pdf', period, query, res);
     }
 
+    const reportType = query.type || ReportType.BUSINESS_SUMMARY;
     const reportData = await this.adminReportsService.getPeriodReport(
       period,
       query,
     );
     const pdfBuffer = await this.pdfExportService.generateReportPdf(
-      query.type,
+      reportType,
       period,
       reportData,
     );
 
-    const filename = `report_${query.type}_${period}.pdf`;
+    const filename = `report_${reportType}_${period}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     return res.send(pdfBuffer);
@@ -151,17 +152,18 @@ export class AdminReportsController {
       return this.handleAsyncExport('excel', period, query, res);
     }
 
+    const reportType = query.type || ReportType.BUSINESS_SUMMARY;
     const reportData = await this.adminReportsService.getPeriodReport(
       period,
       query,
     );
     const excelBuffer = await this.excelExportService.generateReportExcel(
-      query.type,
+      reportType,
       period,
       reportData,
     );
 
-    const filename = `report_${query.type}_${period}.xlsx`;
+    const filename = `report_${reportType}_${period}.xlsx`;
     res.setHeader(
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -277,6 +279,7 @@ export class AdminReportsController {
     }
 
     // Direct synchronous fallback
+    const reportType = query.type || ReportType.BUSINESS_SUMMARY;
     const reportData = await this.adminReportsService.getPeriodReport(
       period,
       query,
@@ -284,18 +287,18 @@ export class AdminReportsController {
     const buffer =
       format === 'pdf'
         ? await this.pdfExportService.generateReportPdf(
-            query.type,
+            reportType,
             period,
             reportData,
           )
         : await this.excelExportService.generateReportExcel(
-            query.type,
+            reportType,
             period,
             reportData,
           );
 
     const ext = format === 'pdf' ? 'pdf' : 'xlsx';
-    const filename = `report_${query.type}_${period}_${jobId}.${ext}`;
+    const filename = `report_${reportType}_${period}_${jobId}.${ext}`;
     const filePath = path.join(this.exportsDir, filename);
     fs.writeFileSync(filePath, buffer);
 
