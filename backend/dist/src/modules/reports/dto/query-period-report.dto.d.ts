@@ -10,7 +10,7 @@ export declare enum PeriodTypeEnum {
     MONTHLY = "monthly"
 }
 export declare class QueryPeriodReportDto {
-    type: ReportType;
+    type?: ReportType;
     period?: PeriodTypeEnum;
     startDate?: string;
     endDate?: string;

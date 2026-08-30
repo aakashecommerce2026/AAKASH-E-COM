@@ -25,13 +25,15 @@ export enum PeriodTypeEnum {
 }
 
 export class QueryPeriodReportDto {
-  @ApiProperty({
+  @ApiPropertyOptional({
     enum: ReportType,
     description:
       'Type of report to generate (member-registrations, repurchase-activities, earnings-summary, business-summary)',
+    default: ReportType.BUSINESS_SUMMARY,
   })
+  @IsOptional()
   @IsEnum(ReportType)
-  type!: ReportType;
+  type?: ReportType = ReportType.BUSINESS_SUMMARY;
 
   @ApiPropertyOptional({
     enum: PeriodTypeEnum,

@@ -70,7 +70,7 @@ export const AdminPerformanceChart = () => {
       dashboardApi.getBusinessStats().catch(() => null),
       dashboardApi.getEarningsStats().catch(() => null),
       dashboardApi.getMemberStats().catch(() => null),
-      reportsApi.getMonthly().catch(() => null),
+      reportsApi.getMonthly({ type: 'business-summary' }).catch(() => null),
     ])
       .then(([biz, earn, mem, monthly]) => {
         if (!isMounted) return;

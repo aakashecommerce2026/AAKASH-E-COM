@@ -16,6 +16,7 @@ import {
   Stack,
   Slider,
   CircularProgress,
+  IconButton,
 } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';

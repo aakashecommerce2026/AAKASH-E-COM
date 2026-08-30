@@ -27,7 +27,7 @@ var PeriodTypeEnum;
     PeriodTypeEnum["MONTHLY"] = "monthly";
 })(PeriodTypeEnum || (exports.PeriodTypeEnum = PeriodTypeEnum = {}));
 class QueryPeriodReportDto {
-    type;
+    type = ReportType.BUSINESS_SUMMARY;
     period = PeriodTypeEnum.DAILY;
     startDate;
     endDate;
@@ -37,10 +37,12 @@ class QueryPeriodReportDto {
 }
 exports.QueryPeriodReportDto = QueryPeriodReportDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({
+    (0, swagger_1.ApiPropertyOptional)({
         enum: ReportType,
         description: 'Type of report to generate (member-registrations, repurchase-activities, earnings-summary, business-summary)',
+        default: ReportType.BUSINESS_SUMMARY,
     }),
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(ReportType),
     __metadata("design:type", String)
 ], QueryPeriodReportDto.prototype, "type", void 0);
