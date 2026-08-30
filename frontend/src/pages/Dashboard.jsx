@@ -506,7 +506,7 @@ const Dashboard = () => {
         {isAdmin ? 'Recent Registrations' : 'My Recent Earnings'}
       </Typography>
 
-      <TableContainer component={Paper} sx={{ mb: 4 }}>
+      <TableContainer component={Paper} elevation={0} sx={{ mb: 4, border: '1px solid #E2E8F0', borderRadius: 3, overflow: 'hidden', overflowX: 'auto', width: '100%' }}>
         {isAdmin ? (
           membersLoading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress color="secondary" /></Box>

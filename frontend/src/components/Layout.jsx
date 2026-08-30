@@ -249,11 +249,13 @@ const Layout = ({ children }) => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          p: { xs: 1.5, sm: 3 },
           width: { sm: `calc(100% - ${drawerWidth}px)` },
+          maxWidth: '100vw',
+          overflowX: 'hidden',
           minHeight: '100vh',
           bgcolor: 'background.default',
-          pt: { xs: 10, sm: 11 },
+          pt: { xs: 9, sm: 11 },
         }}
       >
         {children}

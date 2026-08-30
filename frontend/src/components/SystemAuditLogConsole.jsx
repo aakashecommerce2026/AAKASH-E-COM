@@ -281,8 +281,8 @@ export const SystemAuditLogConsole = () => {
       </Box>
 
       {/* Log Data Table */}
-      <TableContainer component={Box} sx={{ border: '1px solid #F1F5F9', borderRadius: 3, overflow: 'hidden' }}>
-        <Table sx={{ minWidth: 750 }} size="small">
+      <TableContainer component={Box} sx={{ border: '1px solid #F1F5F9', borderRadius: 3, overflow: 'hidden', overflowX: 'auto', width: '100%' }}>
+        <Table sx={{ minWidth: 650 }} size="small">
           <TableHead sx={{ bgcolor: '#FAF9F6' }}>
             <TableRow>
               <TableCell sx={{ fontWeight: 800, color: '#475569', py: 1.5 }}>Log ID & Time</TableCell>

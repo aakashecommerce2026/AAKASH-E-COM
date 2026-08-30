@@ -379,12 +379,15 @@ const CommissionEngineConsole = () => {
       </Grid>
 
       {/* Tabs Switcher */}
-      <Paper sx={{ mb: 3.5 }}>
+      <Paper sx={{ mb: 3.5, borderRadius: 3, overflow: 'hidden' }}>
         <Tabs
           value={activeTab}
           onChange={(e, val) => setActiveTab(val)}
           indicatorColor="secondary"
           textColor="secondary"
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
           sx={{ borderBottom: '1px solid #E2E8F0', px: 2 }}
         >
           <Tab
@@ -417,21 +420,22 @@ const CommissionEngineConsole = () => {
             </Alert>
           )}
 
-          <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, mb: 4 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5, flexWrap: 'wrap', gap: 2 }}>
+          <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, borderRadius: 3, mb: 4 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, flexDirection: { xs: 'column', sm: 'row' }, mb: 3, gap: 2 }}>
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 800, color: 'primary.main' }}>
-                  {engineMode === 'MEMBERSHIP' ? 'Membership Commission (Direct) 20-Level Matrix' : 'Repurchase Commission 20-Level Matrix'}
+                <Typography variant="h6" sx={{ fontWeight: 800, color: 'primary.main', fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
+                  {engineMode === 'MEMBERSHIP' ? '20-Level Membership Direct Referral Rates' : '20-Level Repurchase BV Commission Rates'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Fully editable rate percentages for every level (Level 1 to Level 20). Adjust any level rate and click Save.
+                  Configure exact percentage share distributed to each upline sponsor tier.
                 </Typography>
               </Box>
-              <Box sx={{ display: 'flex', gap: 1.5 }}>
-                <Button variant="outlined" color="primary" startIcon={<ReplayIcon />} onClick={handleResetRules}>
+
+              <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' } }}>
+                <Button variant="outlined" color="primary" startIcon={<ReplayIcon />} onClick={handleResetRules} sx={{ width: { xs: '100%', sm: 'auto' } }}>
                   Reset Defaults
                 </Button>
-                <Button variant="contained" color="secondary" onClick={handleSaveRules}>
+                <Button variant="contained" color="secondary" onClick={handleSaveRules} sx={{ width: { xs: '100%', sm: 'auto' } }}>
                   Save {engineMode === 'MEMBERSHIP' ? 'Direct' : 'Repurchase'} Strategy Rates
                 </Button>
               </Box>
@@ -537,8 +541,8 @@ const CommissionEngineConsole = () => {
             </Paper>
 
             {/* 20 Individual Editable Levels Table */}
-            <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #E2E8F0', borderRadius: 2 }}>
-              <Table size="small">
+            <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #E2E8F0', borderRadius: 2, overflowX: 'auto', width: '100%' }}>
+              <Table size="small" sx={{ minWidth: 600 }}>
                 <TableHead sx={{ bgcolor: '#FAF9F6' }}>
                   <TableRow>
                     <TableCell><strong>Upline Tier Level</strong></TableCell>
