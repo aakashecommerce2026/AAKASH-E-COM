@@ -27,6 +27,7 @@ import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import EditIcon from '@mui/icons-material/Edit';
+import CloseIcon from '@mui/icons-material/Close';
 import { logout } from '../store/actions';
 import { ProfileModal } from './ProfileModal';
 
@@ -61,18 +62,21 @@ const Layout = ({ children }) => {
     { text: isAdmin ? 'Commission Ledger' : 'My Earnings', icon: <MonetizationOnIcon />, path: '/commissions', roles: ['Admin', 'Member'] },
   ];
 
-
-
   const filteredMenu = menuItems.filter((item) => item.roles.includes(user?.role));
 
   const drawerContent = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'primary.dark', color: 'white' }}>
       {/* Brand Header */}
-      <Box sx={{ p: 2.5, display: 'flex', alignItems: 'center', gap: 1.5, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-        <Box component="img" src="/favicon.svg" alt="AAKASH E MART Logo" sx={{ width: 32, height: 32, borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }} />
-        <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 800, color: 'secondary.light', letterSpacing: '0.5px' }}>
-          AAKASH E MART
-        </Typography>
+      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box component="img" src="/favicon.svg" alt="AAKASH E MART Logo" sx={{ width: 32, height: 32, borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }} />
+          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 800, color: 'secondary.light', letterSpacing: '0.5px', fontSize: '1.05rem' }}>
+            AAKASH E MART
+          </Typography>
+        </Box>
+        <IconButton onClick={() => setMobileOpen(false)} sx={{ color: 'white', display: { sm: 'none' } }}>
+          <CloseIcon />
+        </IconButton>
       </Box>
 
       {/* Navigation List */}
@@ -191,12 +195,12 @@ const Layout = ({ children }) => {
 
           {/* Top Right Corner Controls: Logout & Access Badge */}
           {user && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.8, sm: 1.5 } }}>
               <Chip
                 label={user.role === 'Admin' ? 'Admin Access' : 'Member Access'}
                 color={user.role === 'Admin' ? 'primary' : 'secondary'}
                 size="small"
-                sx={{ fontWeight: 600 }}
+                sx={{ fontWeight: 600, display: { xs: 'none', sm: 'inline-flex' } }}
               />
 
               <Button
@@ -205,7 +209,7 @@ const Layout = ({ children }) => {
                 size="small"
                 startIcon={<LogoutIcon />}
                 onClick={handleLogout}
-                sx={{ fontWeight: 700 }}
+                sx={{ fontWeight: 700, px: { xs: 1.2, sm: 2 }, fontSize: { xs: '0.78rem', sm: '0.85rem' } }}
               >
                 Logout
               </Button>

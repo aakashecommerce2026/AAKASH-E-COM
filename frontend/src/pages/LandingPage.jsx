@@ -30,11 +30,15 @@ import CalculateIcon from '@mui/icons-material/Calculate';
 import RegisterModal from '../components/RegisterModal';
 import { membersApi } from '../services/api';
 
+import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
+
 const LandingPage = () => {
   const navigate = useNavigate();
   const { token } = useSelector((state) => state.auth);
 
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [testSponsorCode, setTestSponsorCode] = useState('');
   const [testSponsorResult, setTestSponsorResult] = useState(null);
@@ -112,10 +116,11 @@ const LandingPage = () => {
   const handleOpenRegisterWithCode = (code = '') => {
     setTestSponsorCode(code);
     setRegisterModalOpen(true);
+    setMobileMenuOpen(false);
   };
 
   return (
-    <Box sx={{ bgcolor: '#F8FAFC', minHeight: '100vh', color: '#0F172A', fontFamily: 'Inter, sans-serif' }}>
+    <Box sx={{ bgcolor: '#F8FAFC', minHeight: '100vh', color: '#0F172A', fontFamily: 'Inter, sans-serif', width: '100%', overflowX: 'hidden' }}>
       {/* 1. REFRAMED ULTRA-SLEEK GLASSMORPHIC NAVBAR */}
       <Box
         component="header"
@@ -130,14 +135,14 @@ const LandingPage = () => {
         }}
       >
         <Container maxWidth="lg">
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: 74 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: { xs: 64, sm: 74 } }}>
             {/* Left Brand Logo & Name */}
             <Box
               onClick={() => navigate('/')}
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 1.5,
+                gap: { xs: 1, sm: 1.5 },
                 cursor: 'pointer',
                 transition: 'transform 0.2s',
                 '&:hover': { transform: 'scale(1.02)' },
@@ -146,27 +151,27 @@ const LandingPage = () => {
               <Box
                 component="img"
                 src="/favicon.svg"
-                alt="AAKASH E-COM Logo"
+                alt="AAKASH E MART Logo"
                 sx={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: '12px',
+                  width: { xs: 36, sm: 44 },
+                  height: { xs: 36, sm: 44 },
+                  borderRadius: '10px',
                   boxShadow: '0 0 15px rgba(217, 119, 6, 0.3)',
                   border: '1.5px solid rgba(217, 119, 6, 0.5)',
                 }}
               />
               <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="h6" sx={{ fontWeight: 900, color: '#FFFFFF', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
-                  AAKASH E-COM
+                <Typography variant="h6" sx={{ fontWeight: 900, color: '#FFFFFF', letterSpacing: '-0.02em', lineHeight: 1.1, fontSize: { xs: '1.05rem', sm: '1.25rem' } }}>
+                  AAKASH E MART
                 </Typography>
-                <Typography variant="caption" sx={{ color: '#FBBF24', fontWeight: 800, letterSpacing: '1.5px', fontSize: '0.68rem' }}>
+                <Typography variant="caption" sx={{ color: '#FBBF24', fontWeight: 800, letterSpacing: { xs: '0.8px', sm: '1.5px' }, fontSize: { xs: '0.55rem', sm: '0.68rem' } }}>
                   UNILEVEL NETWORK PLATFORM
                 </Typography>
               </Box>
             </Box>
 
-            {/* Right Action Buttons: Login & Register */}
-            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+            {/* Desktop Action Buttons: Login & Register */}
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', display: { xs: 'none', md: 'flex' } }}>
               {token ? (
                 <Button
                   variant="contained"
@@ -182,7 +187,7 @@ const LandingPage = () => {
                     '&:hover': { bgcolor: '#B45309', transform: 'translateY(-1px)' },
                   }}
                 >
-                  Go to Dashboard
+                  Dashboard
                 </Button>
               ) : (
                 <>
@@ -196,7 +201,7 @@ const LandingPage = () => {
                       fontWeight: 700,
                       borderRadius: 3,
                       px: 2.8,
-                      py: 0.9,
+                      py: 0.8,
                       textTransform: 'none',
                       fontSize: '0.9rem',
                       '&:hover': {
@@ -216,7 +221,7 @@ const LandingPage = () => {
                       fontWeight: 900,
                       borderRadius: 3,
                       px: 3,
-                      py: 0.9,
+                      py: 0.8,
                       textTransform: 'none',
                       fontSize: '0.9rem',
                       background: 'linear-gradient(135deg, #D97706 0%, #B45309 100%)',
@@ -236,9 +241,112 @@ const LandingPage = () => {
               )}
             </Stack>
 
+            {/* Mobile Hamburger Menu Icon Button */}
+            <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
+              <IconButton onClick={() => setMobileMenuOpen(true)} sx={{ color: '#FFFFFF' }}>
+                <MenuIcon />
+              </IconButton>
+            </Box>
           </Box>
         </Container>
       </Box>
+
+      {/* Mobile Navigation Slide-Out Drawer */}
+      <Paper
+        component="div"
+        sx={{
+          display: { xs: 'block', md: 'none' },
+        }}
+      >
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            width: '80%',
+            maxWidth: 300,
+            bgcolor: '#022C22',
+            zIndex: 1300,
+            p: 3,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2.5,
+            color: '#FFFFFF',
+            transform: mobileMenuOpen ? 'translateX(0)' : 'translateX(100%)',
+            transition: 'transform 0.3s ease-in-out',
+            boxShadow: '-10px 0 30px rgba(0,0,0,0.5)',
+          }}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 2, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+            <Typography variant="h6" sx={{ fontWeight: 900, color: '#FBBF24' }}>
+              AAKASH E MART
+            </Typography>
+            <IconButton onClick={() => setMobileMenuOpen(false)} sx={{ color: '#FFFFFF' }}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {token ? (
+              <Button
+                variant="contained"
+                fullWidth
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  navigate('/');
+                }}
+                sx={{ py: 1.2, fontWeight: 800, bgcolor: '#D97706', '&:hover': { bgcolor: '#B45309' } }}
+              >
+                Go to Dashboard
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    navigate('/login');
+                  }}
+                  startIcon={<LoginIcon />}
+                  sx={{ py: 1.2, color: '#FFFFFF', borderColor: 'rgba(255,255,255,0.3)', fontWeight: 700 }}
+                >
+                  Member Login
+                </Button>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setRegisterModalOpen(true);
+                  }}
+                  startIcon={<PersonAddIcon />}
+                  sx={{ py: 1.2, fontWeight: 900, bgcolor: '#D97706', color: '#FFFFFF' }}
+                >
+                  Register Now
+                </Button>
+              </>
+            )}
+          </Stack>
+        </Box>
+
+        {mobileMenuOpen && (
+          <Box
+            onClick={() => setMobileMenuOpen(false)}
+            sx={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              bgcolor: 'rgba(0,0,0,0.6)',
+              backdropFilter: 'blur(4px)',
+              zIndex: 1250,
+            }}
+          />
+        )}
+      </Paper>
 
       {/* 2. REFRAMED HERO SECTION WITH EMBEDDED SPONSOR LOOKUP CARD */}
       <Box
@@ -272,8 +380,8 @@ const LandingPage = () => {
                 sx={{
                   fontWeight: 900,
                   letterSpacing: '-0.03em',
-                  lineHeight: 1.1,
-                  fontSize: { xs: '2.5rem', md: '3.6rem' },
+                  lineHeight: { xs: 1.2, md: 1.1 },
+                  fontSize: { xs: '1.95rem', sm: '2.8rem', md: '3.6rem' },
                   mb: 2.5,
                 }}
               >
@@ -285,11 +393,12 @@ const LandingPage = () => {
                   color: 'rgba(255, 255, 255, 0.88)',
                   fontWeight: 400,
                   lineHeight: 1.6,
+                  fontSize: { xs: '0.98rem', sm: '1.15rem' },
                   mb: 4,
                   maxWidth: 580,
                 }}
               >
-                Join AAKASH E-COM to build your unilevel network branch, receive direct referral rewards, level bonuses, and recurring repurchase cashback from grocery purchases.
+                Join AAKASH E MART to build your unilevel network branch, receive direct referral rewards, level bonuses, and recurring repurchase cashback from grocery purchases.
               </Typography>
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 5 }}>
@@ -302,8 +411,8 @@ const LandingPage = () => {
                     bgcolor: '#D97706',
                     color: '#FFFFFF',
                     fontWeight: 900,
-                    fontSize: '1.05rem',
-                    py: 1.6,
+                    fontSize: { xs: '0.95rem', sm: '1.05rem' },
+                    py: 1.5,
                     px: 4,
                     borderRadius: 3,
                     boxShadow: '0 10px 25px rgba(217, 119, 6, 0.4)',
@@ -320,8 +429,8 @@ const LandingPage = () => {
                     color: '#FFFFFF',
                     borderColor: 'rgba(255, 255, 255, 0.4)',
                     fontWeight: 700,
-                    fontSize: '1rem',
-                    py: 1.6,
+                    fontSize: { xs: '0.9rem', sm: '1rem' },
+                    py: 1.5,
                     px: 3.5,
                     borderRadius: 3,
                     '&:hover': { borderColor: '#FFFFFF', bgcolor: 'rgba(255, 255, 255, 0.1)' },
@@ -333,9 +442,9 @@ const LandingPage = () => {
 
               {/* Floating Glass Badges */}
               <Grid container spacing={2}>
-                <Grid item xs={4}>
-                  <Paper sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.08)', backdropFilter: 'blur(10px)', borderRadius: 2.5, border: '1px solid rgba(255,255,255,0.15)' }}>
-                    <Typography variant="h5" sx={{ fontWeight: 900, color: '#FBBF24' }}>
+                <Grid item xs={12} sm={4}>
+                  <Paper sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.08)', backdropFilter: 'blur(10px)', borderRadius: 2.5, border: '1px solid rgba(255,255,255,0.15)', textAlign: { xs: 'center', sm: 'left' } }}>
+                    <Typography variant="h5" sx={{ fontWeight: 900, color: '#FBBF24', fontSize: { xs: '1.4rem', sm: '1.6rem' } }}>
                       10,000+
                     </Typography>
                     <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>
@@ -343,9 +452,9 @@ const LandingPage = () => {
                     </Typography>
                   </Paper>
                 </Grid>
-                <Grid item xs={4}>
-                  <Paper sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.08)', backdropFilter: 'blur(10px)', borderRadius: 2.5, border: '1px solid rgba(255,255,255,0.15)' }}>
-                    <Typography variant="h5" sx={{ fontWeight: 900, color: '#34D399' }}>
+                <Grid item xs={12} sm={4}>
+                  <Paper sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.08)', backdropFilter: 'blur(10px)', borderRadius: 2.5, border: '1px solid rgba(255,255,255,0.15)', textAlign: { xs: 'center', sm: 'left' } }}>
+                    <Typography variant="h5" sx={{ fontWeight: 900, color: '#34D399', fontSize: { xs: '1.4rem', sm: '1.6rem' } }}>
                       ₹50L+
                     </Typography>
                     <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>
@@ -353,9 +462,9 @@ const LandingPage = () => {
                     </Typography>
                   </Paper>
                 </Grid>
-                <Grid item xs={4}>
-                  <Paper sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.08)', backdropFilter: 'blur(10px)', borderRadius: 2.5, border: '1px solid rgba(255,255,255,0.15)' }}>
-                    <Typography variant="h5" sx={{ fontWeight: 900, color: '#60A5FA' }}>
+                <Grid item xs={12} sm={4}>
+                  <Paper sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.08)', backdropFilter: 'blur(10px)', borderRadius: 2.5, border: '1px solid rgba(255,255,255,0.15)', textAlign: { xs: 'center', sm: 'left' } }}>
+                    <Typography variant="h5" sx={{ fontWeight: 900, color: '#60A5FA', fontSize: { xs: '1.4rem', sm: '1.6rem' } }}>
                       100%
                     </Typography>
                     <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>
@@ -371,7 +480,7 @@ const LandingPage = () => {
               <Paper
                 elevation={16}
                 sx={{
-                  p: 3.5,
+                  p: { xs: 2.5, sm: 3.5 },
                   borderRadius: 4,
                   bgcolor: '#FFFFFF',
                   color: '#0F172A',
