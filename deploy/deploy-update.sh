@@ -20,6 +20,9 @@ fi
 # 2. Build Backend
 echo "📦 Installing & Building Backend..."
 cd "$APP_DIR/backend"
+if [ -f ".env.production" ]; then
+    cp .env.production .env
+fi
 npm install
 chmod -R +x node_modules/.bin
 npx prisma migrate deploy
