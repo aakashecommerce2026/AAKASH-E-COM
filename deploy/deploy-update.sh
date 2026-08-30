@@ -20,7 +20,8 @@ fi
 # 2. Build Backend
 echo "📦 Installing & Building Backend..."
 cd "$APP_DIR/backend"
-npm install --production=false
+npm install
+chmod -R +x node_modules/.bin
 npx prisma migrate deploy
 npx prisma generate
 npm run build
