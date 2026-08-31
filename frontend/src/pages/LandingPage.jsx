@@ -833,7 +833,13 @@ const LandingPage = () => {
               </Typography>
             </Box>
 
-            <Stack direction="row" spacing={3}>
+            <Stack direction="row" spacing={{ xs: 1.5, sm: 3 }} flexWrap="wrap">
+              <Button onClick={() => navigate('/terms-and-conditions')} sx={{ color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>
+                Terms & Conditions
+              </Button>
+              <Button onClick={() => navigate('/privacy-policy')} sx={{ color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>
+                Privacy Policy
+              </Button>
               <Button onClick={() => setRegisterModalOpen(true)} sx={{ color: '#FBBF24', fontWeight: 800 }}>
                 Join Network
               </Button>

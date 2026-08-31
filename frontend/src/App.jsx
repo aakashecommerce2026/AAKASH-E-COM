@@ -9,6 +9,8 @@ import RepurchasePanel from './pages/RepurchasePanel';
 import PayoutConsole from './pages/PayoutConsole';
 import ProfileView from './pages/ProfileView';
 import CommissionEngineConsole from './pages/CommissionEngineConsole';
+import TermsAndConditions from './pages/TermsAndConditions';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import { fetchMembersRequest, fetchRepurchasesRequest, fetchCommissionsRequest } from './store/actions';
 
 
@@ -27,6 +29,8 @@ function App() {
   return (
     <Routes>
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route
         path="*"
         element={
@@ -35,6 +39,8 @@ function App() {
               {/* Common Portal Routes */}
               <Route path="/" element={<Dashboard />} />
               <Route path="/profile" element={<ProfileView />} />
+              <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route
                 path="/commission-engine"
                 element={

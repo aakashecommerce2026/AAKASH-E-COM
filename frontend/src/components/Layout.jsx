@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -17,6 +17,7 @@ import {
   Button,
   Tooltip,
   Avatar,
+  Divider,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -28,8 +29,11 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
+import GavelIcon from '@mui/icons-material/Gavel';
+import SecurityIcon from '@mui/icons-material/Security';
 import { logout } from '../store/actions';
 import { ProfileModal } from './ProfileModal';
+import TermsAndConditionsModal from './TermsAndConditionsModal';
 
 const drawerWidth = 260;
 
@@ -41,6 +45,27 @@ const Layout = ({ children }) => {
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+
+  // Check if member has accepted terms
+  const [mandatoryTermsOpen, setMandatoryTermsOpen] = useState(false);
+
+  useEffect(() => {
+    if (user && user.id) {
+      const accepted = localStorage.getItem(`terms_accepted_${user.id}`);
+      if (!accepted) {
+        setMandatoryTermsOpen(true);
+      } else {
+        setMandatoryTermsOpen(false);
+      }
+    }
+  }, [user]);
+
+  const handleAcceptMandatoryTerms = () => {
+    if (user && user.id) {
+      localStorage.setItem(`terms_accepted_${user.id}`, 'true');
+    }
+    setMandatoryTermsOpen(false);
+  };
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -110,6 +135,47 @@ const Layout = ({ children }) => {
           );
         })}
       </List>
+
+      {/* Policy Links at Sidebar Bottom */}
+      <Box sx={{ px: 2, py: 1, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <List disablePadding>
+          <ListItem disablePadding sx={{ mb: 0.5 }}>
+            <ListItemButton
+              onClick={() => {
+                navigate('/privacy-policy');
+                setMobileOpen(false);
+              }}
+              sx={{ py: 0.5, px: 1, borderRadius: 1.5, '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' } }}
+            >
+              <ListItemIcon sx={{ color: '#FBBF24', minWidth: 32 }}>
+                <SecurityIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText
+                primary="Privacy Policy"
+                slotProps={{ primary: { fontSize: '0.82rem', fontWeight: 600, color: 'rgba(255,255,255,0.9)' } }}
+              />
+            </ListItemButton>
+          </ListItem>
+
+          <ListItem disablePadding sx={{ mb: 0.5 }}>
+            <ListItemButton
+              onClick={() => {
+                navigate('/terms-and-conditions');
+                setMobileOpen(false);
+              }}
+              sx={{ py: 0.5, px: 1, borderRadius: 1.5, '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' } }}
+            >
+              <ListItemIcon sx={{ color: '#FBBF24', minWidth: 32 }}>
+                <GavelIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText
+                primary="Terms & Conditions"
+                slotProps={{ primary: { fontSize: '0.82rem', fontWeight: 600, color: 'rgba(255,255,255,0.9)' } }}
+              />
+            </ListItemButton>
+          </ListItem>
+        </List>
+      </Box>
 
       {/* Profile Footer Info & Edit Trigger */}
       <Box 
@@ -263,6 +329,13 @@ const Layout = ({ children }) => {
 
       {/* Profile & UPI Modal */}
       <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
+
+      {/* Mandatory Terms & Conditions Modal upon Login */}
+      <TermsAndConditionsModal
+        open={mandatoryTermsOpen}
+        mandatory={true}
+        onAccept={handleAcceptMandatoryTerms}
+      />
     </Box>
   );
 };

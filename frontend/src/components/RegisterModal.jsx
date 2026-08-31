@@ -29,7 +29,8 @@ import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import { otpApi, membersApi } from '../services/api';
 import { loginRequest } from '../store/actions';
 
-// Helper to generate unique referral code prefix
+import TermsAndConditionsModal from './TermsAndConditionsModal';
+
 const generateMemberCode = (name = '') => {
   const clean = name.replace(/[^a-zA-Z]/g, '').toUpperCase();
   const prefix = clean.length >= 2 ? clean.substring(0, 2) : 'AK';
@@ -58,7 +59,9 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '', onSuccess }) =>
   const [showPassword, setShowPassword] = useState(false);
   const [memberCode, setMemberCode] = useState('');
 
-  // OTP Verification State
+  // OTP & Terms Verification State
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [otp, setOtp] = useState('');
   const [sendingOtp, setSendingOtp] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
@@ -177,14 +180,9 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '', onSuccess }) =>
     setMemberCode(generateMemberCode(name));
   };
 
-  // Dispatch OTP to Email
-  const handleSendOtp = async () => {
+  // Dispatch OTP to Email after Terms Acceptance
+  const executeDispatchOtp = async () => {
     const cleanEmail = (email || '').trim();
-    if (!cleanEmail || !cleanEmail.includes('@')) {
-      setOtpError('Please enter a valid email address first.');
-      return;
-    }
-
     setSendingOtp(true);
     setOtpError('');
     try {
@@ -197,6 +195,25 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '', onSuccess }) =>
     } finally {
       setSendingOtp(false);
     }
+  };
+
+  const handleSendOtpClick = () => {
+    const cleanEmail = (email || '').trim();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      setOtpError('Please enter a valid email address first.');
+      return;
+    }
+    if (!termsAccepted) {
+      setTermsModalOpen(true);
+    } else {
+      executeDispatchOtp();
+    }
+  };
+
+  const handleAcceptTermsAndSendOtp = () => {
+    setTermsAccepted(true);
+    setTermsModalOpen(false);
+    executeDispatchOtp();
   };
 
   // Submit Final Registration with OTP Code
@@ -553,7 +570,7 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '', onSuccess }) =>
                   <Button
                     variant="outlined"
                     color="success"
-                    onClick={handleSendOtp}
+                    onClick={handleSendOtpClick}
                     disabled={sendingOtp || cooldown > 0 || !email}
                     sx={{ whiteSpace: 'nowrap', height: 56, px: 2.5, fontWeight: 700 }}
                   >
@@ -593,6 +610,13 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '', onSuccess }) =>
             </DialogActions>
           </form>
         )}
+
+        {/* Terms & Conditions Popup Modal */}
+        <TermsAndConditionsModal
+          open={termsModalOpen}
+          onAccept={handleAcceptTermsAndSendOtp}
+          onClose={() => setTermsModalOpen(false)}
+        />
       </DialogContent>
     </Dialog>
   );
