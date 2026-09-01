@@ -23,7 +23,7 @@ export class QueryRepurchaseCommissionDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(100)
+  @Max(10000)
   @IsOptional()
   limit?: number = 10;
 
