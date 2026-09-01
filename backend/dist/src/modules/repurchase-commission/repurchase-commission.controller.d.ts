@@ -6,7 +6,7 @@ export declare class RepurchaseCommissionController {
     constructor(repurchaseCommissionService: RepurchaseCommissionService);
     getConfig(version?: number): Promise<RepurchaseCommissionConfigResponseDto[]>;
     updateConfig(dto: UpdateRepurchaseCommissionConfigDto, actorId: string): Promise<RepurchaseCommissionConfigResponseDto[]>;
-    findAll(query: QueryRepurchaseCommissionDto): Promise<{
+    findAll(query: QueryRepurchaseCommissionDto, user: any): Promise<{
         data: {
             repurchaseEntry: {
                 id: string;

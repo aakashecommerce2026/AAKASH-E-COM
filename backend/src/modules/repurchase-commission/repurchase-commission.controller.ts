@@ -87,7 +87,13 @@ export class RepurchaseCommissionController {
     status: 200,
     description: 'Paginated repurchase commission ledger records',
   })
-  async findAll(@Query() query: QueryRepurchaseCommissionDto) {
+  async findAll(
+    @Query() query: QueryRepurchaseCommissionDto,
+    @CurrentUser() user: any,
+  ) {
+    if (user && user.role !== MemberRole.ADMIN && !query.beneficiaryMemberId && !query.sourceMemberId) {
+      query.beneficiaryMemberId = user.id;
+    }
     return this.repurchaseCommissionService.findAll(query);
   }
 

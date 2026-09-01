@@ -15,8 +15,8 @@ function* fetchCommissions() {
     }
 
     const [memResponse, repResponse] = yield all([
-      call(commissionApi.getMembershipLedger, { limit: 100 }),
-      call(commissionApi.getRepurchaseLedger, { limit: 100 }),
+      call(commissionApi.getMembershipLedger, { limit: 5000 }),
+      call(commissionApi.getRepurchaseLedger, { limit: 5000 }),
     ]);
 
     const memList = Array.isArray(memResponse) ? memResponse : memResponse?.data || [];

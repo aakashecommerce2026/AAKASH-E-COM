@@ -169,19 +169,38 @@ export class MembersService {
       }
     }
 
-    // Validate referrerId if provided (must exist and be ACTIVE)
-    if (referrerId) {
+    // Validate or fallback referrerId (defaults to Root Member ADM-0001 / Admin if unassigned)
+    let assignedReferrerId = referrerId;
+    if (!assignedReferrerId) {
+      const rootMember = await this.prisma.member.findFirst({
+        where: {
+          OR: [
+            { memberCode: 'ADM-0001' },
+            { role: MemberRole.ADMIN },
+            { memberCode: 'AK10001' },
+            { referrerId: null },
+          ],
+          status: MemberStatus.ACTIVE,
+        },
+        orderBy: { joiningDate: 'asc' },
+      });
+      if (rootMember) {
+        assignedReferrerId = rootMember.id;
+      }
+    }
+
+    if (assignedReferrerId) {
       const referrer = await this.prisma.member.findUnique({
-        where: { id: referrerId },
+        where: { id: assignedReferrerId },
       });
       if (!referrer) {
         throw new BadRequestException(
-          `Referrer with ID '${referrerId}' does not exist`,
+          `Referrer with ID '${assignedReferrerId}' does not exist`,
         );
       }
       if (referrer.status !== MemberStatus.ACTIVE) {
         throw new BadRequestException(
-          `Referrer with ID '${referrerId}' is not active (current status: ${referrer.status})`,
+          `Referrer with ID '${assignedReferrerId}' is not active (current status: ${referrer.status})`,
         );
       }
     }
@@ -195,7 +214,7 @@ export class MembersService {
         data: {
           ...rest,
           passwordHash,
-          referrerId: referrerId || null,
+          referrerId: assignedReferrerId || null,
           role: role || MemberRole.MEMBER,
           status: status || MemberStatus.ACTIVE,
           bankDetails: bankDetails

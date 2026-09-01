@@ -75,9 +75,39 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '', onSuccess }) =>
 
   // Populate default sponsor code when modal opens
   useEffect(() => {
+    let isMounted = true;
     if (open) {
-      const initialCode = defaultSponsorCode || authUser?.referralCode || authUser?.memberCode || 'AK10001';
-      setSponsorCode(initialCode);
+      // 1. Check URL query parameters for referral link (?ref=... or ?sponsor=...)
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlRef = urlParams.get('ref') || urlParams.get('sponsor') || urlParams.get('referralCode');
+
+      let initialCode = defaultSponsorCode || urlRef;
+
+      if (!initialCode) {
+        if (authUser && authUser.role !== 'Admin') {
+          // Registration performed by logged-in upline -> pre-fill upline's referral code
+          initialCode = authUser.referralCode || authUser.memberCode || String(authUser.id);
+          setSponsorCode(initialCode);
+        } else {
+          // Landing page public registration -> dynamically fetch Root Sponsor from backend
+          membersApi
+            .getAll({ limit: 10 })
+            .then((res) => {
+              if (!isMounted) return;
+              const list = Array.isArray(res) ? res : res?.data || res?.items || [];
+              const root = list.find((m) => m.role === 'ADMIN' || m.memberCode === 'ADM-0001' || !m.referrerId) || list[0];
+              const rootCode = root?.memberCode || root?.referralCode || 'ADM-0001';
+              setSponsorCode(rootCode);
+            })
+            .catch(() => {
+              if (!isMounted) return;
+              setSponsorCode('ADM-0001');
+            });
+        }
+      } else {
+        setSponsorCode(initialCode);
+      }
+
       setMemberCode(generateMemberCode(name));
       setUsername('');
       setActiveStep(0);
@@ -86,6 +116,10 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '', onSuccess }) =>
       setOtpSent(false);
       setOtp('');
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [open, defaultSponsorCode, authUser, name]);
 
   // Cooldown timer effect for OTP resend
@@ -139,14 +173,18 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '', onSuccess }) =>
             m.email?.toLowerCase() === q.toLowerCase()
         );
 
-        // 2. Fallback to partial match or first search result returned by backend
+        // 2. Fallback for root / admin alias (e.g. AK10001 / AK100 / ADM-0001 -> Super Admin)
+        if (!matched && (q.toLowerCase() === 'ak10001' || q.toLowerCase() === 'ak100' || q.toLowerCase() === 'adm-0001')) {
+          matched = list.find((m) => m.role === 'ADMIN' || m.memberCode === 'ADM-0001' || !m.referrerId) || list[0];
+        }
+
+        // 3. Fallback to partial match or search result returned by backend
         if (!matched && list.length > 0) {
-          matched =
-            list.find(
-              (m) =>
-                m.memberCode?.toLowerCase().includes(q.toLowerCase()) ||
-                m.name?.toLowerCase().includes(q.toLowerCase())
-            ) || list[0];
+          matched = list.find(
+            (m) =>
+              m.memberCode?.toLowerCase().includes(q.toLowerCase()) ||
+              m.name?.toLowerCase().includes(q.toLowerCase())
+          );
         }
 
         if (matched) {

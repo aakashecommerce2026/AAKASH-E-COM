@@ -89,13 +89,17 @@ const LandingPage = () => {
           m.email?.toLowerCase() === q.toLowerCase()
       );
 
+      if (!matched && (q.toLowerCase() === 'ak10001' || q.toLowerCase() === 'ak100' || q.toLowerCase() === 'adm-0001')) {
+        matched = list.find((m) => m.role === 'ADMIN' || m.memberCode === 'ADM-0001' || !m.referrerId) || list[0];
+      }
+
       if (!matched && list.length > 0) {
         matched =
           list.find(
             (m) =>
               m.memberCode?.toLowerCase().includes(q.toLowerCase()) ||
               m.name?.toLowerCase().includes(q.toLowerCase())
-          ) || list[0];
+          );
       }
 
       if (matched) {
@@ -568,10 +572,10 @@ const LandingPage = () => {
                       variant="outlined"
                       color="secondary"
                       fullWidth
-                      onClick={() => handleOpenRegisterWithCode('AK10001')}
+                      onClick={() => handleOpenRegisterWithCode('')}
                       sx={{ py: 1.2, fontWeight: 700, borderStyle: 'dashed' }}
                     >
-                      Register with Default Root Sponsor (AK10001)
+                      Register with Default Root Sponsor (Super Admin)
                     </Button>
                   )}
                 </Box>

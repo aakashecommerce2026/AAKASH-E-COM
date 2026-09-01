@@ -100,12 +100,16 @@ const Dashboard = () => {
   // Member Relevant Commissions
   const relevantCommissions = useMemo(() => {
     if (isAdmin) return commissions || [];
+    const userIdStr = String(user?.id);
+    const userCode = (user?.referralCode || user?.memberCode || '').toLowerCase();
     const userName = user?.name?.toLowerCase();
-    if (!userName) return [];
+
     return (commissions || []).filter(
       (c) =>
-        (c.memberName && c.memberName.toLowerCase() === userName) ||
-        (c.beneficiaryName && c.beneficiaryName.toLowerCase() === userName)
+        String(c.beneficiaryMemberId || c.beneficiaryId || c.memberId) === userIdStr ||
+        (c.memberCode && userCode && c.memberCode.toLowerCase() === userCode) ||
+        (c.memberName && userName && c.memberName.toLowerCase() === userName) ||
+        (c.beneficiaryName && userName && c.beneficiaryName.toLowerCase() === userName)
     );
   }, [commissions, isAdmin, user]);
 

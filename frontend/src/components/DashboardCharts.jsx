@@ -643,27 +643,36 @@ export const MemberPerformanceChart = () => {
     if (!user || !token) {
       setLoading(false);
       setData([
-        { month: 'Jan', directCommissions: 1500, indirectCommissions: 500, total: 2000 },
-        { month: 'Feb', directCommissions: 2500, indirectCommissions: 1000, total: 3500 },
-        { month: 'Mar', directCommissions: 4000, indirectCommissions: 1800, total: 5800 },
-        { month: 'Apr', directCommissions: 5500, indirectCommissions: 2500, total: 8000 },
-        { month: 'May', directCommissions: 7000, indirectCommissions: 3500, total: 10500 },
-        { month: 'Jun', directCommissions: 9500, indirectCommissions: 4800, total: 14300 },
+        { month: 'Jan', directCommissions: 0, indirectCommissions: 0, total: 0 },
+        { month: 'Feb', directCommissions: 0, indirectCommissions: 0, total: 0 },
+        { month: 'Mar', directCommissions: 0, indirectCommissions: 0, total: 0 },
+        { month: 'Apr', directCommissions: 0, indirectCommissions: 0, total: 0 },
+        { month: 'May', directCommissions: 0, indirectCommissions: 0, total: 0 },
+        { month: 'Jun', directCommissions: 0, indirectCommissions: 0, total: 0 },
       ]);
       return;
     }
 
     setLoading(true);
 
+    const memberIdStr = String(user?.id);
+    const userMemberCode = user?.referralCode || user?.memberCode;
+
     Promise.all([
       hierarchyApi.getMemberSummary().catch(() => null),
-      commissionApi.getMembershipLedger({ limit: 100 }).catch(() => null),
-      commissionApi.getRepurchaseLedger({ limit: 100 }).catch(() => null),
-    ]).then(([hierarchySummary, membershipLedgerRes, repurchaseLedgerRes]) => {
+      commissionApi.getMembershipLedger({ beneficiaryMemberId: memberIdStr, limit: 500 }).catch(() => null),
+      commissionApi.getRepurchaseLedger({ beneficiaryMemberId: memberIdStr, limit: 500 }).catch(() => null),
+      dashboardApi.getMemberDashboard().catch(() => null),
+    ]).then(([hierarchySummary, membershipLedgerRes, repurchaseLedgerRes, memberDashboardRes]) => {
       if (!isMounted) return;
 
       if (hierarchySummary) {
         setSummaryMetrics(hierarchySummary);
+      } else if (memberDashboardRes?.referrals) {
+        setSummaryMetrics({
+          totalDownline: memberDashboardRes.referrals.totalDownlineMembers || 0,
+          activeDownline: memberDashboardRes.referrals.activeDownlineMembers || 0,
+        });
       }
 
       const membershipEntries = Array.isArray(membershipLedgerRes)
@@ -674,15 +683,16 @@ export const MemberPerformanceChart = () => {
         ? repurchaseLedgerRes
         : repurchaseLedgerRes?.data || repurchaseLedgerRes?.items || [];
 
-      const memberIdStr = String(user?.id);
-      const userMemberCode = user?.referralCode || user?.memberCode;
-
       const myMembershipCommissions = membershipEntries.filter(
-        (c) => String(c.memberId || c.beneficiaryId) === memberIdStr || c.memberCode === userMemberCode
+        (c) =>
+          String(c.beneficiaryMemberId || c.beneficiaryId || c.memberId) === memberIdStr ||
+          c.memberCode === userMemberCode
       );
 
       const myRepurchaseCommissions = repurchaseEntries.filter(
-        (c) => String(c.memberId || c.beneficiaryId) === memberIdStr || c.memberCode === userMemberCode
+        (c) =>
+          String(c.beneficiaryMemberId || c.beneficiaryId || c.memberId) === memberIdStr ||
+          c.memberCode === userMemberCode
       );
 
       // Build 6-month timeline array ending at current month
@@ -726,20 +736,6 @@ export const MemberPerformanceChart = () => {
         });
       }
 
-      const totalEarned = timeline.reduce((acc, t) => acc + t.total, 0);
-
-      // Real-time baseline interpolation if member has 0 ledger records yet
-      if (totalEarned === 0) {
-        const directCount = hierarchySummary?.branches?.length || (user?.directReferrals ? user.directReferrals.length : 0);
-        const totalDownlineCount = hierarchySummary?.totalDownline || 0;
-
-        timeline.forEach((t, idx) => {
-          t.directCommissions = (idx + 1) <= directCount ? (idx + 1) * 1000 : directCount * 1000;
-          t.indirectCommissions = totalDownlineCount > 0 ? (idx + 1) * 250 : 0;
-          t.total = t.directCommissions + t.indirectCommissions;
-        });
-      }
-
       setData(timeline);
       setLoading(false);
     });
@@ -747,7 +743,7 @@ export const MemberPerformanceChart = () => {
     return () => {
       isMounted = false;
     };
-  }, [user?.id]);
+  }, [user?.id, user?.referralCode, user?.memberCode]);
 
   if (loading || data.length === 0) {
     return (

@@ -87,7 +87,13 @@ export class MembershipCommissionController {
     status: 200,
     description: 'Paginated membership commission ledger records',
   })
-  async findAll(@Query() query: QueryMembershipCommissionDto) {
+  async findAll(
+    @Query() query: QueryMembershipCommissionDto,
+    @CurrentUser() user: any,
+  ) {
+    if (user && user.role !== MemberRole.ADMIN && !query.beneficiaryMemberId && !query.sourceMemberId) {
+      query.beneficiaryMemberId = user.id;
+    }
     return this.membershipCommissionService.findAll(query);
   }
 

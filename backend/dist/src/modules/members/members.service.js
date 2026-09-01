@@ -152,15 +152,33 @@ let MembersService = MembersService_1 = class MembersService {
                 throw new common_1.ConflictException(`Username '${rest.username}' already exists`);
             }
         }
-        if (referrerId) {
+        let assignedReferrerId = referrerId;
+        if (!assignedReferrerId) {
+            const rootMember = await this.prisma.member.findFirst({
+                where: {
+                    OR: [
+                        { memberCode: 'ADM-0001' },
+                        { role: client_1.MemberRole.ADMIN },
+                        { memberCode: 'AK10001' },
+                        { referrerId: null },
+                    ],
+                    status: client_1.MemberStatus.ACTIVE,
+                },
+                orderBy: { joiningDate: 'asc' },
+            });
+            if (rootMember) {
+                assignedReferrerId = rootMember.id;
+            }
+        }
+        if (assignedReferrerId) {
             const referrer = await this.prisma.member.findUnique({
-                where: { id: referrerId },
+                where: { id: assignedReferrerId },
             });
             if (!referrer) {
-                throw new common_1.BadRequestException(`Referrer with ID '${referrerId}' does not exist`);
+                throw new common_1.BadRequestException(`Referrer with ID '${assignedReferrerId}' does not exist`);
             }
             if (referrer.status !== client_1.MemberStatus.ACTIVE) {
-                throw new common_1.BadRequestException(`Referrer with ID '${referrerId}' is not active (current status: ${referrer.status})`);
+                throw new common_1.BadRequestException(`Referrer with ID '${assignedReferrerId}' is not active (current status: ${referrer.status})`);
             }
         }
         const passwordHash = await bcrypt.hash(password, this.BCRYPT_SALT_ROUNDS);
@@ -169,7 +187,7 @@ let MembersService = MembersService_1 = class MembersService {
                 data: {
                     ...rest,
                     passwordHash,
-                    referrerId: referrerId || null,
+                    referrerId: assignedReferrerId || null,
                     role: role || client_1.MemberRole.MEMBER,
                     status: status || client_1.MemberStatus.ACTIVE,
                     bankDetails: bankDetails

@@ -7,7 +7,7 @@ export declare class MembershipCommissionController {
     constructor(membershipCommissionService: MembershipCommissionService);
     getConfig(version?: number): Promise<MembershipCommissionConfigResponseDto[]>;
     createConfig(dto: CreateCommissionConfigDto, actorId: string): Promise<MembershipCommissionConfigResponseDto[]>;
-    findAll(query: QueryMembershipCommissionDto): Promise<{
+    findAll(query: QueryMembershipCommissionDto, user: any): Promise<{
         data: {
             sourceMember: {
                 id: string;

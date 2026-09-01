@@ -35,7 +35,10 @@ let MembershipCommissionController = class MembershipCommissionController {
     async createConfig(dto, actorId) {
         return this.membershipCommissionService.publishConfigVersion(dto, actorId);
     }
-    async findAll(query) {
+    async findAll(query, user) {
+        if (user && user.role !== client_1.MemberRole.ADMIN && !query.beneficiaryMemberId && !query.sourceMemberId) {
+            query.beneficiaryMemberId = user.id;
+        }
         return this.membershipCommissionService.findAll(query);
     }
     async findById(id) {
@@ -92,8 +95,9 @@ __decorate([
         description: 'Paginated membership commission ledger records',
     }),
     __param(0, (0, common_1.Query)()),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [query_membership_commission_dto_1.QueryMembershipCommissionDto]),
+    __metadata("design:paramtypes", [query_membership_commission_dto_1.QueryMembershipCommissionDto, Object]),
     __metadata("design:returntype", Promise)
 ], MembershipCommissionController.prototype, "findAll", null);
 __decorate([
