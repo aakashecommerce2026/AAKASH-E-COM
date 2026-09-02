@@ -49,6 +49,7 @@ const http_exception_filter_1 = require("./common/filters/http-exception.filter"
 async function bootstrap() {
     const logger = new common_1.Logger('Bootstrap');
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    app.enableShutdownHooks();
     const configService = app.get(config_1.ConfigService);
     const nodeEnv = configService.get('nodeEnv') || 'development';
     const port = configService.get('port') || 3000;
