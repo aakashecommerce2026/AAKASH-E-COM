@@ -20,20 +20,23 @@ let EmailService = EmailService_1 = class EmailService {
     fromAddress;
     constructor(configService) {
         this.configService = configService;
-        const host = this.configService.get('SMTP_HOST');
+        const rawHost = this.configService.get('SMTP_HOST') || '';
+        const host = rawHost.trim().replace(/^["']|["']$/g, '');
         const port = parseInt(this.configService.get('SMTP_PORT') || '587', 10);
-        const user = this.configService.get('SMTP_USER');
+        const rawUser = this.configService.get('SMTP_USER') || '';
+        const user = rawUser.trim().replace(/^["']|["']$/g, '');
         const rawPass = this.configService.get('SMTP_PASS') || '';
-        const pass = rawPass.replace(/\s+/g, '');
-        const service = this.configService.get('SMTP_SERVICE');
+        const pass = rawPass.replace(/\s+/g, '').replace(/^["']|["']$/g, '');
+        const rawService = this.configService.get('SMTP_SERVICE') || '';
+        const service = rawService.trim().replace(/^["']|["']$/g, '');
         const secure = this.configService.get('SMTP_SECURE') === 'true';
         const rawFromName = this.configService.get('EMAIL_FROM_NAME') ||
             'AAKASH E-COM Notifications';
         const rawFromEmail = this.configService.get('EMAIL_FROM_ADDRESS') ||
             user ||
             'noreply@aakashecom.com';
-        const cleanFromName = rawFromName.replace(/^["']|["']$/g, '');
-        const cleanFromEmail = rawFromEmail.replace(/^["']|["']$/g, '');
+        const cleanFromName = rawFromName.trim().replace(/^["']|["']$/g, '');
+        const cleanFromEmail = rawFromEmail.trim().replace(/^["']|["']$/g, '');
         this.fromAddress = `"${cleanFromName}" <${cleanFromEmail}>`;
         if ((host || service) && user && pass) {
             try {
@@ -41,23 +44,23 @@ let EmailService = EmailService_1 = class EmailService {
                 const transportConfig = {
                     auth: { user, pass },
                 };
-                if (service) {
-                    transportConfig.service = service;
-                }
-                else {
+                if (host) {
                     transportConfig.host = host;
                     transportConfig.port = port;
                     transportConfig.secure = secure;
                 }
+                else if (service) {
+                    transportConfig.service = service;
+                }
                 this.transporter = nodemailer.createTransport(transportConfig);
-                this.logger.log(`Initialized SMTP transport via ${service || host}`);
+                this.logger.log(`Initialized SMTP transport via ${host || service} (User: ${user})`);
             }
             catch (err) {
                 this.logger.warn(`Failed to initialize Nodemailer transport: ${err.message}. Running in DEV simulation mode.`);
             }
         }
         else {
-            this.logger.warn('SMTP credentials not configured (Set SMTP_USER & SMTP_PASS in .env for live email sending). EmailService running in DEV mode.');
+            this.logger.warn('SMTP credentials not fully configured (Set SMTP_USER & SMTP_PASS in .env for live email sending). EmailService running in DEV mode.');
         }
     }
     async sendMail(options) {

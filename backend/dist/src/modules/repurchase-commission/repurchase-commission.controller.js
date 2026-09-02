@@ -36,7 +36,10 @@ let RepurchaseCommissionController = class RepurchaseCommissionController {
         return this.repurchaseCommissionService.updateConfig(dto, actorId);
     }
     async findAll(query, user) {
-        if (user && user.role !== client_1.MemberRole.ADMIN && !query.beneficiaryMemberId && !query.sourceMemberId) {
+        if (user &&
+            user.role !== client_1.MemberRole.ADMIN &&
+            !query.beneficiaryMemberId &&
+            !query.sourceMemberId) {
             query.beneficiaryMemberId = user.id;
         }
         return this.repurchaseCommissionService.findAll(query);

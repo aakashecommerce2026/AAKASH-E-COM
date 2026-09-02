@@ -20,8 +20,11 @@ fi
 # 2. Build Backend
 echo "📦 Installing & Building Backend..."
 cd "$APP_DIR/backend"
-if [ -f ".env.production" ]; then
+if [ ! -f ".env" ] && [ -f ".env.production" ]; then
+    echo "📄 Creating initial .env from .env.production template..."
     cp .env.production .env
+else
+    echo "🔒 Preserving existing .env file."
 fi
 npm install
 chmod -R +x node_modules/.bin
