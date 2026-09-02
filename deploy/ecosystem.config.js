@@ -2,7 +2,8 @@ module.exports = {
   apps: [
     {
       name: 'aakash-backend',
-      script: './backend/dist/src/main.js',
+      cwd: './backend',
+      script: 'dist/src/main.js',
       instances: 1,
       exec_mode: 'fork',
       env_production: {
