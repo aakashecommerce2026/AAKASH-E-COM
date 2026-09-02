@@ -625,11 +625,19 @@ export class DistributionService {
         },
       });
 
-      // 7. Fire per-member notification hook for each beneficiary member
-      for (const n of notificationParamsList) {
-        await this.notificationsService.notifyMemberCommissionDistributed({
-          ...n,
-          batchNo: completedBatch.batchNo,
+      // 7. Fire per-member notification hook asynchronously in background so response returns immediately
+      if (notificationParamsList.length > 0) {
+        Promise.allSettled(
+          notificationParamsList.map((n) =>
+            this.notificationsService.notifyMemberCommissionDistributed({
+              ...n,
+              batchNo: completedBatch.batchNo,
+            }),
+          ),
+        ).catch((notifyErr: any) => {
+          this.logger.error(
+            `Error dispatching member distribution notifications for batch '${completedBatch.batchNo}': ${notifyErr.message}`,
+          );
         });
       }
 
@@ -710,6 +718,20 @@ export class DistributionService {
         orderBy: { createdAt: 'desc' },
         include: {
           processor: { select: { id: true, memberCode: true, name: true } },
+          records: {
+            include: {
+              member: {
+                select: {
+                  id: true,
+                  memberCode: true,
+                  name: true,
+                  mobile: true,
+                  email: true,
+                  bankDetails: true,
+                },
+              },
+            },
+          },
         },
       }),
     ]);
@@ -728,6 +750,19 @@ export class DistributionService {
       startedAt: b.startedAt,
       completedAt: b.completedAt,
       createdAt: b.createdAt,
+      records: (b as any).records
+        ? (b as any).records.map((r: any) => ({
+            id: r.id,
+            memberId: r.memberId,
+            member: r.member,
+            commissionType: r.commissionType,
+            grossAmount: Number(r.grossAmount),
+            tdsAmount: Number(r.tdsAmount),
+            adminFee: Number(r.adminFee),
+            netAmount: Number(r.netAmount),
+            status: r.status,
+          }))
+        : [],
     }));
 
     return {

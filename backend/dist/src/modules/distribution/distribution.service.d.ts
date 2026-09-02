@@ -107,6 +107,7 @@ export declare class DistributionService {
             startedAt: Date | null;
             completedAt: Date | null;
             createdAt: Date;
+            records: any;
         }[];
         meta: {
             total: number;

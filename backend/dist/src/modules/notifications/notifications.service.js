@@ -37,7 +37,12 @@ let NotificationsService = NotificationsService_1 = class NotificationsService {
         }
         if (channels.includes('EMAIL') && email) {
             if (this.emailService) {
-                await this.emailService.sendPayoutDisbursedEmail(email, memberName, batchNo, grossAmount, tdsAmount, adminFee, netAmount, paymentRef);
+                try {
+                    await this.emailService.sendPayoutDisbursedEmail(email, memberName, batchNo, grossAmount, tdsAmount, adminFee, netAmount, paymentRef);
+                }
+                catch (err) {
+                    this.logger.error(`Failed to send payout email to ${email}: ${err.message}`);
+                }
             }
             else {
                 this.logger.log(`[EMAIL NOTIFICATION] To: ${email} | Subject: Commission Payout Disbursed - ${batchNo}`);

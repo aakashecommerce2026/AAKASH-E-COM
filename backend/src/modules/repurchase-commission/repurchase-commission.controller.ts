@@ -91,7 +91,12 @@ export class RepurchaseCommissionController {
     @Query() query: QueryRepurchaseCommissionDto,
     @CurrentUser() user: any,
   ) {
-    if (user && user.role !== MemberRole.ADMIN && !query.beneficiaryMemberId && !query.sourceMemberId) {
+    if (
+      user &&
+      user.role !== MemberRole.ADMIN &&
+      !query.beneficiaryMemberId &&
+      !query.sourceMemberId
+    ) {
       query.beneficiaryMemberId = user.id;
     }
     return this.repurchaseCommissionService.findAll(query);

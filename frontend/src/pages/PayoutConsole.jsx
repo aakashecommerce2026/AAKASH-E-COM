@@ -58,7 +58,7 @@ const PAYOUT_TYPES = [
 const PayoutConsole = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  const { payouts, loading, processing } = useSelector((state) => state.payout);
+  const { payouts, loading, processing, error } = useSelector((state) => state.payout);
   const { enableDeductions = true } = useSelector((state) => state.commission);
 
   const isAdmin = user?.role === 'Admin';
@@ -73,33 +73,47 @@ const PayoutConsole = () => {
   const [typeFilter, setTypeFilter] = useState('ALL');
 
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
+  const [prevProcessing, setPrevProcessing] = useState(false);
 
   useEffect(() => {
     dispatch(fetchPayoutsRequest());
     dispatch(fetchTdsStatusRequest());
   }, [dispatch]);
 
+  // Handle toast alert when background processing completes
+  useEffect(() => {
+    if (prevProcessing && !processing) {
+      if (error) {
+        setToast({
+          open: true,
+          message: error,
+          severity: 'error',
+        });
+      } else {
+        setToast({
+          open: true,
+          message: 'Payout disbursement processed successfully!',
+          severity: 'success',
+        });
+      }
+    }
+    setPrevProcessing(processing);
+  }, [processing, error, prevProcessing]);
+
   // Handle Single Payout Release
-  const handleProcessSingle = (payoutId, memberName) => {
-    dispatch(processPayoutRequest(payoutId));
-    setToast({
-      open: true,
-      message: `Payout ${payoutId} for ${memberName} processed successfully!`,
-      severity: 'success',
-    });
+  const handleProcessSingle = (row) => {
+    const targetMemberId = row.memberId || row.id;
+    dispatch(processPayoutRequest(targetMemberId));
   };
 
   // Handle Batch Payout Release
   const handleBatchProcess = () => {
-    const pendingIds = payouts.filter((p) => p.status === 'Pending').map((p) => p.id);
+    const pendingIds = payouts
+      .filter((p) => p.status === 'Pending')
+      .map((p) => p.memberId || p.id);
     if (pendingIds.length === 0) return;
 
     dispatch(batchProcessPayoutsRequest(pendingIds));
-    setToast({
-      open: true,
-      message: `Batch processing triggered for ${pendingIds.length} pending payouts!`,
-      severity: 'success',
-    });
   };
 
   // Preset Date Filter Handler
@@ -510,7 +524,7 @@ const PayoutConsole = () => {
                             color="success"
                             disabled={processing}
                             startIcon={<PlayArrowIcon />}
-                            onClick={() => handleProcessSingle(row.id, row.memberName)}
+                            onClick={() => handleProcessSingle(row)}
                             sx={{ py: 0.5, fontWeight: 700 }}
                           >
                             Process

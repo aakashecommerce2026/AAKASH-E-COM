@@ -48,7 +48,9 @@ const payoutReducer = (state = initialState, action) => {
         ...state,
         processing: false,
         payouts: state.payouts.map((p) =>
-          p.id === action.payload.id ? action.payload : p
+          p.id === action.payload.id || p.memberId === action.payload.id
+            ? { ...p, ...action.payload }
+            : p
         ),
         error: null,
       };
@@ -57,7 +59,10 @@ const payoutReducer = (state = initialState, action) => {
       return {
         ...state,
         processing: false,
-        payouts: state.payouts.map((p) => updatedMap.get(p.id) || p),
+        payouts: state.payouts.map((p) => {
+          const update = updatedMap.get(p.id) || updatedMap.get(p.memberId);
+          return update ? { ...p, ...update } : p;
+        }),
         error: null,
       };
     }

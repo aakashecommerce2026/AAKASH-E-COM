@@ -75,6 +75,7 @@ export declare class AdminDistributionController {
             startedAt: Date | null;
             completedAt: Date | null;
             createdAt: Date;
+            records: any;
         }[];
         meta: {
             total: number;

@@ -473,10 +473,12 @@ let DistributionService = DistributionService_1 = class DistributionService {
                     },
                 },
             });
-            for (const n of notificationParamsList) {
-                await this.notificationsService.notifyMemberCommissionDistributed({
+            if (notificationParamsList.length > 0) {
+                Promise.allSettled(notificationParamsList.map((n) => this.notificationsService.notifyMemberCommissionDistributed({
                     ...n,
                     batchNo: completedBatch.batchNo,
+                }))).catch((notifyErr) => {
+                    this.logger.error(`Error dispatching member distribution notifications for batch '${completedBatch.batchNo}': ${notifyErr.message}`);
                 });
             }
             await this.auditService.logAction({
@@ -545,6 +547,20 @@ let DistributionService = DistributionService_1 = class DistributionService {
                 orderBy: { createdAt: 'desc' },
                 include: {
                     processor: { select: { id: true, memberCode: true, name: true } },
+                    records: {
+                        include: {
+                            member: {
+                                select: {
+                                    id: true,
+                                    memberCode: true,
+                                    name: true,
+                                    mobile: true,
+                                    email: true,
+                                    bankDetails: true,
+                                },
+                            },
+                        },
+                    },
                 },
             }),
         ]);
@@ -562,6 +578,19 @@ let DistributionService = DistributionService_1 = class DistributionService {
             startedAt: b.startedAt,
             completedAt: b.completedAt,
             createdAt: b.createdAt,
+            records: b.records
+                ? b.records.map((r) => ({
+                    id: r.id,
+                    memberId: r.memberId,
+                    member: r.member,
+                    commissionType: r.commissionType,
+                    grossAmount: Number(r.grossAmount),
+                    tdsAmount: Number(r.tdsAmount),
+                    adminFee: Number(r.adminFee),
+                    netAmount: Number(r.netAmount),
+                    status: r.status,
+                }))
+                : [],
         }));
         return {
             data,
