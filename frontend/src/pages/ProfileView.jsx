@@ -226,7 +226,7 @@ const ProfileView = () => {
     <Box sx={{ pb: 5 }}>
       {/* Page Header Title */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3.5, flexWrap: 'wrap', gap: 2 }}>
-        <Box display="flex" alignItems="center" gap={1.5}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Avatar sx={{ bgcolor: 'secondary.main', width: 46, height: 46 }}>
             <PaymentIcon />
           </Avatar>

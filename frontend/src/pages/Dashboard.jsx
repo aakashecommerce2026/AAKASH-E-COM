@@ -72,6 +72,7 @@ const Dashboard = () => {
   }, [dispatch]);
 
   const isAdmin = user?.role === 'Admin';
+  const isInactive = user?.status === 'INACTIVE' || user?.status === 'Inactive';
   const referralCode = user?.referralCode || 'AK100';
 
   const now = useMemo(() => new Date(), []);
@@ -80,7 +81,7 @@ const Dashboard = () => {
 
   // Admin Metrics
   const adminTotalMembers = members.length;
-  const adminMembershipSales = members.length * 10000;
+  const adminMembershipSales = members.length * 5000;
   const adminRepurchaseSales = (repurchases || []).reduce((sum, item) => sum + (item.totalAmount || item.unitPrice || 0), 0);
   const adminTotalSalesRevenue = adminMembershipSales + adminRepurchaseSales;
 
@@ -235,7 +236,7 @@ const Dashboard = () => {
   return (
     <Box>
       {/* Header Banner */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5, color: 'primary.main' }}>
             {isAdmin ? 'System Administrator Command Portal' : `Welcome back, ${user?.name || 'Partner'}!`}
@@ -256,6 +257,13 @@ const Dashboard = () => {
           Edit Profile & UPI
         </Button>
       </Box>
+
+      {/* Inactive Member Freeze Notice */}
+      {!isAdmin && isInactive && (
+        <Alert severity="warning" variant="filled" sx={{ mb: 4, borderRadius: 3, fontWeight: 700 }}>
+          🔒 Account Status: INACTIVE & UNDER FREEZE. All commission earnings, payouts, and referral code privileges are locked until activated by Admin from the Member Directory.
+        </Alert>
+      )}
 
       {/* ================= STRICT FIXED-WIDTH (275px) & FIXED-HEIGHT (200px) CARD GRID ================= */}
       {isAdmin ? (
@@ -285,7 +293,7 @@ const Dashboard = () => {
             title="Membership Package Sales"
             value={formatINR(adminMembershipSales)}
             subtitle="Direct Joining Revenue"
-            chipLabel="₹10k Package"
+            chipLabel="₹5k Package"
             icon={<ReceiptIcon />}
             onClick={() => navigate('/members?tab=list', { state: { tab: 0 } })}
             actionText="View Directory"
@@ -373,17 +381,28 @@ const Dashboard = () => {
             mb: 4 
           }}
         >
+          {/* Card 0: Member Joining Fee */}
+          <DashboardCard
+            title="Member Joining Fee"
+            value={formatINR(5000)}
+            subtitle="First Time Joining Payment"
+            chipLabel="₹5,000 Fixed Fee"
+            icon={<ReceiptIcon />}
+            actionText="Registration Fee"
+            themeConfig={themes.cyan}
+          />
+
           {/* Card 1: Total Commission */}
           <DashboardCard
             title="Total Commissions"
-            value={formatINR(totalCommission)}
-            subtitle="All-time MLM earnings"
-            chipLabel="Gross Earnings"
+            value={isInactive ? "Frozen (Inactive)" : formatINR(totalCommission)}
+            subtitle={isInactive ? "Account Inactive" : "All-time MLM earnings"}
+            chipLabel={isInactive ? "Locked" : "Gross Earnings"}
             icon={<MonetizationOnIcon />}
-            onClick={() => navigate('/commissions')}
-            actionText="My Earnings"
+            onClick={() => !isInactive && navigate('/commissions')}
+            actionText={isInactive ? "Locked" : "My Earnings"}
             loading={commissionsLoading}
-            themeConfig={themes.emerald}
+            themeConfig={isInactive ? themes.amber : themes.emerald}
           />
 
           {/* Card 2: Members in Downline */}
@@ -402,57 +421,57 @@ const Dashboard = () => {
           {/* Card 3: Monthly Earnings */}
           <DashboardCard
             title="Monthly Earnings"
-            value={formatINR(monthlyEarnings)}
-            subtitle="This month earnings"
-            chipLabel="Current Month"
+            value={isInactive ? "Frozen" : formatINR(monthlyEarnings)}
+            subtitle={isInactive ? "Account Inactive" : "This month earnings"}
+            chipLabel={isInactive ? "Locked" : "Current Month"}
             icon={<TrendingUpIcon />}
-            actionText="Active Run"
+            actionText={isInactive ? "Locked" : "Active Run"}
             loading={commissionsLoading}
-            themeConfig={themes.violet}
+            themeConfig={isInactive ? themes.amber : themes.violet}
           />
 
           {/* Card 4: Weekly Earnings */}
           <DashboardCard
             title="Weekly Earnings"
-            value={formatINR(weeklyEarnings)}
-            subtitle="Past 7 days earnings"
-            chipLabel="Past 7 Days"
+            value={isInactive ? "Frozen" : formatINR(weeklyEarnings)}
+            subtitle={isInactive ? "Account Inactive" : "Past 7 days earnings"}
+            chipLabel={isInactive ? "Locked" : "Past 7 Days"}
             icon={<DateRangeIcon />}
-            actionText="7-Day Run"
+            actionText={isInactive ? "Locked" : "7-Day Run"}
             loading={commissionsLoading}
-            themeConfig={themes.blue}
+            themeConfig={isInactive ? themes.amber : themes.blue}
           />
 
           {/* Card 5: Paid Payouts */}
           <DashboardCard
             title="Paid Payouts"
-            value={formatINR(paidCommissionTotal)}
-            subtitle="Settled to UPI/Bank"
-            chipLabel="In Bank"
+            value={isInactive ? "Frozen" : formatINR(paidCommissionTotal)}
+            subtitle={isInactive ? "Account Inactive" : "Settled to UPI/Bank"}
+            chipLabel={isInactive ? "Locked" : "In Bank"}
             icon={<CheckCircleIcon />}
-            onClick={() => navigate('/payouts')}
-            actionText="My Payouts"
+            onClick={() => !isInactive && navigate('/payouts')}
+            actionText={isInactive ? "Locked" : "My Payouts"}
             loading={commissionsLoading}
-            themeConfig={themes.green}
+            themeConfig={isInactive ? themes.amber : themes.green}
           />
 
           {/* Card 6: Unpaid / Pending Wallet */}
           <DashboardCard
             title="Unpaid / Pending Wallet"
-            value={formatINR(unpaidCommissionTotal)}
-            subtitle="Next payout release"
-            chipLabel="Pending Cycle"
+            value={isInactive ? "Frozen" : formatINR(unpaidCommissionTotal)}
+            subtitle={isInactive ? "Account Inactive" : "Next payout release"}
+            chipLabel={isInactive ? "Locked" : "Pending Cycle"}
             icon={<PendingActionsIcon />}
-            onClick={() => navigate('/payouts')}
-            actionText="Wallet Details"
+            onClick={() => !isInactive && navigate('/payouts')}
+            actionText={isInactive ? "Locked" : "Wallet Details"}
             loading={commissionsLoading}
             themeConfig={themes.amber}
           />
         </Box>
       )}
 
-      {/* Sponsor Referral Code Copy Bar */}
-      {!isAdmin && (
+      {/* Sponsor Referral Code Copy Bar (Hidden when Member is Inactive) */}
+      {!isAdmin && !isInactive && (
         <Paper 
           variant="outlined" 
           sx={{ 

@@ -506,6 +506,20 @@ const MemberManagement = () => {
     }
   };
 
+  const handleActivateMember = async (member) => {
+    try {
+      await membersApi.update(member.id, { status: 'ACTIVE' });
+      dispatch(fetchMembersRequest());
+      setRegistrationNotice(
+        `✓ Member ${member.name} (${member.referralCode || member.memberCode}) account successfully ACTIVATED!`
+      );
+      setTimeout(() => setRegistrationNotice(''), 6000);
+    } catch (err) {
+      setRegistrationNotice('');
+      alert(err.response?.data?.message || err.message || 'Failed to activate member account.');
+    }
+  };
+
   // MUI DataGrid Column Configuration
   const columns = [
     { field: 'id', headerName: 'ID', width: 80, sortable: true },
@@ -542,6 +556,24 @@ const MemberManagement = () => {
       )
     },
     { field: 'email', headerName: 'Email', flex: 1.1, minWidth: 180 },
+    {
+      field: 'status',
+      headerName: 'Status',
+      width: 130,
+      sortable: true,
+      renderCell: (params) => {
+        const isInactive = params.value === 'INACTIVE' || params.value === 'Inactive' || params.row.status === 'INACTIVE';
+        return (
+          <Chip
+            label={isInactive ? 'INACTIVE' : (params.value || 'ACTIVE')}
+            size="small"
+            color={isInactive ? 'warning' : 'success'}
+            variant={isInactive ? 'filled' : 'outlined'}
+            sx={{ fontWeight: 700 }}
+          />
+        );
+      }
+    },
     { 
       field: 'referralCode', 
       headerName: 'Referral Code', 
@@ -622,11 +654,23 @@ const MemberManagement = () => {
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 250,
+      width: 320,
       sortable: false,
       filterable: false,
       renderCell: (params) => (
         <Box sx={{ display: 'flex', gap: 0.8, alignItems: 'center' }}>
+          {isAdmin && (params.row.status === 'INACTIVE' || params.row.status === 'Inactive') && (
+            <Button
+              variant="contained"
+              color="success"
+              size="small"
+              startIcon={<CheckCircleIcon sx={{ fontSize: 13 }} />}
+              onClick={() => handleActivateMember(params.row)}
+              sx={{ py: 0.4, px: 1, fontSize: '0.72rem', fontWeight: 800 }}
+            >
+              Activate
+            </Button>
+          )}
           <Button
             variant="outlined"
             color="secondary"

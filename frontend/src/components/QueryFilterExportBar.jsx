@@ -66,12 +66,14 @@ const QueryFilterExportBar = ({
               flexGrow: 1,
               "& .MuiOutlinedInput-root": { borderRadius: 2 },
             }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" color="action" />
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                ),
+              },
             }}
           />
 
@@ -88,12 +90,14 @@ const QueryFilterExportBar = ({
                 width: { xs: "100%", sm: "auto" },
                 "& .MuiOutlinedInput-root": { borderRadius: 2 },
               }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <FilterAltIcon fontSize="small" color="action" />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <FilterAltIcon fontSize="small" color="action" />
+                    </InputAdornment>
+                  ),
+                },
               }}
             >
               <MenuItem value="ALL">All Categories</MenuItem>

@@ -135,8 +135,8 @@ __decorate([
 ], CreateMemberDto.prototype, "otp", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
-        example: 10000,
-        description: 'Joining Fee / Package Amount (defaults to 10000)',
+        example: 5000,
+        description: 'Joining Fee / Package Amount (defaults to 5000)',
     }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsNumber)({}, { message: 'Joining fee must be a number' }),

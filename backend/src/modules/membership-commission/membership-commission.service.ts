@@ -186,7 +186,7 @@ export class MembershipCommissionService {
    */
   async calculateForNewMember(
     memberId: string,
-    joiningFee: number = 10000,
+    joiningFee: number = 5000,
     txClient?: Prisma.TransactionClient,
   ): Promise<MembershipCommissionResponseDto[]> {
     const db: any = txClient || this.prisma;

@@ -18,6 +18,7 @@ import {
   Stepper,
   Step,
   StepLabel,
+  Chip,
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
@@ -26,6 +27,7 @@ import ErrorIcon from '@mui/icons-material/Error';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import LockIcon from '@mui/icons-material/Lock';
 import { otpApi, membersApi } from '../services/api';
 import { loginRequest } from '../store/actions';
 
@@ -84,8 +86,8 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '', onSuccess }) =>
       let initialCode = defaultSponsorCode || urlRef;
 
       if (!initialCode) {
-        if (authUser && authUser.role !== 'Admin') {
-          // Registration performed by logged-in upline -> pre-fill upline's referral code
+        if (authUser) {
+          // Registration performed by logged-in upline/admin -> pre-fill referral code
           initialCode = authUser.referralCode || authUser.memberCode || String(authUser.id);
           setSponsorCode(initialCode);
         } else {
@@ -108,7 +110,7 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '', onSuccess }) =>
         setSponsorCode(initialCode);
       }
 
-      setMemberCode(generateMemberCode(name));
+      setMemberCode(generateMemberCode(''));
       setUsername('');
       setActiveStep(0);
       setRegisteredUser(null);
@@ -120,7 +122,7 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '', onSuccess }) =>
     return () => {
       isMounted = false;
     };
-  }, [open, defaultSponsorCode, authUser, name]);
+  }, [open, defaultSponsorCode, authUser]);
 
   // Cooldown timer effect for OTP resend
   useEffect(() => {
@@ -382,6 +384,9 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '', onSuccess }) =>
                   Member Code: <strong style={{ color: '#047857', fontSize: '1rem' }}>{registeredUser.memberCode}</strong>
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
+                  Member Joining Fee: <strong style={{ color: '#047857', fontSize: '1rem' }}>₹5,000</strong>
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
                   Email: <strong>{registeredUser.email}</strong>
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
@@ -409,6 +414,30 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '', onSuccess }) =>
                 </Alert>
               )}
 
+              {/* MEMBER JOINING FEE DISPLAY */}
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 2,
+                  bgcolor: '#EFF6FF',
+                  borderColor: '#93C5FD',
+                  borderRadius: 2.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <Box>
+                  <Typography variant="caption" sx={{ fontWeight: 700, color: '#1E40AF', textTransform: 'uppercase' }}>
+                    Member Joining Fee (First Time Payment)
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 900, color: '#1E3A8A' }}>
+                    ₹5,000
+                  </Typography>
+                </Box>
+                <Chip label="Default Joining Fee" color="primary" size="small" sx={{ fontWeight: 700 }} />
+              </Paper>
+
               {/* STEP 1: SPONSOR CODE VERIFICATION */}
               <Paper variant="outlined" sx={{ p: 2, bgcolor: '#F8FAFC', borderRadius: 2.5, borderColor: '#E2E8F0' }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0F172A', mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -416,17 +445,30 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '', onSuccess }) =>
                 </Typography>
 
                 <TextField
-                  label="Sponsor Referral Code"
+                  label="Sponsor Referral Code (Locked)"
                   variant="outlined"
                   fullWidth
                   required
                   value={sponsorCode}
-                  onChange={(e) => setSponsorCode(e.target.value)}
-                  placeholder="e.g. AK10001"
-                  sx={{ bgcolor: '#FFFFFF' }}
+                  placeholder="Fetching sponsor code..."
+                  helperText="🔒 Auto-assigned sponsor code based on registration route (Locked by system)."
                   slotProps={{
                     input: {
+                      readOnly: true,
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LockIcon color="secondary" fontSize="small" />
+                        </InputAdornment>
+                      ),
                       endAdornment: searchingSponsor ? <CircularProgress size={20} /> : null,
+                    },
+                  }}
+                  sx={{
+                    bgcolor: '#F1F5F9',
+                    '& .MuiInputBase-input': {
+                      fontWeight: 700,
+                      color: '#0F172A',
+                      cursor: 'not-allowed',
                     },
                   }}
                 />
@@ -477,7 +519,7 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '', onSuccess }) =>
 
               {/* STEP 2: MEMBER INFORMATION */}
               <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0F172A', mt: 0.5 }}>
-                Step 2: Personal Information & Generated Code
+                Step 2: Personal Information
               </Typography>
 
               <TextField
@@ -503,35 +545,15 @@ const RegisterModal = ({ open, onClose, defaultSponsorCode = '', onSuccess }) =>
                 helperText="Optional handle. Name can be duplicated, but username must be strictly unique."
               />
 
-              <Box sx={{ display: 'flex', gap: 1.5 }}>
-                <TextField
-                  label="Mobile Number"
-                  variant="outlined"
-                  fullWidth
-                  required
-                  value={mobile}
-                  onChange={(e) => setMobile(e.target.value)}
-                  placeholder="+919876543210"
-                />
-                <TextField
-                  label="Unique Member Code"
-                  variant="outlined"
-                  fullWidth
-                  value={memberCode}
-                  onChange={(e) => setMemberCode(e.target.value)}
-                  slotProps={{
-                    input: {
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton onClick={handleRegenerateCode} title="Generate Code">
-                            <AutoFixHighIcon color="secondary" />
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    },
-                  }}
-                />
-              </Box>
+              <TextField
+                label="Mobile Number"
+                variant="outlined"
+                fullWidth
+                required
+                value={mobile}
+                onChange={(e) => setMobile(e.target.value)}
+                placeholder="+919876543210"
+              />
 
               <Box sx={{ display: 'flex', gap: 1.5 }}>
                 <TextField

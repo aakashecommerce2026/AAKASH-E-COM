@@ -98,8 +98,8 @@ export class CreateAdminMemberDto {
   role?: MemberRole;
 
   @ApiPropertyOptional({
-    example: 10000,
-    description: 'Joining Fee / Package Amount (defaults to 10000)',
+    example: 5000,
+    description: 'Joining Fee / Package Amount (defaults to 5000)',
   })
   @IsOptional()
   @IsNumber({}, { message: 'Joining fee must be a number' })

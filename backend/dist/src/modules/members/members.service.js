@@ -189,7 +189,7 @@ let MembersService = MembersService_1 = class MembersService {
                     passwordHash,
                     referrerId: assignedReferrerId || null,
                     role: role || client_1.MemberRole.MEMBER,
-                    status: status || client_1.MemberStatus.ACTIVE,
+                    status: status || client_1.MemberStatus.INACTIVE,
                     bankDetails: bankDetails
                         ? JSON.parse(JSON.stringify(bankDetails))
                         : undefined,
@@ -197,7 +197,7 @@ let MembersService = MembersService_1 = class MembersService {
             });
             const joiningFeeAmount = rest.joiningFee && Number(rest.joiningFee) > 0
                 ? Number(rest.joiningFee)
-                : 10000;
+                : 5000;
             const generatedCommissions = await this.membershipCommissionService.calculateForNewMember(createdMember.id, joiningFeeAmount, tx);
             await this.auditService.logAction({
                 actorId: actorId || createdMember.id,

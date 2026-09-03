@@ -62,6 +62,7 @@ const PayoutConsole = () => {
   const { enableDeductions = true } = useSelector((state) => state.commission);
 
   const isAdmin = user?.role === 'Admin';
+  const isInactive = user?.status === 'INACTIVE' || user?.status === 'Inactive';
 
   // Tab State: 0 = All, 1 = Pending, 2 = Processed
   const [activeTab, setActiveTab] = useState(0);
@@ -149,10 +150,11 @@ const PayoutConsole = () => {
   // Role Base List
   const basePayouts = useMemo(() => {
     if (isAdmin) return payouts;
+    if (isInactive) return [];
     return payouts.filter(
       (p) => p.memberName.toLowerCase() === user?.name?.toLowerCase()
     );
-  }, [payouts, isAdmin, user]);
+  }, [payouts, isAdmin, isInactive, user]);
 
   // Filtered Ledger Payouts
   const filteredPayouts = useMemo(() => {
@@ -253,7 +255,7 @@ const PayoutConsole = () => {
   return (
     <Box sx={{ pb: 5 }}>
       {/* Page Title */}
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 800, color: 'primary.main', mb: 1 }}>
             {isAdmin ? 'Payout Console & Ledger' : 'My Payout Ledger & Earnings'}
@@ -278,6 +280,13 @@ const PayoutConsole = () => {
           </Button>
         )}
       </Box>
+
+      {/* Inactive Member Freeze Notice */}
+      {!isAdmin && isInactive && (
+        <Alert severity="warning" variant="filled" sx={{ mb: 3.5, borderRadius: 3, fontWeight: 700 }}>
+          🔒 Account Status: INACTIVE & UNDER FREEZE. Payout ledger and earnings are locked until your account is activated by Admin.
+        </Alert>
+      )}
 
       {/* Dynamic Statutory Taxation & TDS Details Banner */}
       <Paper variant="outlined" sx={{ p: 2, mb: 3.5, borderRadius: 2.5, bgcolor: enableDeductions ? '#FEFCE8' : '#F0FDF4', borderColor: enableDeductions ? '#FEF08A' : '#BBF7D0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>

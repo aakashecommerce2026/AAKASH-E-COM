@@ -62,10 +62,12 @@ const Commissions = () => {
   }, [dispatch]);
 
   const isAdmin = user?.role === 'Admin';
+  const isInactive = user?.status === 'INACTIVE' || user?.status === 'Inactive';
 
-  // Base list filtered by role: Admin sees all, Member sees only their own
+  // Base list filtered by role: Admin sees all, Member sees only their own (if active)
   const userCommissions = useMemo(() => {
     if (isAdmin) return commissions || [];
+    if (isInactive) return [];
     const userName = user?.name?.toLowerCase();
     if (!userName) return [];
     return (commissions || []).filter(
@@ -73,7 +75,7 @@ const Commissions = () => {
         (comm.memberName && comm.memberName.toLowerCase() === userName) ||
         (comm.beneficiaryName && comm.beneficiaryName.toLowerCase() === userName)
     );
-  }, [commissions, isAdmin, user]);
+  }, [commissions, isAdmin, isInactive, user]);
 
   // Tab 0: Base Level Earnings List
   const baseLevelEarnings = useMemo(() => {
@@ -256,7 +258,7 @@ const Commissions = () => {
   return (
     <Box sx={{ pb: 5 }}>
       {/* Header Title */}
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: 3 }}>
         <Typography variant="h4" sx={{ fontWeight: 800, color: 'primary.main', mb: 1 }}>
           {isAdmin ? 'Financial Payout & Commission Ledger' : 'My Earnings Console'}
         </Typography>
@@ -266,6 +268,13 @@ const Commissions = () => {
             : 'Detailed ledger of your Direct Referral commission earnings and Repurchase commission payouts.'}
         </Typography>
       </Box>
+
+      {/* Inactive Member Freeze Notice */}
+      {!isAdmin && isInactive && (
+        <Alert severity="warning" variant="filled" sx={{ mb: 3.5, borderRadius: 3, fontWeight: 700 }}>
+          🔒 Account Status: INACTIVE & UNDER FREEZE. Commission details and ledgers are locked until your account is activated by Admin.
+        </Alert>
+      )}
 
       {/* Dynamic Statutory Taxation & TDS Details Banner */}
       <Paper variant="outlined" sx={{ p: 2, mb: 3.5, borderRadius: 2.5, bgcolor: enableDeductions ? '#FEFCE8' : '#F0FDF4', borderColor: enableDeductions ? '#FEF08A' : '#BBF7D0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>

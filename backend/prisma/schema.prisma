@@ -91,7 +91,7 @@ model Member {
   joiningDate                  DateTime                     @default(now()) @map("joining_date")
   upiId                        String?                      @map("upi_id")
   bankDetails                  Json?                        @map("bank_details")
-  status                       MemberStatus                 @default(ACTIVE)
+  status                       MemberStatus                 @default(INACTIVE)
   passwordHash                 String                       @map("password_hash")
   role                         MemberRole                   @default(MEMBER)
   rank                         MemberRank                   @default(NONE)

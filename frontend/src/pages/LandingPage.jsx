@@ -220,7 +220,7 @@ const LandingPage = () => {
                   </Button>
                   <Button
                     variant="contained"
-                    onClick={() => setRegisterModalOpen(true)}
+                    onClick={() => handleOpenRegisterWithCode('')}
                     startIcon={<PersonAddIcon fontSize="small" />}
                     sx={{
                       fontWeight: 900,
@@ -322,10 +322,7 @@ const LandingPage = () => {
                 <Button
                   variant="contained"
                   fullWidth
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    setRegisterModalOpen(true);
-                  }}
+                  onClick={() => handleOpenRegisterWithCode('')}
                   startIcon={<PersonAddIcon />}
                   sx={{ py: 1.2, fontWeight: 900, bgcolor: '#D97706', color: '#FFFFFF' }}
                 >
@@ -410,7 +407,7 @@ const LandingPage = () => {
                 <Button
                   variant="contained"
                   size="large"
-                  onClick={() => setRegisterModalOpen(true)}
+                  onClick={() => handleOpenRegisterWithCode('')}
                   endIcon={<ArrowForwardIcon />}
                   sx={{
                     bgcolor: '#D97706',
@@ -837,14 +834,14 @@ const LandingPage = () => {
               </Typography>
             </Box>
 
-            <Stack direction="row" spacing={{ xs: 1.5, sm: 3 }} flexWrap="wrap">
+            <Stack direction="row" spacing={{ xs: 1.5, sm: 3 }} useFlexGap sx={{ flexWrap: 'wrap' }}>
               <Button onClick={() => navigate('/terms-and-conditions')} sx={{ color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>
                 Terms & Conditions
               </Button>
               <Button onClick={() => navigate('/privacy-policy')} sx={{ color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>
                 Privacy Policy
               </Button>
-              <Button onClick={() => setRegisterModalOpen(true)} sx={{ color: '#FBBF24', fontWeight: 800 }}>
+              <Button onClick={() => handleOpenRegisterWithCode('')} sx={{ color: '#FBBF24', fontWeight: 800 }}>
                 Join Network
               </Button>
               <Button onClick={() => navigate('/login')} sx={{ color: '#FFFFFF', fontWeight: 700 }}>

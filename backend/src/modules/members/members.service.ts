@@ -216,7 +216,7 @@ export class MembersService {
           passwordHash,
           referrerId: assignedReferrerId || null,
           role: role || MemberRole.MEMBER,
-          status: status || MemberStatus.ACTIVE,
+          status: status || MemberStatus.INACTIVE,
           bankDetails: bankDetails
             ? JSON.parse(JSON.stringify(bankDetails))
             : undefined,
@@ -227,7 +227,7 @@ export class MembersService {
       const joiningFeeAmount =
         (rest as any).joiningFee && Number((rest as any).joiningFee) > 0
           ? Number((rest as any).joiningFee)
-          : 10000;
+          : 5000;
       const generatedCommissions =
         await this.membershipCommissionService.calculateForNewMember(
           createdMember.id,

@@ -139,7 +139,7 @@ let MembershipCommissionService = MembershipCommissionService_1 = class Membersh
             }));
         });
     }
-    async calculateForNewMember(memberId, joiningFee = 10000, txClient) {
+    async calculateForNewMember(memberId, joiningFee = 5000, txClient) {
         const db = txClient || this.prisma;
         const existingCount = await db.membershipCommissionLedger.count({
             where: { sourceMemberId: memberId },
