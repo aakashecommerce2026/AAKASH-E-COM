@@ -14,6 +14,7 @@ cd "$APP_DIR"
 # 1. Pull latest code (if git repository)
 if [ -d ".git" ]; then
     echo "📥 Pulling latest git updates..."
+    git reset --hard HEAD
     git pull origin main
 fi
 
